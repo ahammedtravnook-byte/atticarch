@@ -56,7 +56,6 @@ export default function LandingPage() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)', marginBottom: 24, letterSpacing: '0.5px' }}>AtticArch</div>
               <h1 className="text-display" style={{ fontSize: 'var(--text-6xl)', color: 'var(--warm-white)', marginBottom: 16, lineHeight: 1.1, textShadow: '0 4px 32px rgba(0,0,0,0.5)' }}>
                 Experience <span className="text-gradient">Luxury</span><br />
                 Interior Design
