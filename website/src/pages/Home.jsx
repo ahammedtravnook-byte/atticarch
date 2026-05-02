@@ -181,7 +181,7 @@ export default function Home() {
           <div className="rooms-grid">
             {rooms.map((room, i) => (
               <Reveal key={room.slug} delay={i * 0.08}>
-                <Link to={`/${room.slug}`} className="room-card" data-cursor>
+                <Link to={`/${room.slug}`} className="room-card">
                   <div className="room-card__image">
                     <img src={room.image} alt={room.title} loading="lazy" />
                     <div className="room-card__overlay">
@@ -246,7 +246,7 @@ export default function Home() {
           <div className="services-grid">
             {services.map((service, i) => (
               <Reveal key={service.id} delay={i * 0.15}>
-                <div className="service-card" data-cursor>
+                <div className="service-card">
                   <div className="service-card__image">
                     <img src={service.image} alt={service.title} loading="lazy" />
                   </div>
@@ -356,7 +356,7 @@ export default function Home() {
           <div className="projects-grid">
             {projects.slice(0, 6).map((project, i) => (
               <Reveal key={project.id} delay={i * 0.1}>
-                <Link to={`/project/${project.id}`} className="project-card" data-cursor>
+                <Link to={`/project/${project.id}`} className="project-card">
                   <div className="project-card__image">
                     <img src={project.image} alt={project.title} loading="lazy" />
                     <div className="project-card__overlay">
@@ -461,7 +461,7 @@ export default function Home() {
           <div className="blog-grid">
             {blogPosts.map((post, i) => (
               <Reveal key={post.id} delay={i * 0.15}>
-                <Link to={`/blog/${post.slug}`} className="blog-card card" data-cursor>
+                <Link to={`/blog/${post.slug}`} className="blog-card card">
                   <div className="card-image">
                     <img src={post.image} alt={post.title} loading="lazy" />
                     <span className="blog-card__tag text-accent">{post.category}</span>

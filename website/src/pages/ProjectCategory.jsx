@@ -63,7 +63,7 @@ export default function ProjectCategory() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 28 }}>
             {filtered.map((project, i) => (
               <Reveal key={project.id} delay={i * 0.08}>
-                <Link to={`/project/${project.id}`} className="project-card card" data-cursor
+                <Link to={`/project/${project.id}`} className="project-card card"
                   style={{ display: 'block', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--warm-white)', transition: 'all 0.5s var(--ease-out)' }}>
                   <div style={{ aspectRatio: '4/3', overflow: 'hidden', position: 'relative' }}>
                     <img src={project.image} alt={project.title} loading="lazy"

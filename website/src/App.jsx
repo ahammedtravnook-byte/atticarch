@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import Preloader from './components/layout/Preloader'
-import CustomCursor from './components/layout/CustomCursor'
 import SmoothScroll from './components/layout/SmoothScroll'
 import Home from './pages/Home'
 import About from './pages/About'
@@ -30,7 +29,6 @@ export default function App() {
 
   return (
     <div className="app grain-overlay">
-      <CustomCursor />
       <Preloader />
       <SmoothScroll />
       {!isAdmin && !isLanding && <Header />}

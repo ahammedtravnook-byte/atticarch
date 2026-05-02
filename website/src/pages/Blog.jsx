@@ -77,7 +77,7 @@ export default function Blog() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 28 }}>
             {blogPosts.map((post, i) => (
               <Reveal key={post.id} delay={i * 0.1}>
-                <Link to={`/blog/${post.slug}`} className="card" data-cursor style={{ display: 'block' }}>
+                <Link to={`/blog/${post.slug}`} className="card" style={{ display: 'block' }}>
                   <div className="card-image" style={{ position: 'relative' }}>
                     <img src={post.image} alt={post.title} loading="lazy" />
                     <span style={{ position: 'absolute', top: 12, left: 12, background: 'var(--charcoal)', color: 'var(--gold)', padding: '5px 12px', borderRadius: 'var(--radius-full)', fontSize: 10, fontFamily: 'var(--font-accent)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{post.category}</span>
