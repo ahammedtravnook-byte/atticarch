@@ -7,7 +7,7 @@
   position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
   background: var(--charcoal);
@@ -30,13 +30,13 @@
 .hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(26,26,26,0.7) 0%, rgba(26,26,26,0.3) 50%, rgba(26,26,26,0.8) 100%);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.7) 0%, rgba(26, 26, 26, 0.3) 50%, rgba(26, 26, 26, 0.8) 100%);
 }
 
 .hero__content {
   position: relative;
   z-index: 2;
-  padding-top: clamp(240px, 30vh, 320px);
+  padding-top: clamp(320px, 35vh, 320px);
   padding-bottom: 100px;
   width: 100%;
 }
@@ -130,12 +130,14 @@
   transition: transform 0.8s var(--ease-out);
 }
 
-.room-card:hover .room-card__image img { transform: scale(1.08); }
+.room-card:hover .room-card__image img {
+  transform: scale(1.08);
+}
 
 .room-card__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(26,26,26,0.6) 100%);
+  background: linear-gradient(180deg, transparent 50%, rgba(26, 26, 26, 0.6) 100%);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -145,7 +147,9 @@
   color: var(--gold);
 }
 
-.room-card:hover .room-card__overlay { opacity: 1; }
+.room-card:hover .room-card__overlay {
+  opacity: 1;
+}
 
 .room-card__info {
   padding: 16px 20px;
@@ -257,9 +261,13 @@
   transition: transform 0.8s var(--ease-out);
 }
 
-.service-card:hover .service-card__image img { transform: scale(1.06); }
+.service-card:hover .service-card__image img {
+  transform: scale(1.06);
+}
 
-.service-card__content { padding: 28px; }
+.service-card__content {
+  padding: 28px;
+}
 
 .service-card__link {
   display: inline-flex;
@@ -275,7 +283,9 @@
   transition: gap 0.3s;
 }
 
-.service-card__link:hover { gap: 12px; }
+.service-card__link:hover {
+  gap: 12px;
+}
 
 /* ── PROCESS ── */
 .process-grid {
@@ -329,8 +339,13 @@
   font-size: 14px;
 }
 
-.estimate-mini__row span { color: var(--mist); }
-.estimate-mini__row strong { color: var(--warm-white); }
+.estimate-mini__row span {
+  color: var(--mist);
+}
+
+.estimate-mini__row strong {
+  color: var(--warm-white);
+}
 
 .estimate-mini__divider {
   height: 1px;
@@ -345,7 +360,10 @@
   padding: 16px 0 0;
 }
 
-.estimate-mini__total span { color: var(--mist); font-size: 14px; }
+.estimate-mini__total span {
+  color: var(--mist);
+  font-size: 14px;
+}
 
 /* ── PROJECTS ── */
 .projects-grid {
@@ -382,12 +400,14 @@
   transition: transform 0.8s var(--ease-out);
 }
 
-.project-card:hover .project-card__image img { transform: scale(1.06); }
+.project-card:hover .project-card__image img {
+  transform: scale(1.06);
+}
 
 .project-card__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(26,26,26,0.7) 100%);
+  background: linear-gradient(180deg, transparent 40%, rgba(26, 26, 26, 0.7) 100%);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -396,7 +416,9 @@
   transition: opacity 0.4s;
 }
 
-.project-card:hover .project-card__overlay { opacity: 1; }
+.project-card:hover .project-card__overlay {
+  opacity: 1;
+}
 
 .project-card__category {
   font-size: 10px;
@@ -404,9 +426,13 @@
   color: var(--gold-light);
 }
 
-.project-card__overlay svg { color: var(--gold); }
+.project-card__overlay svg {
+  color: var(--gold);
+}
 
-.project-card__info { padding: 16px 20px; }
+.project-card__info {
+  padding: 16px 20px;
+}
 
 .project-card__info h3 {
   font-family: var(--font-heading);
@@ -460,9 +486,16 @@
   letter-spacing: 0.1em;
 }
 
-.upcoming-card__content { padding: 20px; }
+.upcoming-card__content {
+  padding: 20px;
+}
 
-.upcoming-card__progress { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.upcoming-card__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
 
 .upcoming-card__progress-bar {
   flex: 1;
@@ -499,7 +532,11 @@
   background: rgba(201, 169, 110, 0.04);
 }
 
-.testimonial-card__stars { display: flex; gap: 4px; margin-bottom: 16px; }
+.testimonial-card__stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
 
 .testimonial-card__text {
   font-family: var(--font-heading);
@@ -510,7 +547,11 @@
   margin-bottom: 24px;
 }
 
-.testimonial-card__author { display: flex; align-items: center; gap: 12px; }
+.testimonial-card__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .testimonial-card__avatar {
   width: 42px;
@@ -557,7 +598,9 @@
   letter-spacing: 0.1em;
 }
 
-.blog-card__content { padding: 24px; }
+.blog-card__content {
+  padding: 24px;
+}
 
 .blog-card__readmore {
   display: inline-flex;
@@ -595,17 +638,57 @@
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1250px) {
+  .hero__title { font-size: var(--text-6xl); }
+  .about-teaser__grid,
+  .estimate-mini__grid {
+    gap: 48px;
+  }
+}
+
 @media (max-width: 1024px) {
-  .rooms-grid { grid-template-columns: repeat(3, 1fr); }
-  .services-grid { grid-template-columns: repeat(2, 1fr); }
-  .about-teaser__grid, .estimate-mini__grid { gap: 48px; }
+  .rooms-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .about-teaser__grid,
+  .estimate-mini__grid {
+    gap: 48px;
+  }
 }
 
 @media (max-width: 768px) {
-  .hero__title { font-size: var(--text-5xl); }
-  .hero__stats { flex-wrap: wrap; gap: 24px; }
-  .rooms-grid { grid-template-columns: repeat(2, 1fr); }
-  .services-grid, .process-grid, .projects-grid, .upcoming-grid, .blog-grid { grid-template-columns: 1fr; }
-  .about-teaser__grid, .estimate-mini__grid { grid-template-columns: 1fr; }
-  .testimonials-grid { grid-template-columns: 1fr; }
+  .hero__title {
+    font-size: var(--text-5xl);
+  }
+
+  .hero__stats {
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .rooms-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .services-grid,
+  .process-grid,
+  .projects-grid,
+  .upcoming-grid,
+  .blog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-teaser__grid,
+  .estimate-mini__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
 }
