@@ -25,7 +25,7 @@ export default function LandingPage() {
       <Helmet><title>Free Interior Design Consultation — ATTICARCH Bangalore</title></Helmet>
 
       {/* Advanced Floating Hero + Form */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 0 60px', overflow: 'hidden', background: 'var(--charcoal)' }}>
+      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '160px 0 80px', overflow: 'hidden', background: 'var(--charcoal)' }}>
         {/* Animated Background Image */}
         <motion.div 
           initial={{ scale: 1.1, opacity: 0 }}
