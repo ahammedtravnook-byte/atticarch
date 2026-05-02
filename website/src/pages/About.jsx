@@ -30,7 +30,7 @@ export default function About() {
       <Helmet><title>About Us — ATTICARCH | Best Interior Design Firm in Bangalore</title></Helmet>
 
       {/* Hero */}
-      <section style={{ background: 'var(--charcoal)', padding: '180px 0 100px', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'var(--charcoal)', padding: '200px 0 100px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
           <img src={heroImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>

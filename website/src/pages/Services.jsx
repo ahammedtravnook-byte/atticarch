@@ -21,7 +21,7 @@ export default function Services() {
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Helmet><title>Our Services — ATTICARCH Interior Design, Architecture & Project Management</title></Helmet>
 
-      <section style={{ background: 'var(--charcoal)', padding: '180px 0 100px' }}>
+      <section style={{ background: 'var(--charcoal)', padding: '200px 0 100px' }}>
         <div className="container">
           <Reveal>
             <span className="section-label" style={{ color: 'var(--gold-light)' }}>Our Services</span>

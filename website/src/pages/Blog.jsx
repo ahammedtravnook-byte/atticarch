@@ -62,7 +62,7 @@ export default function Blog() {
   return (
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Helmet><title>Blog — ATTICARCH Interior Design Insights</title></Helmet>
-      <section style={{ background: 'var(--charcoal)', padding: '180px 0 100px' }}>
+      <section style={{ background: 'var(--charcoal)', padding: '200px 0 100px' }}>
         <div className="container">
           <Reveal>
             <span className="section-label" style={{ color: 'var(--gold-light)' }}>Our Blog</span>
