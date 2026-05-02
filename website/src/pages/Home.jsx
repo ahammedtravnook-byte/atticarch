@@ -30,10 +30,11 @@ function Reveal({ children, className = '', delay = 0 }) {
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 60 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={{ willChange: 'transform, opacity' }}
     >
       {children}
     </motion.div>
@@ -50,19 +51,17 @@ export default function Home() {
   const heroWidth = useTransform(scrollYProgress, [0, 0.3], ['100%', '90%'])
 
   useEffect(() => {
-    // GSAP ScrollTrigger for sections
-    const sections = document.querySelectorAll('.gsap-reveal')
-    sections.forEach(section => {
-      gsap.fromTo(section, { y: 80, opacity: 0 }, {
-        y: 0, opacity: 1, duration: 1, ease: 'power3.out',
-        scrollTrigger: { trigger: section, start: 'top 85%', toggleActions: 'play none none none' }
-      })
-    })
+    // Refresh ScrollTrigger when images load to ensure correct positions
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh()
+    }, 1000)
 
-
-
-    return () => ScrollTrigger.getAll().forEach(t => t.kill())
+    return () => {
+      clearTimeout(timer)
+      ScrollTrigger.getAll().forEach(t => t.kill())
+    }
   }, [])
+
 
   return (
     <motion.main
@@ -92,17 +91,18 @@ export default function Home() {
         </motion.div>
         <motion.div className="hero__content container" style={{ opacity: heroOpacity, position: 'relative' }}>
           
-          {/* Floating Glow Orbs */}
+          {/* Floating Glow Orbs - Optimized blur for performance */}
           <motion.div
-            animate={{ y: [0, -20, 0], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            style={{ position: 'absolute', top: '10%', right: '5%', width: 300, height: 300, background: 'var(--gold-glow)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none', zIndex: -1 }}
+            animate={{ y: [0, -15, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ position: 'absolute', top: '10%', right: '5%', width: 250, height: 250, background: 'var(--gold-glow)', borderRadius: '50%', filter: 'blur(60px)', opacity: 0.3, pointerEvents: 'none', zIndex: -1 }}
           />
           <motion.div
-            animate={{ y: [0, 30, 0], x: [0, -20, 0], opacity: [0.2, 0.4, 0.2] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-            style={{ position: 'absolute', bottom: '20%', left: '-5%', width: 400, height: 400, background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%', filter: 'blur(100px)', pointerEvents: 'none', zIndex: -1 }}
+            animate={{ y: [0, 20, 0], x: [0, -15, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            style={{ position: 'absolute', bottom: '20%', left: '-5%', width: 350, height: 350, background: 'rgba(255, 255, 255, 0.03)', borderRadius: '50%', filter: 'blur(80px)', opacity: 0.2, pointerEvents: 'none', zIndex: -1 }}
           />
+
 
           <motion.div
             className="hero__text"

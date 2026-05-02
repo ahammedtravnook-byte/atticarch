@@ -3,11 +3,14 @@ import { useEffect, useRef } from 'react'
 export default function CustomCursor() {
   const cursorRef = useRef(null)
   const followerRef = useRef(null)
+  const requestRef = useRef()
 
   useEffect(() => {
     const cursor = cursorRef.current
     const follower = followerRef.current
     if (!cursor || !follower) return
+    
+    // Skip for touch devices
     if (window.matchMedia('(pointer: coarse)').matches) {
       cursor.style.display = 'none'
       follower.style.display = 'none'
@@ -19,48 +22,46 @@ export default function CustomCursor() {
     const onMouseMove = (e) => {
       mouseX = e.clientX
       mouseY = e.clientY
-      cursor.style.left = mouseX + 'px'
-      cursor.style.top = mouseY + 'px'
+      cursor.style.left = `${mouseX}px`
+      cursor.style.top = `${mouseY}px`
     }
 
     const animate = () => {
       posX += (mouseX - posX) * 0.1
       posY += (mouseY - posY) * 0.1
-      follower.style.left = posX + 'px'
-      follower.style.top = posY + 'px'
-      requestAnimationFrame(animate)
+      follower.style.left = `${posX}px`
+      follower.style.top = `${posY}px`
+      requestRef.current = requestAnimationFrame(animate)
     }
 
-    const onHoverIn = () => {
-      cursor.classList.add('cursor--hover')
-      follower.classList.add('cursor-follower--hover')
-    }
-    const onHoverOut = () => {
-      cursor.classList.remove('cursor--hover')
-      follower.classList.remove('cursor-follower--hover')
+    // Use event delegation for better performance and consistency across route changes
+    const onMouseOver = (e) => {
+      const target = e.target.closest('a, button, .card, [data-cursor]')
+      if (target) {
+        cursor.classList.add('cursor--hover')
+        follower.classList.add('cursor-follower--hover')
+      } else {
+        cursor.classList.remove('cursor--hover')
+        follower.classList.remove('cursor-follower--hover')
+      }
     }
 
     document.addEventListener('mousemove', onMouseMove)
-    animate()
-
-    const hoverEls = document.querySelectorAll('a, button, .card, [data-cursor]')
-    hoverEls.forEach(el => {
-      el.addEventListener('mouseenter', onHoverIn)
-      el.addEventListener('mouseleave', onHoverOut)
-    })
+    document.addEventListener('mouseover', onMouseOver)
+    requestRef.current = requestAnimationFrame(animate)
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
-      hoverEls.forEach(el => {
-        el.removeEventListener('mouseenter', onHoverIn)
-        el.removeEventListener('mouseleave', onHoverOut)
-      })
+      document.removeEventListener('mouseover', onMouseOver)
+      if (requestRef.current) cancelAnimationFrame(requestRef.current)
     }
   }, [])
 
   const baseStyle = {
-    position: 'fixed', pointerEvents: 'none', zIndex: 'var(--z-cursor)',
-    borderRadius: '50%', transform: 'translate(-50%, -50%)', transition: 'width 0.3s, height 0.3s, background 0.3s',
+    position: 'fixed', pointerEvents: 'none', zIndex: 9999,
+    borderRadius: '50%', transform: 'translate(-50%, -50%)', 
+    transition: 'width 0.3s, height 0.3s, background 0.3s, opacity 0.3s',
+    willChange: 'left, top'
   }
 
   return (
@@ -75,3 +76,4 @@ export default function CustomCursor() {
     </>
   )
 }
+
