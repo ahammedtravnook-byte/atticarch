@@ -26,9 +26,43 @@ export const upcomingProjects = [
 ]
 
 export const services = [
-  { id: 'interior', title: 'Interior Design', subtitle: 'Crafting Dream Spaces', description: 'From conceptualization to execution, we create bespoke interiors that reflect your personality and lifestyle. Every detail is meticulously planned to deliver spaces that inspire.', features: ['Space Planning & Layout', 'Material Selection', 'Custom Furniture Design', 'Lighting Design', 'Color Consultation', 'Art & Accessories Curation'], image: heroLiving },
-  { id: 'project-mgmt', title: 'Project Management', subtitle: 'Seamless Execution', description: 'Our dedicated project managers ensure your dream space comes to life on time and within budget. We coordinate every aspect from procurement to final handover.', features: ['Timeline Management', 'Vendor Coordination', 'Quality Control', 'Budget Management', 'Progress Reporting', 'Post-Delivery Support'], image: commercial },
-  { id: 'architectural', title: 'Architectural Design', subtitle: 'Visionary Structures', description: 'We design architectural masterpieces that blend aesthetics with functionality. Our architects create structures that stand the test of time.', features: ['Architectural Planning', 'Structural Design', '3D Visualization', 'Permit Management', 'Sustainable Design', 'Landscape Integration'], image: villa },
+  {
+    id: 'residential',
+    title: 'Residential Interiors',
+    subtitle: 'Your Dream Home, Crafted',
+    description: 'From cosy apartments to sprawling villas, we design stunning homes tailored to your lifestyle. Full turnkey execution with a 10-Year Warranty on all work. Interiors starting from ₹10 Lacs.',
+    features: ['Space Planning & Layout', 'Custom Wardrobe & Storage', 'Modular Kitchen Design', 'False Ceiling & Lighting', 'Flooring & Civil Work', 'Electrical & Plumbing'],
+    image: heroLiving,
+  },
+  {
+    id: 'commercial',
+    title: 'Commercial Spaces',
+    subtitle: 'Inspiring Workspaces',
+    description: 'We design high-impact commercial interiors — offices, showrooms, restaurants, and retail spaces — that reflect your brand identity and elevate the client experience.',
+    features: ['Office & Workspace Design', 'Retail & Showroom Interiors', 'Restaurant & Hospitality', 'Brand-Aligned Design', 'MEP Coordination', 'Turnkey Execution'],
+    image: commercial,
+  },
+  {
+    id: 'renovation',
+    title: 'Renovation & Refurbishment',
+    subtitle: 'Transform, Refresh, Elevate',
+    description: 'Breathe new life into your existing space. From a single room refresh to a complete home makeover — we deliver remarkable transformations, on time and within budget.',
+    features: ['Complete Home Renovation', 'Room-wise Makeovers', 'Kitchen & Bath Upgrades', 'Flooring & Ceiling Refresh', 'Civil & Plumbing', 'Electrical & Lighting'],
+    image: foyer,
+  },
+]
+
+export const workTypes = [
+  'Modular Kitchens', 'Wardrobes', 'False Ceiling', 'Lighting Design',
+  'Flooring', 'Electrical', 'Plumbing', 'Civil Work',
+  'TV Units', 'Crockery Units', 'Pooja Rooms', 'Balcony Design',
+  'Kids Bedrooms', 'Home Office', 'Wallpaper & Textures', 'Landscaping',
+]
+
+export const partners = [
+  'Hettich', 'Hafele', 'Asian Paints', 'Jaquar', 'Kohler',
+  'Duravit', 'Grohe', 'Bosch', 'Dorma', 'Pergo',
+  'Armstrong', 'Saint-Gobain',
 ]
 
 export const rooms = [

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\pages\\\\\" | Select-Object Name, @{Name='FullPath';Expression={$_.FullName}})",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\components\\\\\" | Select-Object Name, @{Name='FullPath';Expression={$_.FullName}})",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\\" | Select-Object Name, @{Name='FullPath';Expression={$_.FullName}})",
+      "PowerShell(Write-Host \"=== Pages Directory ===\"; Get-ChildItem \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\pages\\\\\" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })",
+      "PowerShell(Write-Host \"=== Components Directory ===\"; Get-ChildItem \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\components\\\\\" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })",
+      "PowerShell(Write-Host \"=== Src Directory ===\"; Get-ChildItem \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\\" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })",
+      "PowerShell(Write-Host \"=== Pages Full Listing ===\"; Get-ChildItem \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\pages\\\\\" -Recurse | ForEach-Object { if \\($_.PSIsContainer\\) { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\\"\\), \"\" } else { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\\\\src\\\\\"\\), \"\" } })",
+      "WebFetch(domain:www.youtube.com)",
+      "WebSearch",
+      "Bash(npm run *)",
+      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => k.toLowerCase\\(\\).includes\\('youtube'\\) || k.toLowerCase\\(\\).includes\\('instagram'\\)\\); console.log\\(keys\\)\")",
+      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => k.toLowerCase\\(\\).includes\\('play'\\) || k.toLowerCase\\(\\).includes\\('video'\\)\\); console.log\\(keys.slice\\(0,20\\)\\)\")",
+      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\); console.log\\(keys.filter\\(k => /^[A-Z]/.test\\(k\\) && k.length < 16\\).filter\\(k => !k.endsWith\\('Icon'\\) && !k.startsWith\\('Lucide'\\)\\).sort\\(\\).slice\\(0, 60\\)\\)\")",
+      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => !k.endsWith\\('Icon'\\) && !k.startsWith\\('Lucide'\\)\\); console.log\\(keys.filter\\(k => ['Quote','Play','CirclePlay','ExternalLink','Share2','Link'].includes\\(k\\)\\)\\)\")"
+    ]
+  }
+}
