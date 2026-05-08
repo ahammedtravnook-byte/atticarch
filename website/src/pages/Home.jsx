@@ -34,8 +34,8 @@ import './Home.css'
 gsap.registerPlugin(ScrollTrigger)
 
 /* ── constants ── */
-/* Only the 3 full landscape videos shared by the client */
-const HERO_VIDEOS = ['vcUMkExgiCw', 'N2QJ6ETLnaQ', 'XzEPJfpn4FI']
+const HERO_IMAGES = [heroLiving, villa, kitchen, bedroom, apartment]
+const HERO_SLIDE_INTERVAL = 5000
 const YT_CATALOG = [
   { id: 'vcUMkExgiCw', title: 'ATTICARCH — Luxury Interior Design' },
   { id: 'N2QJ6ETLnaQ', title: 'ATTICARCH — Residential Transformation' },
@@ -63,7 +63,6 @@ const SVC_IMGS = {
   renovation:  [foyer, kitchen, bathroom, bedroom, heroLiving],
 }
 const INSTA_IMGS = [heroLiving, kitchen, bedroom, villa, apartment, commercial, foyer, dining, bathroom]
-const VIDEO_INTERVAL = 120000 /* 2 minutes — plays each video in full */
 
 /* ─────────────────────────────────────────
    UTILITY COMPONENTS
@@ -127,44 +126,264 @@ function ImageCycler({ images, interval = 2800, className = '', style = {} }) {
 }
 
 /* ─────────────────────────────────────────
-   HERO — YOUTUBE BG (hidden-load approach)
-   Static image shows first; iframe fades in
-   only after video is actually playing —
-   zero YouTube branding ever visible.
+   HERO — CINEMATIC PARALLAX IMAGE HERO
+   Cycling images with Ken Burns effect,
+   parallax scroll, floating gold elements.
+   Zero iframes = zero lag.
 ───────────────────────────────────────── */
 
-function HeroVideo({ videoId }) {
-  const [playing, setPlaying] = useState(false)
-  useEffect(() => { setPlaying(false) }, [videoId])
+const HERO_ROTATING_WORDS = ['Luxury', 'Elegance', 'Comfort', 'Perfection']
+
+function HeroParallax() {
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [wordIdx, setWordIdx] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const heroRef = useRef(null)
+  const bgRef = useRef(null)
+
+  /* Cycle hero images */
+  useEffect(() => {
+    const start = Date.now()
+    const frame = setInterval(() => {
+      const p = ((Date.now() - start) % HERO_SLIDE_INTERVAL) / HERO_SLIDE_INTERVAL
+      setProgress(p)
+    }, 50)
+    const cycle = setInterval(() => setSlideIdx(i => (i + 1) % HERO_IMAGES.length), HERO_SLIDE_INTERVAL)
+    return () => { clearInterval(frame); clearInterval(cycle) }
+  }, [slideIdx])
+
+  /* Rotate words */
+  useEffect(() => {
+    const t = setInterval(() => setWordIdx(i => (i + 1) % HERO_ROTATING_WORDS.length), 2800)
+    return () => clearInterval(t)
+  }, [])
+
+  /* GSAP parallax on scroll */
+  useEffect(() => {
+    if (!heroRef.current || !bgRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.to(bgRef.current, {
+        yPercent: 30,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 0.8,
+        },
+      })
+    })
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      {/* Static hero image — always visible, hides YouTube loader */}
-      <div className="hero__bg-static" />
-
-      {/* YouTube — fades in only after video is actually running.
-          The iframe is expanded 80px on every edge so YouTube's
-          title bar (top) and any bottom branding are clipped off. */}
-      <motion.div
-        animate={{ opacity: playing ? 1 : 0 }}
-        transition={{ duration: 2.2, ease: 'easeInOut' }}
-        style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
-      >
-        <div className="hero__iframe-wrap">
-          <iframe
-            key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&cc_load_policy=0&disablekb=1&fs=0&origin=${window.location.origin}`}
-            allow="autoplay; encrypted-media"
-            title="bg-video"
-            onLoad={() => setTimeout(() => setPlaying(true), 3500)}
-            style={{ border: 'none', filter: 'brightness(0.28) saturate(0.65)' }}
+    <section className="hero" ref={heroRef}>
+      {/* Parallax background layer */}
+      <div className="hero__bg" ref={bgRef}>
+        <AnimatePresence mode="sync">
+          <motion.img
+            key={slideIdx}
+            src={HERO_IMAGES[slideIdx]}
+            alt="ATTICARCH luxury interior"
+            className="hero__bg-img"
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 1, scale: 1.05 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2, ease: 'easeInOut' }}
           />
+        </AnimatePresence>
+        <div className="hero__grain" />
+        <div className="hero__overlay" />
+      </div>
+
+      {/* Floating decorative elements */}
+      <div className="hero__decor">
+        <motion.div className="hero__orb hero__orb--gold"
+          animate={{ y: [0, -25, 0], x: [0, 15, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div className="hero__orb hero__orb--white"
+          animate={{ y: [0, 30, 0], x: [0, -18, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div className="hero__frame hero__frame--1"
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }} />
+        <motion.div className="hero__frame hero__frame--2"
+          animate={{ rotate: [360, 0] }}
+          transition={{ duration: 80, repeat: Infinity, ease: 'linear' }} />
+      </div>
+
+      {/* Main content — Split layout */}
+      <div className="hero__content container">
+        <div className="hero__grid">
+          {/* Left: Text */}
+          <motion.div className="hero__left"
+            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+
+            <motion.div className="hero__eyebrow"
+              initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}>
+              <span className="hero__eyebrow-dot" />
+              <span>Est. 2002 · Award-Winning Studio</span>
+            </motion.div>
+
+            <h1 className="hero__title">
+              <div style={{ overflow: 'hidden' }}>
+                <motion.span className="hero__title-line"
+                  initial={{ y: 130 }} animate={{ y: 0 }}
+                  transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}>
+                  Designing Homes
+                </motion.span>
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <motion.span className="hero__title-line hero__title-line--accent"
+                  initial={{ y: 130 }} animate={{ y: 0 }}
+                  transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+                  That Tell <em>Your</em> Story
+                </motion.span>
+              </div>
+            </h1>
+
+            {/* Animated tagline pill */}
+            <motion.div className="hero__tagline"
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.85 }}>
+              <span className="hero__tagline-label">We Specialize In</span>
+              <div className="hero__tagline-word">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={wordIdx}
+                    initial={{ y: 24, opacity: 0, filter: 'blur(4px)' }}
+                    animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ y: -24, opacity: 0, filter: 'blur(4px)' }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+                    {HERO_ROTATING_WORDS[wordIdx]}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            <motion.p className="hero__subtitle"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.95 }}>
+              From concept to keys, we create breathtaking interiors that blend functionality with unmatched elegance. Bangalore's most trusted design studio.
+            </motion.p>
+
+            {/* Feature highlights */}
+            <motion.div className="hero__features"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.05 }}>
+              <div className="hero__feature">
+                <Check size={14} />
+                <span>10-Year Warranty</span>
+              </div>
+              <div className="hero__feature">
+                <Check size={14} />
+                <span>500+ Projects</span>
+              </div>
+              <div className="hero__feature">
+                <Check size={14} />
+                <span>Starting ₹10 Lacs</span>
+              </div>
+            </motion.div>
+
+            <motion.div className="hero__actions"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1.15 }}>
+              <Link to="/contact-us" className="btn btn-primary hero__cta-primary">
+                Start Your Project <ArrowUpRight size={18} />
+              </Link>
+              <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">
+                Explore Portfolio
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Right: Preview + Stats */}
+          <motion.div className="hero__right"
+            initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}>
+
+            {/* Floating image preview */}
+            <div className="hero__preview">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={slideIdx}
+                  src={HERO_IMAGES[slideIdx]}
+                  alt="Latest project"
+                  className="hero__preview-img"
+                  initial={{ opacity: 0, scale: 1.08 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.2, ease: 'easeInOut' }}
+                />
+              </AnimatePresence>
+              <div className="hero__preview-border" />
+              <div className="hero__preview-label">
+                <span className="hero__preview-dot" />
+                Latest Project
+              </div>
+            </div>
+
+            {/* Stats grid */}
+            <div className="hero__stats-grid">
+              {stats.map((s, i) => (
+                <motion.div key={i} className="hero__stat-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.0 + i * 0.1 }}>
+                  <span className="hero__stat-number text-mono">
+                    <Counter end={s.number.replace(/\D/g, '')} suffix={s.number.replace(/\d/g, '')} />
+                  </span>
+                  <span className="hero__stat-label">{s.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
-        {/* Transparent intercept layer — blocks ALL mouse events from
-            reaching the iframe so YouTube never shows hover controls */}
-        <div className="hero__iframe-block" />
-      </motion.div>
-    </div>
+
+        {/* Bottom image strip — inside container for proper alignment */}
+        <motion.div className="hero__strip"
+          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 1.5 }}>
+          {ALL_IMGS.slice(0, 6).map((img, i) => (
+            <motion.div key={i} className="hero__strip-item"
+              whileHover={{ scale: 1.08, y: -4 }}
+              transition={{ duration: 0.3 }}>
+              <img src={img} alt="" loading="lazy" />
+            </motion.div>
+          ))}
+          <div className="hero__strip-cta">
+            <span>50+</span>
+            <small>More Projects</small>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Slide indicators */}
+      <div className="hero__slide-nav">
+        <div className="hero__slide-dots">
+          {HERO_IMAGES.map((_, i) => (
+            <button key={i} className={`hero__slide-dot ${i === slideIdx ? 'active' : ''}`} onClick={() => setSlideIdx(i)}>
+              {i === slideIdx && (
+                <motion.div className="hero__slide-dot-fill"
+                  initial={{ scaleX: 0 }} animate={{ scaleX: progress }}
+                  transition={{ duration: 0, ease: 'linear' }}
+                  style={{ transformOrigin: 'left' }} />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll indicator */}
+      <div className="hero__scroll-cue">
+        <motion.div className="hero__scroll-line"
+          animate={{ y: [0, 16, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }} />
+        <span className="hero__scroll-text">Scroll</span>
+      </div>
+    </section>
   )
 }
 
@@ -594,26 +813,11 @@ function InstaCard({ img, index }) {
 ───────────────────────────────────────── */
 
 export default function Home() {
-  const [videoIdx, setVideoIdx] = useState(0)
-  const [progress, setProgress] = useState(0)
-
   const [activeCategory, setActiveCategory] = useState('all')
   const categories = ['all', ...new Set(projects.map(p => p.category))]
   const filtered = activeCategory === 'all' ? projects : projects.filter(p => p.category === activeCategory)
 
   const [lightbox, setLightbox] = useState(null)
-
-  /* video timer */
-  useEffect(() => {
-    const start = Date.now()
-    const frame = setInterval(() => setProgress(((Date.now() - start) % VIDEO_INTERVAL) / VIDEO_INTERVAL), 60)
-    return () => clearInterval(frame)
-  }, [videoIdx])
-
-  useEffect(() => {
-    const t = setInterval(() => setVideoIdx(i => (i + 1) % HERO_VIDEOS.length), VIDEO_INTERVAL)
-    return () => clearInterval(t)
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => ScrollTrigger.refresh(), 800)
@@ -628,111 +832,9 @@ export default function Home() {
       </Helmet>
 
       {/* ═══════════════════════════════════════════
-          HERO — CINEMATIC YOUTUBE BACKGROUND
+          HERO — CINEMATIC PARALLAX IMAGE
       ══════════════════════════════════════════ */}
-      <section className="hero">
-        <div className="hero__bg">
-          <AnimatePresence mode="sync">
-            <HeroVideo key={HERO_VIDEOS[videoIdx]} videoId={HERO_VIDEOS[videoIdx]} />
-          </AnimatePresence>
-          <div className="hero__grain" />
-          <div className="hero__overlay" />
-        </div>
-
-        <div className="hero__content container">
-          {/* glow orbs */}
-          <motion.div className="hero__orb hero__orb--gold"
-            animate={{ y: [0, -22, 0], x: [0, 12, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} />
-          <motion.div className="hero__orb hero__orb--white"
-            animate={{ y: [0, 28, 0], x: [0, -14, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }} />
-
-          <motion.div className="hero__text"
-            initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="hero__badge-row">
-              <span className="section-label" style={{ color: 'var(--gold-light)', margin: 0 }}>Since 2002 • Bangalore</span>
-              <motion.div className="hero__badge"
-                initial={{ scale: 0 }} animate={{ scale: 1 }}
-                transition={{ delay: 0.55, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
-                Award Winning
-              </motion.div>
-            </div>
-
-            <h1 className="hero__title">
-              {['Transforming', 'Spaces, Transforming', 'Lives'].map((line, i) => (
-                <div key={i} style={{ overflow: 'hidden' }}>
-                  <motion.div
-                    initial={{ y: 110, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 1.15, delay: 0.3 + i * 0.18, ease: [0.16, 1, 0.3, 1] }}>
-                    {i === 1
-                      ? <><span className="text-gradient">Spaces,</span> Transforming</>
-                      : i === 2 ? <span className="text-gradient">Lives</span>
-                      : line}
-                  </motion.div>
-                </div>
-              ))}
-            </h1>
-
-            <motion.p className="hero__subtitle"
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.92 }}>
-              Bangalore's premier interior design firm crafting luxurious living spaces for discerning homeowners for over two decades.
-            </motion.p>
-
-            <motion.div className="hero__trust-strip"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1.0 }}>
-              <span className="hero__trust-badge">10-Year Warranty</span>
-              <span className="hero__trust-sep" />
-              <span className="hero__trust-badge">Starting ₹10 Lacs</span>
-              <span className="hero__trust-sep" />
-              <span className="hero__trust-badge">500+ Projects</span>
-            </motion.div>
-
-            <motion.div className="hero__actions"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1.15 }}>
-              <Link to="/contact-us" className="btn btn-primary">Book Free Consultation <ArrowUpRight size={18} /></Link>
-              <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">View Projects</Link>
-            </motion.div>
-          </motion.div>
-
-          <motion.div className="hero__stats"
-            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1.25 }}>
-            {stats.map((s, i) => (
-              <div key={i} className="hero__stat">
-                <span className="hero__stat-number text-mono"><Counter end={s.number.replace(/\D/g, '')} suffix={s.number.replace(/\d/g, '')} /></span>
-                <span className="hero__stat-label">{s.label}</span>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* video navigation */}
-        <div className="hero__vid-nav">
-          <div className="hero__vid-dots">
-            {HERO_VIDEOS.map((_, i) => (
-              <button key={i} className={`hero__vid-dot ${i === videoIdx ? 'active' : ''}`} onClick={() => setVideoIdx(i)} />
-            ))}
-          </div>
-          <span className="hero__vid-counter text-mono">
-            {String(videoIdx + 1).padStart(2, '0')} / {String(HERO_VIDEOS.length).padStart(2, '0')}
-          </span>
-        </div>
-
-        {/* progress bar */}
-        <div className="hero__progress-track">
-          <motion.div className="hero__progress-fill" style={{ width: `${progress * 100}%` }} />
-        </div>
-
-        <div className="hero__scroll-cue">
-          <motion.div animate={{ y: [0, 14, 0] }} transition={{ duration: 1.6, repeat: Infinity }}
-            style={{ width: 1, height: 48, background: 'var(--gold)', opacity: 0.4 }} />
-        </div>
-      </section>
+      <HeroParallax />
 
       {/* ═══════════════════════════════════════════
           ROOM EXPLORER — ACCORDION

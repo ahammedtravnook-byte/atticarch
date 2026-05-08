@@ -1,160 +1,315 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle } from 'lucide-react'
+import { Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle, ArrowRight, Play } from 'lucide-react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { stats } from '../data/siteData'
 import heroImg from '../assets/images/hero-living.png'
 import kitchenImg from '../assets/images/kitchen.png'
 import villaImg from '../assets/images/villa.png'
+import bedroomImg from '../assets/images/bedroom.png'
+import apartmentImg from '../assets/images/apartment.png'
+import commercialImg from '../assets/images/commercial.png'
+import './LandingPage.css'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const HERO_IMAGES = [heroImg, villaImg, kitchenImg, bedroomImg]
+
+function Counter({ end, suffix = '', duration = 2 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true })
+  useEffect(() => {
+    if (!inView || !ref.current) return
+    const num = parseFloat(end)
+    gsap.fromTo(ref.current, { innerText: 0 }, {
+      innerText: num, duration, snap: { innerText: 1 }, ease: 'power2.out',
+      onUpdate() { ref.current.textContent = Math.floor(ref.current.innerText || 0) + suffix },
+    })
+  }, [inView, end, suffix, duration])
+  return <span ref={ref}>0{suffix}</span>
+}
 
 export default function LandingPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', type: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [heroIdx, setHeroIdx] = useState(0)
+  const [stickyVisible, setStickyVisible] = useState(false)
 
   const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true) }
 
+  /* Hero image cycle */
+  useEffect(() => {
+    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), 4500)
+    return () => clearInterval(t)
+  }, [])
+
+  /* Show sticky CTA after scroll */
+  useEffect(() => {
+    const onScroll = () => setStickyVisible(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const benefits = [
-    { icon: Award, text: '22+ Years of Experience' },
-    { icon: Shield, text: '500+ Projects Delivered' },
-    { icon: Clock, text: '3-Month Warranty After Handover' },
-    { icon: Star, text: '100% Client Satisfaction' },
+    { icon: Award, text: '22+ Years of Experience', desc: 'Trusted expertise since 2002' },
+    { icon: Shield, text: '500+ Projects Delivered', desc: 'Across Bangalore & beyond' },
+    { icon: Clock, text: '3-Month Post-Delivery Warranty', desc: 'Complete peace of mind' },
+    { icon: Star, text: '100% Client Satisfaction', desc: 'Rated 5-star by homeowners' },
+  ]
+
+  const projects = [
+    { img: heroImg, title: '4BHK @ SNN Clermont', type: 'Apartment' },
+    { img: kitchenImg, title: 'Premium Kitchen Design', type: 'Kitchen' },
+    { img: villaImg, title: 'Luxury Villa Interiors', type: 'Villa' },
+    { img: bedroomImg, title: 'Master Suite Design', type: 'Bedroom' },
+    { img: apartmentImg, title: '3BHK @ Prestige Lakeside', type: 'Apartment' },
+    { img: commercialImg, title: 'Corporate Office', type: 'Commercial' },
   ]
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <motion.main className="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <Helmet><title>Free Interior Design Consultation — ATTICARCH Bangalore</title></Helmet>
 
-      {/* Advanced Floating Hero + Form */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'flex-start', padding: '240px 0 80px', overflow: 'hidden', background: 'var(--charcoal)' }}>
-        {/* Animated Background Image */}
-        <motion.div 
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.6 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          style={{ position: 'absolute', inset: 0, zIndex: 0 }}
-        >
-          <img src={heroImg} alt="Luxury Interior" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.7) 100%)' }} />
-        </motion.div>
+      {/* ═══════════════════════════════════════
+          HERO — PARALLAX + FORM
+      ═══════════════════════════════════════ */}
+      <section className="landing-hero">
+        {/* Animated Background */}
+        <div className="landing-hero__bg">
+          <AnimatePresence mode="sync">
+            <motion.img
+              key={heroIdx}
+              src={HERO_IMAGES[heroIdx]}
+              alt="ATTICARCH interiors"
+              className="landing-hero__bg-img"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1.02 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.8, ease: 'easeInOut' }}
+            />
+          </AnimatePresence>
+          <div className="landing-hero__overlay" />
+          <div className="landing-hero__grain" />
+        </div>
 
-        {/* Floating Decorative Elements */}
-        <motion.div
+        {/* Floating orbs */}
+        <motion.div className="landing-hero__orb landing-hero__orb--1"
           animate={{ y: [0, -30, 0], rotate: [0, 5, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          style={{ position: 'absolute', top: '10%', right: '5%', width: 300, height: 300, background: 'var(--gold-glow)', borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%', filter: 'blur(40px)', zIndex: 1 }}
-        />
-        <motion.div
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div className="landing-hero__orb landing-hero__orb--2"
           animate={{ y: [0, 40, 0], x: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          style={{ position: 'absolute', bottom: '10%', left: '10%', width: 200, height: 200, background: 'rgba(201, 169, 110, 0.1)', borderRadius: '50%', filter: 'blur(30px)', zIndex: 1 }}
-        />
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} />
 
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 60, alignItems: 'center' }}>
-            <motion.div
-              initial={{ x: -60, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <h1 className="text-display" style={{ fontSize: 'var(--text-6xl)', color: 'var(--warm-white)', marginBottom: 16, lineHeight: 1.1, textShadow: '0 4px 32px rgba(0,0,0,0.5)' }}>
-                Experience <span className="text-gradient">Luxury</span><br />
-                Interior Design
-              </h1>
-              <p style={{ color: 'var(--silver)', fontSize: 'var(--text-lg)', lineHeight: 1.7, marginBottom: 32, maxWidth: 500, textShadow: '0 2px 16px rgba(0,0,0,0.5)' }}>
-                Book a <strong style={{ color: 'var(--gold)' }}>FREE design consultation</strong> with Bangalore's most trusted interior design firm. Transform your space today.
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                {benefits.map((b, i) => (
-                  <motion.div key={i} whileHover={{ x: 5 }} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ background: 'var(--gold-glow)', padding: 8, borderRadius: 'var(--radius-full)' }}>
-                      <b.icon size={16} color="var(--gold)" />
-                    </div>
-                    <span style={{ color: 'var(--silver)', fontSize: 13, fontWeight: 500 }}>{b.text}</span>
-                  </motion.div>
-                ))}
+        <div className="container landing-hero__inner">
+          <motion.div className="landing-hero__left"
+            initial={{ x: -60, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+
+            <div className="landing-hero__badge">
+              <span className="landing-hero__badge-dot" />
+              Free Consultation Available
+            </div>
+
+            <h1 className="landing-hero__title">
+              Experience <span className="text-gradient">Luxury</span><br />
+              Interior Design
+            </h1>
+
+            <p className="landing-hero__desc">
+              Book a <strong style={{ color: 'var(--gold)' }}>FREE design consultation</strong> with Bangalore's most trusted interior design firm. Transform your space today.
+            </p>
+
+            <div className="landing-hero__benefits">
+              {benefits.map((b, i) => (
+                <motion.div key={i} className="landing-benefit"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 + i * 0.1 }}
+                  whileHover={{ x: 5 }}>
+                  <div className="landing-benefit__icon">
+                    <b.icon size={16} color="var(--gold)" />
+                  </div>
+                  <div>
+                    <strong>{b.text}</strong>
+                    <span>{b.desc}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Stats row */}
+            <div className="landing-hero__stats">
+              {stats.map((s, i) => (
+                <div key={i} className="landing-stat">
+                  <span className="landing-stat__num text-mono">
+                    <Counter end={s.number.replace(/\D/g, '')} suffix={s.number.replace(/\d/g, '')} />
+                  </span>
+                  <span className="landing-stat__label">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Consultation Form */}
+          <motion.div className="landing-hero__right"
+            initial={{ x: 60, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}>
+
+            <div className="landing-form-card">
+              <div className="landing-form-card__header">
+                <h2>Book Free Consultation</h2>
+                <p>Our expert will call you within 30 minutes</p>
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ x: 60, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              style={{ background: 'rgba(254, 252, 249, 0.95)', backdropFilter: 'blur(20px)', borderRadius: 'var(--radius-xl)', padding: 40, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--pearl)' }}
-            >
-              <h2 className="text-heading" style={{ fontSize: 'var(--text-3xl)', marginBottom: 8, color: 'var(--charcoal)' }}>
-                Book Free Consultation
-              </h2>
-              <p style={{ color: 'var(--ash)', fontSize: 13, marginBottom: 32 }}>Our expert will call you within 30 minutes to discuss your dream space.</p>
 
               {submitted ? (
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ textAlign: 'center', padding: '40px 0' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--gold-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <motion.div className="landing-form-success"
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                  <div className="landing-form-success__icon">
                     <Check size={28} color="var(--gold)" />
                   </div>
-                  <h3 className="text-heading" style={{ fontSize: 'var(--text-2xl)' }}>Thank You!</h3>
-                  <p style={{ color: 'var(--ash)', marginTop: 8, fontSize: 15 }}>We'll call you within 30 minutes.</p>
+                  <h3>Thank You!</h3>
+                  <p>We'll call you within 30 minutes.</p>
                 </motion.div>
               ) : (
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <input type="text" placeholder="Your Name *" required value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-                    style={{ width: '100%', padding: '16px 20px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-full)', background: 'var(--cream)', fontSize: 14, outline: 'none', transition: 'border 0.3s' }} 
-                    onFocus={(e) => e.target.style.borderColor = 'var(--gold)'} onBlur={(e) => e.target.style.borderColor = 'var(--pearl)'} />
-                  <input type="tel" placeholder="Phone Number *" required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
-                    style={{ width: '100%', padding: '16px 20px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-full)', background: 'var(--cream)', fontSize: 14, outline: 'none', transition: 'border 0.3s' }} 
-                    onFocus={(e) => e.target.style.borderColor = 'var(--gold)'} onBlur={(e) => e.target.style.borderColor = 'var(--pearl)'} />
-                  <input type="email" placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-                    style={{ width: '100%', padding: '16px 20px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-full)', background: 'var(--cream)', fontSize: 14, outline: 'none', transition: 'border 0.3s' }} 
-                    onFocus={(e) => e.target.style.borderColor = 'var(--gold)'} onBlur={(e) => e.target.style.borderColor = 'var(--pearl)'} />
-                  <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}
-                    style={{ width: '100%', padding: '16px 20px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-full)', background: 'var(--cream)', fontSize: 14, color: 'var(--smoke)', outline: 'none', transition: 'border 0.3s' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--gold)'} onBlur={(e) => e.target.style.borderColor = 'var(--pearl)'}>
-                    <option value="">Select Project Type</option>
-                    <option>Apartment Interior</option>
-                    <option>Villa Interior</option>
-                    <option>Commercial Space</option>
-                    <option>Renovation</option>
-                  </select>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '18px', borderRadius: 'var(--radius-full)', marginTop: 8 }}>
+                <form onSubmit={handleSubmit} className="landing-form">
+                  <div className="landing-input-group">
+                    <input type="text" placeholder="Your Name *" required
+                      value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                  </div>
+                  <div className="landing-input-group">
+                    <input type="tel" placeholder="Phone Number *" required
+                      value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                  </div>
+                  <div className="landing-input-group">
+                    <input type="email" placeholder="Email Address"
+                      value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                  </div>
+                  <div className="landing-input-group">
+                    <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                      <option value="">Select Project Type</option>
+                      <option>Apartment Interior</option>
+                      <option>Villa Interior</option>
+                      <option>Commercial Space</option>
+                      <option>Renovation</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="landing-form__submit">
                     <Send size={16} /> Get Free Consultation
                   </button>
-                  <p style={{ fontSize: 11, color: 'var(--mist)', textAlign: 'center', marginTop: 4 }}>🔒 Your information is 100% secure with us</p>
+                  <p className="landing-form__secure">🔒 Your information is 100% secure</p>
                 </form>
               )}
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Before/After */}
-      <section className="section" style={{ textAlign: 'center' }}>
+      {/* ═══════════════════════════════════════
+          RECENT TRANSFORMATIONS
+      ═══════════════════════════════════════ */}
+      <section className="landing-projects">
         <div className="container">
-          <h2 className="section-title">Our Recent Transformations</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginTop: 40 }}>
-            {[heroImg, kitchenImg, villaImg].map((img, i) => (
-              <motion.div key={i} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', aspectRatio: '4/3' }}
-                initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.8, delay: i * 0.15 }}>
-                <img src={img} alt={`Project ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <motion.div className="landing-section-header"
+            initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.8 }}>
+            <span className="section-label" style={{ justifyContent: 'center' }}>Our Portfolio</span>
+            <h2 className="section-title" style={{ textAlign: 'center' }}>Recent Transformations</h2>
+          </motion.div>
+
+          <div className="landing-projects__grid">
+            {projects.map((proj, i) => (
+              <motion.div key={i} className="landing-proj-card"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: i * 0.1 }}
+                whileHover={{ y: -6 }}>
+                <div className="landing-proj-card__img">
+                  <img src={proj.img} alt={proj.title} loading="lazy" />
+                  <div className="landing-proj-card__overlay">
+                    <span className="landing-proj-card__type">{proj.type}</span>
+                  </div>
+                </div>
+                <div className="landing-proj-card__info">
+                  <h3>{proj.title}</h3>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Sticky CTA */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--charcoal)', padding: '12px 0', zIndex: 100, borderTop: '1px solid rgba(201,169,110,0.2)' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--warm-white)', fontSize: 14 }}>📞 Get your <strong style={{ color: 'var(--gold)' }}>FREE</strong> consultation today!</span>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <a href="tel:09845013138" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: 12 }}>
-              <Phone size={14} /> Call Now
-            </a>
-            <a href="https://api.whatsapp.com/send?phone=919845013138" className="btn btn-outline" style={{ padding: '10px 20px', fontSize: 12 }} target="_blank" rel="noopener noreferrer">
-              <MessageCircle size={14} /> WhatsApp
-            </a>
+      {/* ═══════════════════════════════════════
+          VIDEO SHOWCASE
+      ═══════════════════════════════════════ */}
+      <section className="landing-video">
+        <div className="container">
+          <motion.div className="landing-section-header"
+            initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.8 }}>
+            <span className="section-label" style={{ justifyContent: 'center', color: 'var(--gold-light)' }}>Watch Our Work</span>
+            <h2 className="section-title" style={{ textAlign: 'center', color: 'var(--warm-white)' }}>See the Transformation</h2>
+          </motion.div>
+          <div className="landing-video__grid">
+            {[
+              { id: 'vcUMkExgiCw', title: 'Luxury Interior Design' },
+              { id: 'N2QJ6ETLnaQ', title: 'Residential Transformation' },
+              { id: 'XzEPJfpn4FI', title: 'Premium Villa Interiors' },
+            ].map((v, i) => (
+              <motion.a key={v.id}
+                href={`https://www.youtube.com/watch?v=${v.id}`}
+                target="_blank" rel="noopener noreferrer"
+                className="landing-yt-card"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: i * 0.12 }}
+                whileHover={{ y: -6 }}>
+                <div className="landing-yt-card__thumb">
+                  <img src={`https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`} alt={v.title}
+                    onError={e => { e.target.src = heroImg }} loading="lazy" />
+                  <div className="landing-yt-card__play">
+                    <Play size={24} fill="white" />
+                  </div>
+                </div>
+                <h3>{v.title}</h3>
+              </motion.a>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          STICKY CTA
+      ═══════════════════════════════════════ */}
+      <AnimatePresence>
+        {stickyVisible && (
+          <motion.div className="landing-sticky"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
+            <div className="container landing-sticky__inner">
+              <span className="landing-sticky__text">
+                📞 Get your <strong style={{ color: 'var(--gold)' }}>FREE</strong> consultation today!
+              </span>
+              <div className="landing-sticky__actions">
+                <a href="tel:09845013138" className="btn btn-primary landing-sticky__btn">
+                  <Phone size={14} /> Call Now
+                </a>
+                <a href="https://api.whatsapp.com/send?phone=919845013138" className="btn btn-outline landing-sticky__btn"
+                  target="_blank" rel="noopener noreferrer">
+                  <MessageCircle size={14} /> WhatsApp
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.main>
   )
 }

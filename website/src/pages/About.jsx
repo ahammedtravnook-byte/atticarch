@@ -1,22 +1,32 @@
+import { useRef, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Award, Users, Target, Eye } from 'lucide-react'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ArrowRight, Target, Eye } from 'lucide-react'
 import { stats } from '../data/siteData'
 import heroImg from '../assets/images/hero-living.png'
 import villaImg from '../assets/images/villa.png'
+import './About.css'
 
-function Reveal({ children, delay = 0 }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }} transition={{ duration: 0.7, delay, ease: [0.16,1,0.3,1] }}
-      style={{ willChange: 'transform, opacity' }}>
-      {children}
-    </motion.div>
-  )
-}
+gsap.registerPlugin(ScrollTrigger)
 
 export default function About() {
+  const heroRef = useRef(null)
+  const heroBgRef = useRef(null)
+  const heroTitleRef = useRef(null)
+  const heroLineRef = useRef(null)
+  const statsRef = useRef(null)
+  const timelineSectionRef = useRef(null)
+  const timelineTrackRef = useRef(null)
+  const timelineProgressRef = useRef(null)
+  const missionImageRef = useRef(null)
+
+  const [counters, setCounters] = useState(stats.map(() => 0))
+  const countersAnimated = useRef(false)
+
   const milestones = [
     { year: '2002', title: 'Founded', desc: 'ATTICARCH established as a multi-disciplinary consultancy firm in Bangalore.' },
     { year: '2008', title: 'First 100 Projects', desc: 'Crossed the milestone of 100 completed residential and commercial projects.' },
@@ -25,108 +35,329 @@ export default function About() {
     { year: '2024', title: '500+ Projects', desc: 'Surpassed 500 successfully delivered projects across residential, commercial, and villa segments.' },
   ]
 
+  useGSAP(() => {
+    // Hero parallax
+    gsap.to(heroBgRef.current, {
+      y: '30%',
+      ease: 'none',
+      scrollTrigger: {
+        trigger: heroRef.current,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      }
+    })
+
+    // Hero title word reveal
+    const words = heroTitleRef.current?.querySelectorAll('.word-inner')
+    if (words?.length) {
+      gsap.from(words, {
+        y: 80,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.06,
+        ease: 'power4.out',
+        delay: 0.3,
+      })
+    }
+
+    // Hero line
+    gsap.to(heroLineRef.current, {
+      width: 80,
+      duration: 1,
+      ease: 'power2.out',
+      delay: 0.8,
+    })
+
+    // Mission image clip-path reveal
+    if (missionImageRef.current) {
+      gsap.from(missionImageRef.current, {
+        clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)',
+        duration: 1.2,
+        ease: 'power3.inOut',
+        scrollTrigger: {
+          trigger: missionImageRef.current,
+          start: 'top 75%',
+          once: true,
+        }
+      })
+    }
+
+    // Stats counter
+    ScrollTrigger.create({
+      trigger: statsRef.current,
+      start: 'top 80%',
+      once: true,
+      onEnter: () => {
+        if (countersAnimated.current) return
+        countersAnimated.current = true
+
+        stats.forEach((stat, i) => {
+          const target = parseInt(stat.number.replace(/[^0-9]/g, ''))
+          const obj = { val: 0 }
+          gsap.to(obj, {
+            val: target,
+            duration: 2,
+            ease: 'power2.out',
+            onUpdate: () => {
+              setCounters(prev => {
+                const next = [...prev]
+                next[i] = Math.round(obj.val)
+                return next
+              })
+            }
+          })
+        })
+
+        // Underlines
+        gsap.to('.about-stats__underline', {
+          scaleX: 1,
+          duration: 0.8,
+          stagger: 0.15,
+          ease: 'power2.out',
+          delay: 0.5,
+        })
+      }
+    })
+
+    // Horizontal timeline (desktop)
+    const mm = gsap.matchMedia()
+    mm.add('(min-width: 769px)', () => {
+      const track = timelineTrackRef.current
+      const section = timelineSectionRef.current
+      if (!track || !section) return
+
+      const totalScroll = track.scrollWidth - window.innerWidth + 200
+
+      const tl = gsap.to(track, {
+        x: -totalScroll,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          pin: true,
+          scrub: 1,
+          end: () => `+=${totalScroll}`,
+          onUpdate: (self) => {
+            if (timelineProgressRef.current) {
+              timelineProgressRef.current.style.width = `${self.progress * 100}%`
+            }
+          }
+        }
+      })
+
+      return () => tl.scrollTrigger?.kill()
+    })
+  }, { scope: heroRef })
+
+  const getStatSuffix = (number) => {
+    if (number.includes('%')) return '%'
+    if (number.includes('+')) return '+'
+    return ''
+  }
+
+  const splitTitle = (text) => {
+    return text.split(' ').map((word, i) => (
+      <span key={i} style={{ overflow: 'hidden', display: 'inline-block' }}>
+        <span className="word-inner" style={{ display: 'inline-block' }}>
+          {word}&nbsp;
+        </span>
+      </span>
+    ))
+  }
+
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      ref={heroRef}
+    >
       <Helmet><title>About Us — ATTICARCH | Best Interior Design Firm in Bangalore</title></Helmet>
 
       {/* Hero */}
-      <section style={{ background: 'var(--charcoal)', padding: '200px 0 100px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
-          <img src={heroImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <section className="about-hero">
+        <div className="about-hero__bg" ref={heroBgRef}>
+          <img src={heroImg} alt="" />
         </div>
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <Reveal>
-            <span className="section-label" style={{ color: 'var(--gold-light)' }}>About ATTICARCH</span>
-            <h1 className="text-display" style={{ fontSize: 'var(--text-6xl)', color: 'var(--warm-white)' }}>
-              Crafting Exceptional <br /><span className="text-gold">Interiors Since 2002</span>
-            </h1>
-            <p style={{ color: 'var(--silver)', fontSize: 'var(--text-lg)', maxWidth: 600, lineHeight: 1.7, marginTop: 20 }}>
-              A multi-disciplinary firm providing Architectural, Interior Designing and Project Management services across Bangalore.
-            </p>
-          </Reveal>
+        <div className="container about-hero__content">
+          <span className="about-hero__label">About ATTICARCH</span>
+          <h1 className="about-hero__title" ref={heroTitleRef}>
+            {splitTitle('Crafting Exceptional')}
+            <br />
+            <span style={{ color: 'var(--gold)' }}>
+              {splitTitle('Interiors Since 2002')}
+            </span>
+          </h1>
+          <div className="about-hero__line" ref={heroLineRef} />
+          <p className="about-hero__subtitle">
+            A multi-disciplinary firm providing Architectural, Interior Designing and Project Management services across Bangalore.
+          </p>
         </div>
       </section>
 
       {/* Mission & Vision */}
-      <section className="section">
+      <section className="about-mission">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
-            <Reveal>
-              <div>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
-                  <Target size={24} color="var(--gold)" />
-                  <h2 className="text-heading" style={{ fontSize: 'var(--text-3xl)' }}>Our Mission</h2>
+          <div className="about-mission__grid">
+            <div>
+              <motion.div
+                className="about-mission__card"
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="about-mission__card-header">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+                  >
+                    <Target size={26} color="var(--gold)" />
+                  </motion.div>
+                  <h3>Our Mission</h3>
                 </div>
-                <p style={{ color: 'var(--ash)', lineHeight: 1.8 }}>
-                  To transform ordinary spaces into extraordinary living experiences through innovative design, premium materials, 
+                <p>
+                  To transform ordinary spaces into extraordinary living experiences through innovative design, premium materials,
                   and uncompromising quality. We believe every space tells a story, and we're here to craft yours.
                 </p>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, marginTop: 40 }}>
-                  <Eye size={24} color="var(--gold)" />
-                  <h2 className="text-heading" style={{ fontSize: 'var(--text-3xl)' }}>Our Vision</h2>
+              </motion.div>
+
+              <motion.div
+                className="about-mission__card"
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="about-mission__card-header">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ type: 'spring', stiffness: 200, delay: 0.35 }}
+                  >
+                    <Eye size={26} color="var(--gold)" />
+                  </motion.div>
+                  <h3>Our Vision</h3>
                 </div>
-                <p style={{ color: 'var(--ash)', lineHeight: 1.8 }}>
-                  To be Bangalore's most trusted and creative interior design firm, setting benchmarks in luxury design 
+                <p>
+                  To be Bangalore's most trusted and creative interior design firm, setting benchmarks in luxury design
                   and client satisfaction while making premium interiors accessible to every homeowner.
                 </p>
+              </motion.div>
+            </div>
+
+            <motion.div
+              className="about-mission__image"
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div ref={missionImageRef} style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}>
+                <img src={villaImg} alt="ATTICARCH Vision" />
               </div>
-            </Reveal>
-            <Reveal delay={0.2}>
-              <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
-                <img src={villaImg} alt="ATTICARCH Vision" style={{ width: '100%', height: 450, objectFit: 'cover' }} />
-              </div>
-            </Reveal>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="section section-dark">
+      <section className="about-stats" ref={statsRef}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32, textAlign: 'center' }}>
+          <div className="about-stats__grid">
             {stats.map((s, i) => (
-              <Reveal key={i} delay={i * 0.1}>
-                <div>
-                  <span className="text-mono" style={{ fontSize: 'var(--text-5xl)', fontWeight: 700, color: 'var(--gold)' }}>{s.number}</span>
-                  <p style={{ color: 'var(--mist)', fontFamily: 'var(--font-accent)', fontSize: 12, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 8 }}>{s.label}</p>
-                </div>
-              </Reveal>
+              <motion.div
+                className="about-stats__item"
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <span className="about-stats__number">
+                  {counters[i]}{getStatSuffix(s.number)}
+                </span>
+                <span className="about-stats__label">{s.label}</span>
+                <div className="about-stats__underline" />
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Timeline */}
-      <section className="section section-linen">
-        <div className="container" style={{ maxWidth: 800 }}>
-          <Reveal>
-            <div style={{ textAlign: 'center', marginBottom: 60 }}>
-              <span className="section-label" style={{ justifyContent: 'center' }}>Our Journey</span>
-              <h2 className="section-title">Milestones That Define Us</h2>
+      <section className="about-timeline" ref={timelineSectionRef}>
+        <div className="container">
+          <motion.div
+            className="about-timeline__header"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <span className="section-label" style={{ justifyContent: 'center' }}>Our Journey</span>
+            <h2 className="section-title">Milestones That Define Us</h2>
+          </motion.div>
+        </div>
+
+        {/* Desktop horizontal */}
+        <div className="about-timeline__track-wrapper">
+          <div className="container">
+            <div className="about-timeline__progress">
+              <div className="about-timeline__progress-bar" ref={timelineProgressRef} />
             </div>
-          </Reveal>
-          {milestones.map((m, i) => (
-            <Reveal key={i} delay={i * 0.1}>
-              <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', padding: '24px 0', borderBottom: '1px solid var(--pearl)' }}>
-                <span className="text-mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--gold)', minWidth: 80 }}>{m.year}</span>
-                <div>
-                  <h3 className="text-heading" style={{ fontSize: 'var(--text-xl)', marginBottom: 8 }}>{m.title}</h3>
-                  <p style={{ color: 'var(--ash)', fontSize: 14, lineHeight: 1.7 }}>{m.desc}</p>
-                </div>
+          </div>
+          <div className="about-timeline__track" ref={timelineTrackRef} style={{ paddingLeft: 'calc((100vw - 1200px) / 2 + 20px)' }}>
+            {milestones.map((m, i) => (
+              <div className="about-timeline__card" key={i}>
+                <span className="about-timeline__year">{m.year}</span>
+                <h3>{m.title}</h3>
+                <p>{m.desc}</p>
               </div>
-            </Reveal>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile vertical */}
+        <div className="container">
+          <div className="about-timeline__vertical">
+            {milestones.map((m, i) => (
+              <motion.div
+                className="about-timeline__vertical-item"
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
+              >
+                <span className="about-timeline__vertical-year">{m.year}</span>
+                <h3>{m.title}</h3>
+                <p>{m.desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="section" style={{ textAlign: 'center' }}>
+      <section className="about-cta">
         <div className="container">
-          <Reveal>
-            <h2 className="section-title">Ready to Transform Your Space?</h2>
-            <p className="section-subtitle" style={{ margin: '0 auto 32px' }}>Let's discuss your dream project</p>
-            <Link to="/contact-us" className="btn btn-primary">Book Consultation <ArrowRight size={16} /></Link>
-          </Reveal>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="about-cta__title">Ready to Transform Your Space?</h2>
+            <p className="about-cta__subtitle">Let's discuss your dream project</p>
+            <Link to="/contact-us" className="btn btn-primary">
+              Book Consultation <ArrowRight size={16} />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </motion.main>
