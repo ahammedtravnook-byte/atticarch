@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { ArrowUpRight, ArrowRight, Star, Calculator, ChevronLeft, ChevronRight, Quote, Play, Check } from 'lucide-react'
+import { ArrowUpRight, ArrowRight, Star, ChevronLeft, ChevronRight, Quote, Play, Check } from 'lucide-react'
 
 /* brand SVGs — lucide doesn't include these */
 const IconYoutube = ({ size = 16, ...p }) => (
@@ -342,20 +342,44 @@ function HeroParallax() {
           </motion.div>
         </div>
 
-        {/* Bottom image strip — inside container for proper alignment */}
-        <motion.div className="hero__strip"
-          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1.5 }}>
-          {ALL_IMGS.slice(0, 6).map((img, i) => (
-            <motion.div key={i} className="hero__strip-item"
-              whileHover={{ scale: 1.08, y: -4 }}
-              transition={{ duration: 0.3 }}>
-              <img src={img} alt="" loading="lazy" />
-            </motion.div>
-          ))}
-          <div className="hero__strip-cta">
-            <span>50+</span>
-            <small>More Projects</small>
+        {/* YouTube video testimonials strip */}
+        <motion.div className="hero__yt-strip"
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 1.9 }}>
+          <div className="hero__yt-label">
+            <IconYoutube size={14} />
+            <span>Watch Our Transformations</span>
+          </div>
+          <div className="hero__yt-thumbs">
+            {YT_CATALOG.slice(0, 4).map((v) => (
+              <motion.a
+                key={v.id}
+                href={`https://www.youtube.com/watch?v=${v.id}`}
+                target="_blank" rel="noopener noreferrer"
+                className="hero__yt-thumb"
+                whileHover={{ scale: 1.07, y: -4 }}
+                transition={{ duration: 0.3 }}
+                title={v.title}
+              >
+                <img
+                  src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`}
+                  alt={v.title}
+                  loading="lazy"
+                  onError={e => { e.target.src = heroLiving }}
+                />
+                <div className="hero__yt-play">
+                  <Play size={12} fill="white" />
+                </div>
+              </motion.a>
+            ))}
+            <a
+              href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA"
+              target="_blank" rel="noopener noreferrer"
+              className="hero__yt-more"
+            >
+              <IconYoutube size={18} />
+              <small>More Videos</small>
+            </a>
           </div>
         </motion.div>
       </div>
@@ -868,9 +892,10 @@ export default function Home() {
                 Crafting Luxury Interiors<br />Since <span className="text-gold">2002</span>
               </h2>
               <p className="about-teaser__desc">
-                ATTICARCH is a multi-disciplinary consultancy firm providing Architectural, Interior Designing
-                and Project Management services to domestic and corporate clients across Bangalore. With over
-                22 years of expertise, we transform ordinary spaces into extraordinary living experiences.
+                ATTICARCH is Bangalore's premier luxury interior design studio — delivering exceptional residential
+                and commercial interiors since 2002. With over 22 years of expertise and 500+ completed projects,
+                we transform ordinary spaces into extraordinary living experiences tailored to your unique lifestyle,
+                backed by a 10-Year Warranty and interiors starting from ₹10 Lacs.
               </p>
               <div className="about-teaser__highlights">
                 {[{ n: '500', s: '+', l: 'Projects Completed' }, { n: '22', s: '+', l: 'Years Excellence' }, { n: '50', s: '+', l: 'Design Awards' }].map((h, i) => (
@@ -940,41 +965,6 @@ export default function Home() {
           HOW WE WORK — TABBED CINEMA
       ══════════════════════════════════════════ */}
       <HowWeWork />
-
-      {/* ═══════════════════════════════════════════
-          ESTIMATE CALCULATOR
-      ══════════════════════════════════════════ */}
-      <section className="section section-dark estimate-mini">
-        <div className="container">
-          <div className="estimate-mini__grid">
-            <Reveal>
-              <span className="section-label" style={{ color: 'var(--gold-light)' }}>Estimate Calculator</span>
-              <h2 className="section-title" style={{ color: 'var(--warm-white)' }}>
-                Get an Instant <span className="text-gold">Cost Estimate</span>
-              </h2>
-              <p style={{ color: 'var(--mist)', lineHeight: 1.8, marginBottom: 32 }}>
-                Use our smart calculator to get a rough estimate. Select your property type, size, and design style to get started.
-              </p>
-              <Link to="/estimate" className="btn btn-primary"><Calculator size={18} /> Open Full Calculator</Link>
-            </Reveal>
-            <Reveal delay={0.2}>
-              <div className="estimate-mini__card">
-                {[['Property Type', '2/3 BHK Apartment'], ['Interior Style', 'Premium'], ['Carpet Area', '1,200 – 1,800 sq.ft']].map(([k, v]) => (
-                  <div key={k} className="estimate-mini__row"><span>{k}</span><strong>{v}</strong></div>
-                ))}
-                <div className="estimate-mini__divider" />
-                <div className="estimate-mini__total">
-                  <span>Estimated Range</span>
-                  <strong className="text-gold text-mono" style={{ fontSize: 'var(--text-3xl)' }}>₹12L — ₹22L</strong>
-                </div>
-                <Link to="/estimate" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}>
-                  Customize Your Estimate <ArrowRight size={16} />
-                </Link>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
 
       {/* ═══════════════════════════════════════════
           PROJECTS — EDITORIAL MASONRY
