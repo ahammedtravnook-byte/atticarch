@@ -1,35 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useInView } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle, ArrowRight, Play } from 'lucide-react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { stats } from '../data/siteData'
-import heroImg from '../assets/images/hero-living.png'
-import kitchenImg from '../assets/images/kitchen.png'
-import villaImg from '../assets/images/villa.png'
-import bedroomImg from '../assets/images/bedroom.png'
-import apartmentImg from '../assets/images/apartment.png'
-import commercialImg from '../assets/images/commercial.png'
+import { valueProps, projects, pickImages } from '../data/siteData'
 import './LandingPage.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const HERO_IMAGES = [heroImg, villaImg, kitchenImg, bedroomImg]
-
-function Counter({ end, suffix = '', duration = 2 }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true })
-  useEffect(() => {
-    if (!inView || !ref.current) return
-    const num = parseFloat(end)
-    gsap.fromTo(ref.current, { innerText: 0 }, {
-      innerText: num, duration, snap: { innerText: 1 }, ease: 'power2.out',
-      onUpdate() { ref.current.textContent = Math.floor(ref.current.innerText || 0) + suffix },
-    })
-  }, [inView, end, suffix, duration])
-  return <span ref={ref}>0{suffix}</span>
-}
+const heroImg = pickImages(1, 0)[0]
+const HERO_IMAGES = pickImages(4, 5)
 
 export default function LandingPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', type: '' })
@@ -53,20 +34,17 @@ export default function LandingPage() {
   }, [])
 
   const benefits = [
-    { icon: Award, text: '22+ Years of Experience', desc: 'Trusted expertise since 2002' },
-    { icon: Shield, text: '500+ Projects Delivered', desc: 'Across Bangalore & beyond' },
-    { icon: Clock, text: '3-Month Post-Delivery Warranty', desc: 'Complete peace of mind' },
-    { icon: Star, text: '100% Client Satisfaction', desc: 'Rated 5-star by homeowners' },
+    { icon: Award, text: 'Established in 2002', desc: 'A trusted Bangalore design studio' },
+    { icon: Shield, text: '10-Year Workmanship Warranty', desc: 'Complete peace of mind' },
+    { icon: Clock, text: 'Turnkey Execution', desc: 'Concept to handover, end-to-end' },
+    { icon: Star, text: 'Free Design Consultation', desc: 'No obligation, expert guidance' },
   ]
 
-  const projects = [
-    { img: heroImg, title: '4BHK @ SNN Clermont', type: 'Apartment' },
-    { img: kitchenImg, title: 'Premium Kitchen Design', type: 'Kitchen' },
-    { img: villaImg, title: 'Luxury Villa Interiors', type: 'Villa' },
-    { img: bedroomImg, title: 'Master Suite Design', type: 'Bedroom' },
-    { img: apartmentImg, title: '3BHK @ Prestige Lakeside', type: 'Apartment' },
-    { img: commercialImg, title: 'Corporate Office', type: 'Commercial' },
-  ]
+  const showcase = projects.slice(0, 6).map((p) => ({
+    img: p.image,
+    title: p.title,
+    type: p.category.charAt(0).toUpperCase() + p.category.slice(1),
+  }))
 
   return (
     <motion.main className="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -140,13 +118,11 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* Stats row */}
+            {/* Value props row */}
             <div className="landing-hero__stats">
-              {stats.map((s, i) => (
+              {valueProps.map((s, i) => (
                 <div key={i} className="landing-stat">
-                  <span className="landing-stat__num text-mono">
-                    <Counter end={s.number.replace(/\D/g, '')} suffix={s.number.replace(/\d/g, '')} />
-                  </span>
+                  <span className="landing-stat__num text-mono">{s.value}</span>
                   <span className="landing-stat__label">{s.label}</span>
                 </div>
               ))}
@@ -221,7 +197,7 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="landing-projects__grid">
-            {projects.map((proj, i) => (
+            {showcase.map((proj, i) => (
               <motion.div key={i} className="landing-proj-card"
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}

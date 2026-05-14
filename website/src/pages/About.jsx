@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
@@ -6,10 +6,11 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight, Target, Eye } from 'lucide-react'
-import { stats } from '../data/siteData'
-import heroImg from '../assets/images/hero-living.png'
-import villaImg from '../assets/images/villa.png'
+import { valueProps, pickImages } from '../data/siteData'
 import './About.css'
+
+const heroImg = pickImages(1, 0)[0]
+const villaImg = pickImages(1, 25)[0]
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -24,15 +25,12 @@ export default function About() {
   const timelineProgressRef = useRef(null)
   const missionImageRef = useRef(null)
 
-  const [counters, setCounters] = useState(stats.map(() => 0))
-  const countersAnimated = useRef(false)
-
   const milestones = [
     { year: '2002', title: 'Founded', desc: 'ATTICARCH established as a multi-disciplinary consultancy firm in Bangalore.' },
-    { year: '2008', title: 'First 100 Projects', desc: 'Crossed the milestone of 100 completed residential and commercial projects.' },
+    { year: '2008', title: 'Growth & Expansion', desc: 'Expanded our portfolio across residential and commercial interior projects.' },
     { year: '2014', title: 'Luxury Division', desc: 'Launched dedicated luxury interior design vertical for high-end villas and penthouses.' },
-    { year: '2019', title: 'Award Recognition', desc: 'Recognized as one of the top interior design firms in Bangalore.' },
-    { year: '2024', title: '500+ Projects', desc: 'Surpassed 500 successfully delivered projects across residential, commercial, and villa segments.' },
+    { year: '2019', title: 'Studio Recognition', desc: 'Established as a trusted interior design studio across Bangalore.' },
+    { year: '2024', title: 'Two Decades Strong', desc: 'Continuing to deliver turnkey interiors with a 10-Year Workmanship Warranty.' },
   ]
 
   useGSAP(() => {
@@ -83,39 +81,18 @@ export default function About() {
       })
     }
 
-    // Stats counter
+    // Value prop underlines
     ScrollTrigger.create({
       trigger: statsRef.current,
       start: 'top 80%',
       once: true,
       onEnter: () => {
-        if (countersAnimated.current) return
-        countersAnimated.current = true
-
-        stats.forEach((stat, i) => {
-          const target = parseInt(stat.number.replace(/[^0-9]/g, ''))
-          const obj = { val: 0 }
-          gsap.to(obj, {
-            val: target,
-            duration: 2,
-            ease: 'power2.out',
-            onUpdate: () => {
-              setCounters(prev => {
-                const next = [...prev]
-                next[i] = Math.round(obj.val)
-                return next
-              })
-            }
-          })
-        })
-
-        // Underlines
         gsap.to('.about-stats__underline', {
           scaleX: 1,
           duration: 0.8,
           stagger: 0.15,
           ease: 'power2.out',
-          delay: 0.5,
+          delay: 0.3,
         })
       }
     })
@@ -148,12 +125,6 @@ export default function About() {
       return () => tl.scrollTrigger?.kill()
     })
   }, { scope: heroRef })
-
-  const getStatSuffix = (number) => {
-    if (number.includes('%')) return '%'
-    if (number.includes('+')) return '+'
-    return ''
-  }
 
   const splitTitle = (text) => {
     return text.split(' ').map((word, i) => (
@@ -269,7 +240,7 @@ export default function About() {
       <section className="about-stats" ref={statsRef}>
         <div className="container">
           <div className="about-stats__grid">
-            {stats.map((s, i) => (
+            {valueProps.map((s, i) => (
               <motion.div
                 className="about-stats__item"
                 key={i}
@@ -278,9 +249,7 @@ export default function About() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
               >
-                <span className="about-stats__number">
-                  {counters[i]}{getStatSuffix(s.number)}
-                </span>
+                <span className="about-stats__number">{s.value}</span>
                 <span className="about-stats__label">{s.label}</span>
                 <div className="about-stats__underline" />
               </motion.div>

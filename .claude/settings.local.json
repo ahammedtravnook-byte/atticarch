@@ -15,7 +15,12 @@
       "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => k.toLowerCase\\(\\).includes\\('youtube'\\) || k.toLowerCase\\(\\).includes\\('instagram'\\)\\); console.log\\(keys\\)\")",
       "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => k.toLowerCase\\(\\).includes\\('play'\\) || k.toLowerCase\\(\\).includes\\('video'\\)\\); console.log\\(keys.slice\\(0,20\\)\\)\")",
       "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\); console.log\\(keys.filter\\(k => /^[A-Z]/.test\\(k\\) && k.length < 16\\).filter\\(k => !k.endsWith\\('Icon'\\) && !k.startsWith\\('Lucide'\\)\\).sort\\(\\).slice\\(0, 60\\)\\)\")",
-      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => !k.endsWith\\('Icon'\\) && !k.startsWith\\('Lucide'\\)\\); console.log\\(keys.filter\\(k => ['Quote','Play','CirclePlay','ExternalLink','Share2','Link'].includes\\(k\\)\\)\\)\")"
+      "Bash(node -e \"const lucide = require\\('lucide-react'\\); const keys = Object.keys\\(lucide\\).filter\\(k => !k.endsWith\\('Icon'\\) && !k.startsWith\\('Lucide'\\)\\); console.log\\(keys.filter\\(k => ['Quote','Play','CirclePlay','ExternalLink','Share2','Link'].includes\\(k\\)\\)\\)\")",
+      "Bash(npm i *)",
+      "Bash(sed -i '1818,1954d' src/pages/Home.css)",
+      "Bash(sed -n '1814,1820p' src/pages/Home.css)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/project/42-mark-3-villament)"
     ]
   }
 }

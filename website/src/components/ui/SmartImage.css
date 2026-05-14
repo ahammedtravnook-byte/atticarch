@@ -1,0 +1,63 @@
+.smart-img {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.smart-img__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-size: 200% 100%;
+  animation: smart-shimmer 1.5s linear infinite;
+  transition: opacity 0.45s ease;
+}
+
+.smart-img--light .smart-img__skeleton {
+  background-image: linear-gradient(
+    100deg,
+    rgba(0, 0, 0, 0.045) 28%,
+    rgba(0, 0, 0, 0.085) 50%,
+    rgba(0, 0, 0, 0.045) 72%
+  );
+}
+
+.smart-img--dark .smart-img__skeleton {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 28%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 72%
+  );
+}
+
+.smart-img.is-loaded .smart-img__skeleton {
+  opacity: 0;
+}
+
+.smart-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.smart-img.is-loaded img {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@keyframes smart-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-img__skeleton { animation: none; }
+  .smart-img img { transition: opacity 0.3s ease; transform: none; }
+}

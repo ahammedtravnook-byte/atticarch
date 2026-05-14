@@ -1815,63 +1815,6 @@
   letter-spacing: 0.04em;
 }
 
-/* ── LIGHTBOX ── */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.94);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(8px);
-}
-
-.lightbox__inner {
-  position: relative;
-  max-width: 88vw;
-}
-
-.lightbox__img {
-  max-width: 80vw;
-  max-height: 72vh;
-  object-fit: contain;
-  border-radius: 12px;
-  display: block;
-}
-
-.lightbox__info {
-  padding: 18px 0 0;
-}
-
-.lightbox__info h3 {
-  font-family: var(--font-heading);
-  font-size: var(--text-xl);
-  color: white;
-}
-
-.lightbox__info p {
-  font-size: 13px;
-  color: rgba(255,255,255,0.45);
-  margin-top: 4px;
-}
-
-.lightbox__close {
-  position: absolute;
-  top: -44px;
-  right: 0;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.55);
-  font-size: 32px;
-  cursor: pointer;
-  line-height: 1;
-  transition: color 0.2s;
-  padding: 0;
-}
-
-.lightbox__close:hover { color: white; }
-
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
@@ -1933,9 +1876,18 @@
   .hero__yt-thumb { width: 72px; height: 46px; }
   .hero__yt-more { width: 72px; height: 46px; }
 
-  /* accordion becomes 2-item visible on mobile */
-  .room-accordion { height: 460px; }
-  .room-acc-collapsed span { font-size: 11px; }
+  /* accordion stacks vertically on mobile — flex-grow still drives the active panel */
+  .room-accordion { flex-direction: column; height: 600px; gap: 4px; }
+  .room-acc-strip { min-width: 0; min-height: 44px; }
+  .room-acc-collapsed span {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .room-acc-expanded { padding: 24px 20px; }
+  .room-acc-index { top: 12px; left: 16px; transform: none; }
+  .room-acc-desc { max-width: none; }
 
   .about-teaser__grid { grid-template-columns: 1fr; }
   .about-teaser__highlights { gap: 24px; }

@@ -19,22 +19,16 @@ const IconInstagram = ({ size = 16, ...p }) => (
 )
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { projects, upcomingProjects, services, rooms, testimonials, stats, processSteps, blogPosts, workTypes, partners } from '../data/siteData'
-import heroLiving from '../assets/images/hero-living.png'
-import kitchen from '../assets/images/kitchen.png'
-import bedroom from '../assets/images/bedroom.png'
-import villa from '../assets/images/villa.png'
-import apartment from '../assets/images/apartment.png'
-import commercial from '../assets/images/commercial.png'
-import foyer from '../assets/images/foyer.png'
-import dining from '../assets/images/dining.png'
-import bathroom from '../assets/images/bathroom.png'
+import { projects, upcomingProjects, services, rooms, testimonials, valueProps, processSteps, blogPosts, workTypes, partners, allImages, pickImages } from '../data/siteData'
+import ProjectLightbox from '../components/ui/ProjectLightbox'
+import SmartImage from '../components/ui/SmartImage'
 import './Home.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
-/* ── constants ── */
-const HERO_IMAGES = [heroLiving, villa, kitchen, bedroom, apartment]
+/* ── constants — all imagery is now real, optimized project photos ── */
+const FALLBACK_IMG = allImages[0]
+const HERO_IMAGES = projects.slice(0, 5).map((p) => p.image)
 const HERO_SLIDE_INTERVAL = 5000
 const YT_CATALOG = [
   { id: 'vcUMkExgiCw', title: 'ATTICARCH — Luxury Interior Design' },
@@ -45,42 +39,19 @@ const YT_CATALOG = [
   { id: 'Kp0BATDxKFI', title: '3BHK Flat Interiors at Prestige Tranquility' },
   { id: 'yvptQo71mnw', title: '3BHK Apartment Tour — Prestige Song of the South' },
 ]
-const ALL_IMGS = [heroLiving, kitchen, bedroom, villa, apartment, commercial, foyer, dining, bathroom]
-const PROCESS_IMGS = [heroLiving, villa, apartment, commercial, kitchen, bedroom]
-const ROOM_IMGS = {
-  'kitchen-interior-designers': [kitchen, dining, commercial, apartment, foyer],
-  'living-room':  [heroLiving, villa, apartment, foyer, dining],
-  'bedrooms':     [bedroom, bathroom, heroLiving, apartment, villa],
-  'foyer':        [foyer, heroLiving, villa, dining, kitchen],
-  'dining-room':  [dining, kitchen, foyer, villa, apartment],
-  'kids-bedroom': [bedroom, apartment, bathroom, kitchen, heroLiving],
-  'bathrooms':    [bathroom, bedroom, villa, foyer, apartment],
-  'balcony':      [villa, heroLiving, apartment, dining, commercial],
-}
+const ALL_IMGS = allImages
+const PROCESS_IMGS = pickImages(6, 30)
+const ROOM_IMGS = Object.fromEntries(rooms.map((r, i) => [r.slug, pickImages(5, i * 5)]))
 const SVC_IMGS = {
-  residential: [heroLiving, villa, apartment, dining, bedroom],
-  commercial:  [commercial, apartment, villa, kitchen, foyer],
-  renovation:  [foyer, kitchen, bathroom, bedroom, heroLiving],
+  residential: pickImages(5, 3),
+  commercial: pickImages(5, 64),
+  renovation: pickImages(5, 17),
 }
-const INSTA_IMGS = [heroLiving, kitchen, bedroom, villa, apartment, commercial, foyer, dining, bathroom]
+const INSTA_IMGS = pickImages(12, 70)
 
 /* ─────────────────────────────────────────
    UTILITY COMPONENTS
 ───────────────────────────────────────── */
-
-function Counter({ end, suffix = '', duration = 2 }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true })
-  useEffect(() => {
-    if (!inView || !ref.current) return
-    const num = parseFloat(end)
-    gsap.fromTo(ref.current, { innerText: 0 }, {
-      innerText: num, duration, snap: { innerText: 1 }, ease: 'power2.out',
-      onUpdate() { ref.current.textContent = Math.floor(ref.current.innerText || 0) + suffix },
-    })
-  }, [inView, end, suffix, duration])
-  return <span ref={ref}>0{suffix}</span>
-}
 
 function Reveal({ children, className = '', delay = 0, dir = 'up' }) {
   const map = {
@@ -279,7 +250,7 @@ function HeroParallax() {
               </div>
               <div className="hero__feature">
                 <Check size={14} />
-                <span>500+ Projects</span>
+                <span>Turnkey Execution</span>
               </div>
               <div className="hero__feature">
                 <Check size={14} />
@@ -325,16 +296,14 @@ function HeroParallax() {
               </div>
             </div>
 
-            {/* Stats grid */}
+            {/* Value props grid */}
             <div className="hero__stats-grid">
-              {stats.map((s, i) => (
+              {valueProps.map((s, i) => (
                 <motion.div key={i} className="hero__stat-card"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 1.0 + i * 0.1 }}>
-                  <span className="hero__stat-number text-mono">
-                    <Counter end={s.number.replace(/\D/g, '')} suffix={s.number.replace(/\d/g, '')} />
-                  </span>
+                  <span className="hero__stat-number text-mono">{s.value}</span>
                   <span className="hero__stat-label">{s.label}</span>
                 </motion.div>
               ))}
@@ -365,7 +334,7 @@ function HeroParallax() {
                   src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`}
                   alt={v.title}
                   loading="lazy"
-                  onError={e => { e.target.src = heroLiving }}
+                  onError={e => { e.target.src = FALLBACK_IMG }}
                 />
                 <div className="hero__yt-play">
                   <Play size={12} fill="white" />
@@ -495,7 +464,7 @@ function RoomAccordion() {
 ───────────────────────────────────────── */
 
 function AboutMosaic() {
-  const imgs = [heroLiving, villa, kitchen, bedroom]
+  const imgs = pickImages(4, 84)
   return (
     <div className="about-mosaic">
       {imgs.map((img, i) => (
@@ -794,7 +763,7 @@ function YouTubeCard({ video, featured }) {
     >
       <div className="yt-card__thumb">
         <img src={thumb} alt={video.title} loading="lazy"
-          onError={e => { e.target.src = heroLiving }} />
+          onError={e => { e.target.src = FALLBACK_IMG }} />
         <div className="yt-card__overlay" />
         <motion.div className="yt-card__play" animate={{ scale: hov ? 1.18 : 1 }} transition={{ duration: 0.3 }}>
           <Play size={featured ? 34 : 24} fill="white" />
@@ -852,7 +821,7 @@ export default function Home() {
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
       <Helmet>
         <title>ATTICARCH — Best Interior Designers in Bangalore | Luxury Interior Design</title>
-        <meta name="description" content="ATTICARCH: Bangalore's premier interior design firm since 2002. Luxury residential, commercial & villa interiors. 500+ projects delivered. Get your free consultation today." />
+        <meta name="description" content="ATTICARCH: Bangalore's premier interior design firm since 2002. Luxury residential, commercial & villa interiors with turnkey execution. Get your free consultation today." />
       </Helmet>
 
       {/* ═══════════════════════════════════════════
@@ -892,16 +861,16 @@ export default function Home() {
                 Crafting Luxury Interiors<br />Since <span className="text-gold">2002</span>
               </h2>
               <p className="about-teaser__desc">
-                ATTICARCH is Bangalore's premier luxury interior design studio — delivering exceptional residential
-                and commercial interiors since 2002. With over 22 years of expertise and 500+ completed projects,
-                we transform ordinary spaces into extraordinary living experiences tailored to your unique lifestyle,
-                backed by a 10-Year Warranty and interiors starting from ₹10 Lacs.
+                ATTICARCH is Bangalore's premier luxury interior design studio — crafting exceptional residential
+                and commercial interiors since 2002. We transform ordinary spaces into extraordinary living
+                experiences tailored to your unique lifestyle, backed by a 10-Year Workmanship Warranty and
+                bespoke interiors starting from ₹10 Lacs.
               </p>
               <div className="about-teaser__highlights">
-                {[{ n: '500', s: '+', l: 'Projects Completed' }, { n: '22', s: '+', l: 'Years Excellence' }, { n: '50', s: '+', l: 'Design Awards' }].map((h, i) => (
+                {valueProps.map((h, i) => (
                   <div key={i} className="highlight-item">
-                    <span className="highlight-number text-mono"><Counter end={h.n} suffix={h.s} /></span>
-                    <span>{h.l}</span>
+                    <span className="highlight-number text-mono">{h.value}</span>
+                    <span>{h.label}</span>
                   </div>
                 ))}
               </div>
@@ -1011,7 +980,7 @@ export default function Home() {
                   onClick={() => setLightbox(proj)}
                 >
                   <ImageCycler
-                    images={[proj.image, ...ALL_IMGS.filter(x => x !== proj.image).slice(0, 3)]}
+                    images={proj.images.length ? proj.images : [FALLBACK_IMG]}
                     interval={3200}
                     style={{ width: '100%', height: '100%' }}
                   />
@@ -1019,7 +988,7 @@ export default function Home() {
                     <span className="proj-item__cat">{proj.category}</span>
                     <div>
                       <h3 className="proj-item__title">{proj.title}</h3>
-                      <p className="proj-item__meta">{proj.location} · {proj.size}</p>
+                      <p className="proj-item__meta">{proj.location} · {proj.images.length} photos</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1043,7 +1012,7 @@ export default function Home() {
               <Reveal key={project.id} delay={i * 0.15}>
                 <div className="upcoming-card">
                   <div className="upcoming-card__image">
-                    <img src={project.image} alt={project.title} loading="lazy" />
+                    <SmartImage src={project.image} alt={project.title} />
                     <span className="upcoming-card__badge text-accent">{project.status}</span>
                   </div>
                   <div className="upcoming-card__content">
@@ -1161,7 +1130,7 @@ export default function Home() {
             {blogPosts[0] && (
               <Reveal className="blog-featured-wrap">
                 <Link to={`/blog/${blogPosts[0].slug}`} className="blog-featured">
-                  <img src={blogPosts[0].image} alt={blogPosts[0].title} />
+                  <SmartImage src={blogPosts[0].image} alt={blogPosts[0].title} className="blog-featured__img" tone="dark" />
                   <div className="blog-featured__overlay" />
                   <div className="blog-featured__content">
                     <span className="blog-tag">{blogPosts[0].category}</span>
@@ -1177,7 +1146,7 @@ export default function Home() {
                 <Reveal key={post.id} delay={i * 0.1}>
                   <Link to={`/blog/${post.slug}`} className="blog-side-card">
                     <div className="blog-side-img">
-                      <img src={post.image} alt={post.title} loading="lazy" />
+                      <SmartImage src={post.image} alt={post.title} />
                     </div>
                     <div className="blog-side-content">
                       <span className="blog-tag">{post.category}</span>
@@ -1212,21 +1181,7 @@ export default function Home() {
           LIGHTBOX
       ══════════════════════════════════════════ */}
       <AnimatePresence>
-        {lightbox && (
-          <motion.div className="lightbox" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLightbox(null)}>
-            <motion.div className="lightbox__inner"
-              initial={{ scale: 0.88, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.88, opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              onClick={e => e.stopPropagation()}>
-              <img src={lightbox.image} alt={lightbox.title} className="lightbox__img" />
-              <div className="lightbox__info">
-                <h3>{lightbox.title}</h3>
-                <p>{lightbox.location} · {lightbox.size} · {lightbox.year}</p>
-              </div>
-              <button className="lightbox__close" onClick={() => setLightbox(null)}>×</button>
-            </motion.div>
-          </motion.div>
-        )}
+        {lightbox && <ProjectLightbox project={lightbox} onClose={() => setLightbox(null)} />}
       </AnimatePresence>
     </motion.main>
   )

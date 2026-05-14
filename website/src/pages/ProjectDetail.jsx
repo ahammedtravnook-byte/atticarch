@@ -1,63 +1,195 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Maximize2, Calendar } from 'lucide-react'
+import { ArrowLeft, ArrowRight, MapPin, Maximize2, Calendar, Layers, Plus } from 'lucide-react'
 import { projects } from '../data/siteData'
+import SmartImage from '../components/ui/SmartImage'
+import ProjectLightbox from '../components/ui/ProjectLightbox'
+import './ProjectDetail.css'
+
+const fade = {
+  hidden: { opacity: 0, y: 40 },
+  show: { opacity: 1, y: 0 },
+}
 
 export default function ProjectDetail() {
   const { slug } = useParams()
-  const project = projects.find(p => String(p.id) === slug) || projects[0]
+  const project = projects.find((p) => String(p.id) === slug) || projects[0]
+  const idx = projects.findIndex((p) => p.id === project.id)
+  const nextProject = projects[(idx + 1) % projects.length]
+
+  const gallery = project.images?.length ? project.images : [project.image]
+  const [lightbox, setLightbox] = useState(null) // start index or null
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.main
+      className="pd"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Helmet><title>{project.title} — ATTICARCH Project</title></Helmet>
 
-      <section style={{ background: 'var(--charcoal)', padding: '140px 0 0' }}>
-        <div className="container" style={{ paddingBottom: 40 }}>
-          <Link to="/project-category/projects-residential" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--mist)', fontSize: 14, marginBottom: 24 }}>
-            <ArrowLeft size={16} /> Back to Projects
-          </Link>
-          <h1 className="text-display" style={{ fontSize: 'var(--text-5xl)', color: 'var(--warm-white)' }}>{project.title}</h1>
-          <div style={{ display: 'flex', gap: 32, marginTop: 20, flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mist)', fontSize: 14 }}><MapPin size={14} color="var(--gold)" />{project.location}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mist)', fontSize: 14 }}><Maximize2 size={14} color="var(--gold)" />{project.size}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mist)', fontSize: 14 }}><Calendar size={14} color="var(--gold)" />{project.year}</span>
+      {/* ── EDITORIAL SPLIT HERO — no full-bleed image ── */}
+      <section className="pd-hero">
+        <div className="pd-hero__glow" />
+        <div className="container pd-hero__inner">
+          <motion.div
+            className="pd-hero__top"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Link to="/" className="pd-back">
+              <ArrowLeft size={15} /> Back to Home
+            </Link>
+            <span className="pd-hero__index text-mono">
+              Project {String(idx + 1).padStart(2, '0')}
+              <span> / {String(projects.length).padStart(2, '0')}</span>
+            </span>
+          </motion.div>
+
+          <div className="pd-hero__grid">
+            {/* LEFT — editorial text column */}
+            <motion.div
+              className="pd-hero__text"
+              initial={{ opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span className="pd-hero__cat">{project.category}</span>
+              <h1 className="pd-hero__title">{project.title}</h1>
+              <p className="pd-hero__desc">{project.description}</p>
+
+              <div className="pd-hero__meta">
+                {[
+                  { k: 'Location', v: project.location, icon: MapPin },
+                  { k: 'Scope', v: project.size, icon: Maximize2 },
+                  { k: 'Year', v: project.year, icon: Calendar },
+                  { k: 'Gallery', v: `${gallery.length} Photos`, icon: Layers },
+                ].map((s) => (
+                  <div className="pd-hero__meta-cell" key={s.k}>
+                    <s.icon size={15} />
+                    <div>
+                      <span className="pd-hero__meta-k">{s.k}</span>
+                      <span className="pd-hero__meta-v">{s.v}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link to="/contact-us" className="btn btn-primary pd-hero__cta">
+                Start a Similar Project <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* RIGHT — contained image + thumb strip */}
+            <motion.div
+              className="pd-hero__media"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <button className="pd-hero__cover" onClick={() => setLightbox(0)}>
+                <SmartImage src={gallery[0]} alt={project.title} tone="dark" eager />
+                <span className="pd-hero__cover-frame" />
+                <span className="pd-hero__cover-badge">
+                  <Plus size={13} /> View Gallery
+                </span>
+              </button>
+
+              {gallery.length > 1 && (
+                <div className="pd-hero__thumbs">
+                  {gallery.slice(1, 5).map((img, i) => (
+                    <button
+                      key={i}
+                      className="pd-hero__thumb"
+                      onClick={() => setLightbox(i + 1)}
+                    >
+                      <SmartImage src={img} alt={`${project.title} — ${i + 2}`} tone="dark" />
+                      {i === 3 && gallery.length > 5 && (
+                        <span className="pd-hero__thumb-more">+{gallery.length - 5}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
           </div>
-        </div>
-        <div style={{ maxHeight: 500, overflow: 'hidden' }}>
-          <img src={project.image} alt={project.title} style={{ width: '100%', height: 500, objectFit: 'cover' }} />
         </div>
       </section>
 
-      <section className="section">
-        <div className="container" style={{ maxWidth: 800 }}>
-          <h2 className="text-heading" style={{ fontSize: 'var(--text-3xl)', marginBottom: 16 }}>About This Project</h2>
-          <p style={{ color: 'var(--ash)', lineHeight: 1.8, fontSize: 'var(--text-base)' }}>{project.description}</p>
-          <p style={{ color: 'var(--ash)', lineHeight: 1.8, fontSize: 'var(--text-base)', marginTop: 16 }}>
-            This project showcases our commitment to excellence in interior design. Every element was carefully selected 
-            to create a harmonious living environment that reflects the client's personality and lifestyle preferences. 
-            From the premium materials to the bespoke furniture pieces, each detail contributes to the overall 
-            luxury experience that ATTICARCH is known for.
-          </p>
+      {/* ── GALLERY ── */}
+      <section className="section section-linen pd-gallery-section">
+        <div className="container">
+          <motion.div
+            className="pd-gallery-head"
+            variants={fade}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <div>
+              <span className="pd-label">Visual Tour</span>
+              <h2 className="pd-gallery-head__title">The Full Gallery</h2>
+            </div>
+            <span className="pd-gallery-head__hint">Click any image to expand</span>
+          </motion.div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 40 }}>
-            {projects.filter(p => p.id !== project.id).slice(0, 4).map(p => (
-              <div key={p.id} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                <img src={p.image} alt={p.title} style={{ width: '100%', height: 250, objectFit: 'cover' }} loading="lazy" />
-              </div>
+          <div className="pd-gallery">
+            {gallery.map((img, i) => (
+              <motion.button
+                key={i}
+                className={`pd-gallery__item ${i % 7 === 0 ? 'pd-gallery__item--wide' : ''} ${i % 5 === 2 ? 'pd-gallery__item--tall' : ''}`}
+                onClick={() => setLightbox(i)}
+                initial={{ opacity: 0, scale: 0.94 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.6, delay: (i % 4) * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <SmartImage src={img} alt={`${project.title} — view ${i + 1}`} />
+                <span className="pd-gallery__num text-mono">{String(i + 1).padStart(2, '0')}</span>
+              </motion.button>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="section section-dark" style={{ textAlign: 'center' }}>
+      {/* ── NEXT PROJECT ── */}
+      <Link to={`/project/${nextProject.id}`} className="pd-next">
+        <SmartImage src={nextProject.image} alt={nextProject.title} tone="dark" className="pd-next__bg" />
+        <div className="pd-next__grad" />
+        <div className="container pd-next__content">
+          <span className="pd-label">Next Project</span>
+          <h2 className="pd-next__title">{nextProject.title}</h2>
+          <span className="pd-next__cta">View Project <ArrowRight size={18} /></span>
+        </div>
+      </Link>
+
+      {/* ── CTA ── */}
+      <section className="section section-dark pd-cta">
         <div className="container">
-          <h2 className="text-display" style={{ fontSize: 'var(--text-4xl)', color: 'var(--warm-white)' }}>
-            Want Something Similar?
-          </h2>
-          <Link to="/contact-us" className="btn btn-primary" style={{ marginTop: 24 }}>Book Consultation</Link>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="pd-cta__title">Want Something Like This?</h2>
+            <p className="pd-cta__sub">Let’s craft a space that tells your story.</p>
+            <Link to="/contact-us" className="btn btn-primary">Book a Consultation <ArrowRight size={16} /></Link>
+          </motion.div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {lightbox !== null && (
+          <ProjectLightbox project={project} startIndex={lightbox} onClose={() => setLightbox(null)} />
+        )}
+      </AnimatePresence>
     </motion.main>
   )
 }

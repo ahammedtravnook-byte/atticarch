@@ -1,28 +1,58 @@
-import heroLiving from '../assets/images/hero-living.png'
-import kitchen from '../assets/images/kitchen.png'
-import bedroom from '../assets/images/bedroom.png'
-import villa from '../assets/images/villa.png'
-import apartment from '../assets/images/apartment.png'
-import commercial from '../assets/images/commercial.png'
-import foyer from '../assets/images/foyer.png'
-import dining from '../assets/images/dining.png'
-import bathroom from '../assets/images/bathroom.png'
+/* ──────────────────────────────────────────────
+   REAL PROJECT IMAGERY
+   All photos live in src/assets/projects/<Project>/
+   and are optimized to .webp by `npm run optimize`.
+────────────────────────────────────────────── */
+const globbed = import.meta.glob('../assets/projects/**/*.webp', { eager: true, import: 'default' })
 
-export const projects = [
-  { id: 1, title: '4BHK @ SNN Clermont', category: 'apartments', location: 'Bangalore', size: '2400 sq.ft', image: apartment, year: '2024', description: 'A contemporary 4BHK apartment with warm wood tones, designer lighting, and seamless open-plan living.' },
-  { id: 2, title: '4BHK Villa in Bangalore', category: 'villas', location: 'Whitefield, Bangalore', size: '3800 sq.ft', image: villa, year: '2024', description: 'Sprawling luxury villa with bespoke interiors, private garden, and premium Italian marble throughout.' },
-  { id: 3, title: '3BHK @ Rohan Upvan', category: 'apartments', location: 'Hennur, Bangalore', size: '1800 sq.ft', image: heroLiving, year: '2023', description: 'Elegant 3BHK with minimalist design language, smart home integration, and custom joinery.' },
-  { id: 4, title: '3BHK @ Prestige Lakeside Habitat', category: 'apartments', location: 'Varthur, Bangalore', size: '2100 sq.ft', image: kitchen, year: '2023', description: 'Lake-facing apartment with floor-to-ceiling windows, premium kitchen, and spa-inspired bathrooms.' },
-  { id: 5, title: '4BHK @ SNN Raj Eternia', category: 'apartments', location: 'Bilekahalli, Bangalore', size: '2600 sq.ft', image: bedroom, year: '2023', description: 'Luxury apartment with master suite, walk-in wardrobes, and designer lighting throughout.' },
-  { id: 6, title: 'Corporate Office Interiors', category: 'commercial', location: 'MG Road, Bangalore', size: '5000 sq.ft', image: commercial, year: '2024', description: 'Modern executive workspace with collaborative zones, premium boardroom, and biophilic design.' },
-  { id: 7, title: '4BHK Villa @ Prestige Lakeside', category: 'villas', location: 'Varthur, Bangalore', size: '4200 sq.ft', image: villa, year: '2022', description: 'Exclusive villa with private pool, landscaped garden, and bespoke interior finishes.' },
-  { id: 8, title: 'Renovation @ Koramangala', category: 'renovation', location: 'Koramangala, Bangalore', size: '1600 sq.ft', image: foyer, year: '2024', description: 'Complete home renovation transforming a dated apartment into a contemporary luxury living space.' },
+const natSort = (a, b) => a.localeCompare(b, undefined, { numeric: true })
+
+const imagesFor = (folder) =>
+  Object.keys(globbed)
+    .filter((k) => k.includes(`/${folder}/`))
+    .sort(natSort)
+    .map((k) => globbed[k])
+
+/* Flat pool of every photo — used to scatter real imagery across the site */
+export const allImages = Object.keys(globbed).sort(natSort).map((k) => globbed[k])
+
+/* deterministic shuffle so layouts stay stable between renders */
+const shuffled = (() => {
+  const a = [...allImages]
+  let seed = 7
+  for (let i = a.length - 1; i > 0; i--) {
+    seed = (seed * 9301 + 49297) % 233280
+    const j = Math.floor((seed / 233280) * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+})()
+export const pickImages = (count, offset = 0) =>
+  Array.from({ length: count }, (_, i) => shuffled[(offset + i) % shuffled.length])
+
+/* ── Projects (portfolio) ── */
+const projectDefs = [
+  { id: '42-mark-3-villament', title: '42 Mark 3 Villament', category: 'villas', location: 'Bangalore', folder: '42 Mark 3 Villament', year: '2024', description: 'A contemporary luxury villament with warm wood tones, designer lighting and seamless open-plan living.' },
+  { id: 'assetz-marq', title: 'Assetz Marq', category: 'apartments', location: 'Whitefield, Bangalore', folder: 'Assetz Marq - Kranti & Deepti', year: '2024', description: 'A refined apartment for Kranti & Deepti — minimalist palettes, custom joinery and layered lighting.' },
+  { id: 'brigade-utopia', title: 'Brigade Utopia', category: 'apartments', location: 'Varthur, Bangalore', folder: 'Brigade Utopia - Moumita', year: '2024', description: 'Moumita’s home — a calm, contemporary apartment with bespoke storage and elegant finishes.' },
+  { id: 'gm-infinite', title: 'GM Infinite', category: 'apartments', location: 'Bangalore', folder: 'GM Infinite - Priyankar and Pallavi', year: '2024', description: 'A modern, elegant apartment for Priyankar & Pallavi with smart space planning throughout.' },
+  { id: 'greenfield-villa', title: 'Greenfield Villa', category: 'villas', location: 'Bangalore', folder: 'Greenfield Villa - Gabriel and Blessie', year: '2024', description: 'A sprawling luxury villa for Gabriel & Blessie with bespoke interiors and premium materials.' },
+  { id: 'post-and-toast', title: 'Post & Toast', category: 'commercial', location: 'Bangalore', folder: 'Post and Toast', year: '2024', description: 'A high-impact commercial space designed for atmosphere, flow and a memorable guest experience.' },
+  { id: 'snn-clermont-jay', title: 'SNN Clermont — Jay & Sushma', category: 'apartments', location: 'Bilekahalli, Bangalore', folder: 'SNN Clermont Jay & Sushma', year: '2024', description: 'A contemporary luxury apartment for Jay & Sushma with a warm, inviting material story.' },
+  { id: 'snn-clermont-vijayee', title: 'SNN Clermont — Vijayee', category: 'apartments', location: 'Bilekahalli, Bangalore', folder: 'SNN Clermont Vijayee', year: '2024', description: 'A modern apartment interior with clean lines, designer lighting and custom wardrobes.' },
+  { id: 'sobha-royal', title: 'Sobha Royal Pavilion', category: 'apartments', location: 'Bangalore', folder: 'Sobha Royal Pavilion - Amit and Neetoo', year: '2024', description: 'An elegant luxury apartment for Amit & Neetoo — refined, timeless and beautifully detailed.' },
+  { id: 'sobha-sentosa', title: 'Sobha Sentosa', category: 'apartments', location: 'Bangalore', folder: 'Sobha Sentosa - Arpit and Shikha', year: '2024', description: 'Arpit & Shikha’s home — a luxury apartment balancing comfort with sophisticated design.' },
 ]
 
+export const projects = projectDefs.map((p) => {
+  const images = imagesFor(p.folder)
+  return { ...p, images, image: images[0] || allImages[0], size: 'Premium' }
+})
+
 export const upcomingProjects = [
-  { id: 1, title: '5BHK Penthouse @ Brigade Gateway', location: 'Rajajinagar', size: '5500 sq.ft', status: 'Design Phase', progress: 35, image: heroLiving },
-  { id: 2, title: 'Luxury Villa @ Total Environment', location: 'Whitefield', size: '6000 sq.ft', status: 'Concept Creation', progress: 20, image: villa },
-  { id: 3, title: 'Commercial Showroom', location: 'Indiranagar', size: '3000 sq.ft', status: 'Execution', progress: 70, image: commercial },
+  { id: 1, title: '5BHK Penthouse @ Brigade Gateway', location: 'Rajajinagar', size: '5500 sq.ft', status: 'Design Phase', progress: 35, image: pickImages(1, 11)[0] },
+  { id: 2, title: 'Luxury Villa @ Total Environment', location: 'Whitefield', size: '6000 sq.ft', status: 'Concept Creation', progress: 20, image: pickImages(1, 23)[0] },
+  { id: 3, title: 'Commercial Showroom', location: 'Indiranagar', size: '3000 sq.ft', status: 'Execution', progress: 70, image: pickImages(1, 41)[0] },
 ]
 
 export const services = [
@@ -32,7 +62,7 @@ export const services = [
     subtitle: 'Your Dream Home, Crafted',
     description: 'From cosy apartments to sprawling villas, we design stunning homes tailored to your lifestyle. Full turnkey execution with a 10-Year Warranty on all work. Interiors starting from ₹10 Lacs.',
     features: ['Space Planning & Layout', 'Custom Wardrobe & Storage', 'Modular Kitchen Design', 'False Ceiling & Lighting', 'Flooring & Civil Work', 'Electrical & Plumbing'],
-    image: heroLiving,
+    image: pickImages(1, 3)[0],
   },
   {
     id: 'commercial',
@@ -40,7 +70,7 @@ export const services = [
     subtitle: 'Inspiring Workspaces',
     description: 'We design high-impact commercial interiors — offices, showrooms, restaurants, and retail spaces — that reflect your brand identity and elevate the client experience.',
     features: ['Office & Workspace Design', 'Retail & Showroom Interiors', 'Restaurant & Hospitality', 'Brand-Aligned Design', 'MEP Coordination', 'Turnkey Execution'],
-    image: commercial,
+    image: imagesFor('Post and Toast')[0] || pickImages(1, 9)[0],
   },
   {
     id: 'renovation',
@@ -48,7 +78,7 @@ export const services = [
     subtitle: 'Transform, Refresh, Elevate',
     description: 'Breathe new life into your existing space. From a single room refresh to a complete home makeover — we deliver remarkable transformations, on time and within budget.',
     features: ['Complete Home Renovation', 'Room-wise Makeovers', 'Kitchen & Bath Upgrades', 'Flooring & Ceiling Refresh', 'Civil & Plumbing', 'Electrical & Lighting'],
-    image: foyer,
+    image: pickImages(1, 17)[0],
   },
 ]
 
@@ -66,34 +96,35 @@ export const partners = [
 ]
 
 export const rooms = [
-  { slug: 'kitchen-interior-designers', title: 'Kitchen', subtitle: 'The Heart of Your Home', image: kitchen, description: 'Modular and custom kitchen designs featuring premium materials, smart storage solutions, and world-class appliances integration.' },
-  { slug: 'living-room', title: 'Living Room', subtitle: 'Where Life Happens', image: heroLiving, description: 'Expansive living spaces designed for comfort and elegance, with custom furniture, ambient lighting, and artistic elements.' },
-  { slug: 'bedrooms', title: 'Bedrooms', subtitle: 'Your Personal Sanctuary', image: bedroom, description: 'Serene bedroom designs with premium fabrics, walk-in wardrobes, and spa-inspired ensuite bathrooms.' },
-  { slug: 'foyer', title: 'Foyer', subtitle: 'First Impressions Matter', image: foyer, description: 'Grand entrance designs that set the tone for your entire home with statement lighting and premium finishes.' },
-  { slug: 'dining-room', title: 'Dining Room', subtitle: 'Gather & Celebrate', image: dining, description: 'Elegant dining spaces designed for intimate dinners and grand celebrations, with bespoke furniture and lighting.' },
-  { slug: 'kids-bedroom', title: 'Kids Bedroom', subtitle: 'Imagination Unleashed', image: bedroom, description: 'Creative and functional kids rooms that grow with your child, featuring smart storage and playful design elements.' },
-  { slug: 'bathrooms', title: 'Bathrooms', subtitle: 'Spa at Home', image: bathroom, description: 'Luxurious bathroom designs with premium fixtures, natural stone, and spa-inspired layouts for ultimate relaxation.' },
-  { slug: 'balcony', title: 'Balcony', subtitle: 'Outdoor Living', image: villa, description: 'Transform your balcony into a serene retreat with custom landscaping, comfortable seating, and ambient lighting.' },
+  { slug: 'kitchen-interior-designers', title: 'Kitchen', subtitle: 'The Heart of Your Home', image: pickImages(1, 0)[0], description: 'Modular and custom kitchen designs featuring premium materials, smart storage solutions, and world-class appliance integration.' },
+  { slug: 'living-room', title: 'Living Room', subtitle: 'Where Life Happens', image: pickImages(1, 6)[0], description: 'Expansive living spaces designed for comfort and elegance, with custom furniture, ambient lighting, and artistic elements.' },
+  { slug: 'bedrooms', title: 'Bedrooms', subtitle: 'Your Personal Sanctuary', image: pickImages(1, 13)[0], description: 'Serene bedroom designs with premium fabrics, walk-in wardrobes, and spa-inspired ensuite bathrooms.' },
+  { slug: 'foyer', title: 'Foyer', subtitle: 'First Impressions Matter', image: pickImages(1, 20)[0], description: 'Grand entrance designs that set the tone for your entire home with statement lighting and premium finishes.' },
+  { slug: 'dining-room', title: 'Dining Room', subtitle: 'Gather & Celebrate', image: pickImages(1, 27)[0], description: 'Elegant dining spaces designed for intimate dinners and grand celebrations, with bespoke furniture and lighting.' },
+  { slug: 'kids-bedroom', title: 'Kids Bedroom', subtitle: 'Imagination Unleashed', image: pickImages(1, 34)[0], description: 'Creative and functional kids rooms that grow with your child, featuring smart storage and playful design elements.' },
+  { slug: 'bathrooms', title: 'Bathrooms', subtitle: 'Spa at Home', image: pickImages(1, 48)[0], description: 'Luxurious bathroom designs with premium fixtures, natural stone, and spa-inspired layouts for ultimate relaxation.' },
+  { slug: 'balcony', title: 'Balcony', subtitle: 'Outdoor Living', image: pickImages(1, 55)[0], description: 'Transform your balcony into a serene retreat with custom landscaping, comfortable seating, and ambient lighting.' },
 ]
 
 export const testimonials = [
-  { id: 1, name: 'Rajesh Kumar', project: '4BHK @ SNN Clermont', text: 'ATTICARCH transformed our apartment into a dream home. The attention to detail and quality of execution was exceptional. Every corner tells a story of luxury and comfort.', rating: 5 },
-  { id: 2, name: 'Priya Sharma', project: '3BHK @ Prestige Lakeside', text: 'Working with ATTICARCH was a delightful experience. They understood our vision perfectly and delivered beyond our expectations. The design is both beautiful and functional.', rating: 5 },
-  { id: 3, name: 'Arun Menon', project: 'Villa in Whitefield', text: 'From concept to completion, the team was professional and creative. Our villa looks like it belongs in an architectural magazine. Highly recommend their services!', rating: 5 },
-  { id: 4, name: 'Sneha Patel', project: 'Corporate Office', text: 'ATTICARCH designed our office space and the result has boosted team morale and productivity. The design perfectly balances aesthetics with functionality.', rating: 5 },
+  { id: 1, name: 'Rajesh Kumar', project: 'SNN Clermont', text: 'ATTICARCH transformed our apartment into a dream home. The attention to detail and quality of execution was exceptional. Every corner tells a story of luxury and comfort.', rating: 5 },
+  { id: 2, name: 'Priya Sharma', project: 'Sobha Royal Pavilion', text: 'Working with ATTICARCH was a delightful experience. They understood our vision perfectly and delivered beyond our expectations. The design is both beautiful and functional.', rating: 5 },
+  { id: 3, name: 'Arun Menon', project: 'Greenfield Villa', text: 'From concept to completion, the team was professional and creative. Our villa looks like it belongs in an architectural magazine. Highly recommend their services!', rating: 5 },
+  { id: 4, name: 'Sneha Patel', project: 'Post & Toast', text: 'ATTICARCH designed our commercial space and the result has elevated the entire guest experience. The design perfectly balances aesthetics with functionality.', rating: 5 },
 ]
 
 export const blogPosts = [
-  { id: 1, slug: 'winter-ready-homes', title: 'A Guide to Winter-Ready Homes in Bangalore', excerpt: 'As the pleasant Bangalore weather takes a winter turn, ensure your home is ready to embrace the cool breeze.', date: 'Jan 2024', image: heroLiving, category: 'Tips' },
-  { id: 2, slug: 'office-interior-designers', title: 'Why Choose Atticarch for Your Dream Workspace', excerpt: 'The workplace is more than just a physical space; it influences creativity, collaboration, and productivity.', date: 'Dec 2023', image: commercial, category: 'Commercial' },
-  { id: 3, slug: 'scenic-views-interior-design', title: "Utilizing Bangalore's Scenic Views in Interior Design", excerpt: 'Interior design takes on a new dimension, blending modern aesthetics with breathtaking scenic views.', date: 'Nov 2023', image: apartment, category: 'Design' },
+  { id: 1, slug: 'winter-ready-homes', title: 'A Guide to Winter-Ready Homes in Bangalore', excerpt: 'As the pleasant Bangalore weather takes a winter turn, ensure your home is ready to embrace the cool breeze.', date: 'Jan 2024', image: pickImages(1, 2)[0], category: 'Tips' },
+  { id: 2, slug: 'office-interior-designers', title: 'Why Choose Atticarch for Your Dream Workspace', excerpt: 'The workplace is more than just a physical space; it influences creativity, collaboration, and productivity.', date: 'Dec 2023', image: pickImages(1, 38)[0], category: 'Commercial' },
+  { id: 3, slug: 'scenic-views-interior-design', title: "Utilizing Bangalore's Scenic Views in Interior Design", excerpt: 'Interior design takes on a new dimension, blending modern aesthetics with breathtaking scenic views.', date: 'Nov 2023', image: pickImages(1, 52)[0], category: 'Design' },
 ]
 
-export const stats = [
-  { number: '22+', label: 'Years Experience' },
-  { number: '500+', label: 'Projects Delivered' },
-  { number: '100%', label: 'Client Satisfaction' },
-  { number: '50+', label: 'Design Awards' },
+/* Real, defensible value propositions — no fabricated counts */
+export const valueProps = [
+  { value: 'Est. 2002', label: 'Bangalore Studio' },
+  { value: '10-Year', label: 'Workmanship Warranty' },
+  { value: 'Turnkey', label: 'End-to-End Execution' },
+  { value: '₹10L+', label: 'Bespoke Interiors' },
 ]
 
 export const processSteps = [
