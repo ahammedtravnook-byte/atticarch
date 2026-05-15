@@ -117,8 +117,9 @@ export default function Contact() {
                         <option>Apartment Interior</option>
                         <option>Villa Interior</option>
                         <option>Commercial Interior</option>
-                        <option>Renovation</option>
-                        <option>Architectural Consultation</option>
+                        <option>Renovation & Refurbishment</option>
+                        <option>Modular Kitchen / Wardrobes</option>
+                        <option>Other</option>
                       </select>
                     </div>
                     <div>

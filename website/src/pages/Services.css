@@ -74,6 +74,28 @@
   margin: 0 0 36px;
 }
 
+/* hero pricing/warranty badges */
+.svc-hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0 32px;
+}
+.svc-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(201, 169, 110, 0.1);
+  border: 1px solid rgba(201, 169, 110, 0.28);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+}
+.svc-hero-badge svg { color: var(--gold); flex-shrink: 0; }
+.svc-hero-badge strong { color: var(--gold-light, #e8d4a8); font-weight: 700; }
+
 .svc-hero__tags {
   display: flex;
   flex-wrap: wrap;
@@ -250,6 +272,102 @@
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 3px;
+}
+
+/* ── SCOPE OF WORK ── */
+.svc-scope {
+  padding: 110px 0;
+  background: linear-gradient(180deg, var(--warm-white, #faf6f0) 0%, var(--linen, #f3ece1) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.svc-scope::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,169,110,0.2), transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+.svc-scope__head {
+  text-align: center;
+  margin-bottom: 56px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+}
+.svc-scope__title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--charcoal);
+  line-height: 1.15;
+  margin: 8px 0 16px;
+  letter-spacing: -0.02em;
+}
+.svc-scope__sub {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ash);
+}
+
+.svc-scope__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  position: relative;
+}
+
+.svc-scope__chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(26, 22, 18, 0.04);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease,
+              box-shadow 0.4s ease;
+  cursor: default;
+}
+.svc-scope__chip:hover {
+  transform: translateY(-4px);
+  border-color: rgba(201, 169, 110, 0.4);
+  box-shadow: 0 20px 36px rgba(26, 22, 18, 0.08);
+}
+
+.svc-scope__chip-num {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  font-weight: 700;
+  padding: 4px 8px;
+  background: rgba(201, 169, 110, 0.1);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.svc-scope__chip-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+@media (max-width: 900px) {
+  .svc-scope { padding: 80px 0; }
+  .svc-scope__grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .svc-scope__grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .svc-scope__chip { padding: 14px 14px; }
+  .svc-scope__chip-name { font-size: 12.5px; }
 }
 
 /* ── WORK SHOWCASE MARQUEE ── */

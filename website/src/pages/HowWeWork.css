@@ -131,11 +131,11 @@
   padding: 44px 0;
 }
 
-.hww-step__text { padding-right: 56px; }
-.hww-step__media { padding-left: 56px; }
+.hww-step__text { order: 1; padding-right: 56px; }
+.hww-step__node { order: 2; }
+.hww-step__media { order: 3; padding-left: 56px; }
 .hww-step--alt .hww-step__text { order: 3; padding-right: 0; padding-left: 56px; }
 .hww-step--alt .hww-step__media { order: 1; padding-left: 0; padding-right: 56px; }
-.hww-step__node { order: 2; }
 
 .hww-step__num {
   display: block;

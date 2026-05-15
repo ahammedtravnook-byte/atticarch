@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { ArrowUpRight, ArrowRight, Star, ChevronLeft, ChevronRight, Quote, Play, Check } from 'lucide-react'
+import { ArrowUpRight, ArrowRight, Star, ChevronLeft, ChevronRight, Quote, Play, Check, ShieldCheck, Wallet, Package } from 'lucide-react'
 
 /* brand SVGs — lucide doesn't include these */
 const IconYoutube = ({ size = 16, ...p }) => (
@@ -19,7 +19,7 @@ const IconInstagram = ({ size = 16, ...p }) => (
 )
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { projects, upcomingProjects, services, rooms, testimonials, valueProps, processSteps, blogPosts, workTypes, partners, allImages, pickImages } from '../data/siteData'
+import { projects, services, rooms, testimonials, valueProps, processSteps, blogPosts, workTypes, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
 import ProjectLightbox from '../components/ui/ProjectLightbox'
 import SmartImage from '../components/ui/SmartImage'
 import './Home.css'
@@ -40,14 +40,25 @@ const YT_CATALOG = [
   { id: 'yvptQo71mnw', title: '3BHK Apartment Tour — Prestige Song of the South' },
 ]
 const ALL_IMGS = allImages
-const PROCESS_IMGS = pickImages(6, 30)
+/* Non-overlapping offset map — every section on the Home page consumes
+   a unique slice of the shuffled image pool so the same image never
+   appears in two sections at once.
+     0-39   → ROOM_IMGS  (8 rooms × 5)
+     40-45  → PROCESS_IMGS (6)
+     46-50  → SVC residential
+     51-55  → SVC commercial
+     56-60  → SVC renovation
+     61-72  → INSTA (12)
+     77-79  → blogPosts (in siteData)
+     84-87  → About mosaic (4, see AboutMosaic component below)           */
 const ROOM_IMGS = Object.fromEntries(rooms.map((r, i) => [r.slug, pickImages(5, i * 5)]))
+const PROCESS_IMGS = pickImages(6, 40)
 const SVC_IMGS = {
-  residential: pickImages(5, 3),
-  commercial: pickImages(5, 64),
-  renovation: pickImages(5, 17),
+  residential: pickImages(5, 46),
+  commercial: pickImages(5, 51),
+  renovation: pickImages(5, 56),
 }
-const INSTA_IMGS = pickImages(12, 70)
+const INSTA_IMGS = pickImages(12, 61)
 
 /* ─────────────────────────────────────────
    UTILITY COMPONENTS
@@ -262,7 +273,7 @@ function HeroParallax() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 1.15 }}>
               <Link to="/contact-us" className="btn btn-primary hero__cta-primary">
-                Start Your Project <ArrowUpRight size={18} />
+                Free Consultation <ArrowUpRight size={18} />
               </Link>
               <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">
                 Explore Portfolio
@@ -290,10 +301,6 @@ function HeroParallax() {
                 />
               </AnimatePresence>
               <div className="hero__preview-border" />
-              <div className="hero__preview-label">
-                <span className="hero__preview-dot" />
-                Latest Project
-              </div>
             </div>
 
             {/* Value props grid */}
@@ -385,6 +392,70 @@ function HeroParallax() {
    Expanding horizontal strips — hover/click
    any strip to expand it with cycling images
 ───────────────────────────────────────── */
+
+function RoomCarouselMobile() {
+  const [active, setActive] = useState(0)
+  const scrollerRef = useRef(null)
+
+  const handleScroll = () => {
+    const el = scrollerRef.current
+    if (!el) return
+    const idx = Math.round(el.scrollLeft / el.clientWidth)
+    if (idx !== active) setActive(idx)
+  }
+
+  const goTo = (i) => {
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' })
+  }
+
+  return (
+    <Reveal>
+      <div className="room-mobile-wrap">
+        <div className="room-mobile-scroller" ref={scrollerRef} onScroll={handleScroll}>
+          {rooms.map((room, i) => {
+            const images = ROOM_IMGS[room.slug] || [room.image]
+            return (
+              <div key={room.slug} className="room-mobile-card">
+                <ImageCycler
+                  images={images}
+                  interval={3000}
+                  style={{ position: 'absolute', inset: 0 }}
+                />
+                <div className="room-mobile-grad" />
+                <div className="room-mobile-index">{String(i + 1).padStart(2, '0')} / {String(rooms.length).padStart(2, '0')}</div>
+                <div className="room-mobile-body">
+                  <p className="room-mobile-sub">{room.subtitle}</p>
+                  <h3 className="room-mobile-title">{room.title}</h3>
+                  <p className="room-mobile-desc">{room.description}</p>
+                  <Link to={`/${room.slug}`} className="room-mobile-btn">
+                    Explore Space <ArrowUpRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="room-mobile-dots">
+          {rooms.map((r, i) => (
+            <button
+              key={r.slug}
+              className={`room-mobile-dot ${i === active ? 'active' : ''}`}
+              onClick={() => goTo(i)}
+              aria-label={`Go to ${r.title}`}
+            />
+          ))}
+        </div>
+
+        <div className="room-mobile-hint">
+          <ChevronLeft size={14} /> <span>Swipe to explore</span> <ChevronRight size={14} />
+        </div>
+      </div>
+    </Reveal>
+  )
+}
 
 function RoomAccordion() {
   const [active, setActive] = useState(0)
@@ -518,6 +589,26 @@ function ServiceCard({ service, images }) {
   )
 }
 
+function ServiceCardMobile({ service, images, index }) {
+  return (
+    <Link to="/services" className="svc-mob-card">
+      <div className="svc-mob-card__media">
+        <ImageCycler images={images} interval={3200} style={{ position: 'absolute', inset: 0 }} />
+        <div className="svc-mob-card__media-grad" />
+        <span className="svc-mob-card__num text-mono">{String(index + 1).padStart(2, '0')}</span>
+      </div>
+      <div className="svc-mob-card__body">
+        <span className="svc-mob-card__sub">{service.subtitle}</span>
+        <h3 className="svc-mob-card__title">{service.title}</h3>
+        <p className="svc-mob-card__desc">{service.description}</p>
+        <span className="svc-mob-card__cta">
+          Learn More <ArrowRight size={13} />
+        </span>
+      </div>
+    </Link>
+  )
+}
+
 /* ─────────────────────────────────────────
    PROCESS — ZIGZAG ALTERNATING LAYOUT
    Steps alternate: text-left/image-right,
@@ -540,6 +631,22 @@ const STEP_PERKS = [
   ['Premium on-site craftsmanship', 'Weekly progress reports', 'Quality checkpoints'],
   ['Final client walkthrough', 'Snag rectification', '3-Month post-delivery warranty'],
 ]
+
+function HwwImage({ src, alt }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <>
+      {!loaded && <div className="hww-skeleton" aria-hidden="true" />}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
+      />
+    </>
+  )
+}
 
 function HowWeWork() {
   const [active, setActive] = useState(0)
@@ -654,7 +761,7 @@ function HowWeWork() {
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 className="hww-img"
               >
-                <img src={img} alt={step.title} />
+                <HwwImage src={img} alt={step.title} />
                 <div className="hww-img-overlay" />
                 <div className="hww-img-footer">
                   <span className="text-mono" style={{ color: 'var(--gold)', fontSize: 12 }}>
@@ -845,7 +952,8 @@ export default function Home() {
               </span>
             </div>
           </Reveal>
-          <RoomAccordion />
+          <div className="rooms-desktop"><RoomAccordion /></div>
+          <div className="rooms-mobile"><RoomCarouselMobile /></div>
         </div>
       </section>
 
@@ -889,15 +997,40 @@ export default function Home() {
       <section className="section services-section">
         <div className="container">
           <Reveal>
-            <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div className="svc-section-head">
               <span className="section-label" style={{ justifyContent: 'center' }}>What We Do</span>
               <h2 className="section-title">Our Core Services</h2>
+              <p className="svc-section-sub">
+                Three focused practices — one accountable team. Every project covers civil, electrical,
+                plumbing, joinery and finishes under a single 10-Year Workmanship Warranty.
+              </p>
+              <div className="svc-section-badges">
+                <div className="svc-section-badge">
+                  <ShieldCheck size={15} />
+                  <span><strong>10-Year</strong> Warranty</span>
+                </div>
+                <div className="svc-section-badge">
+                  <Wallet size={15} />
+                  <span>Starting from <strong>₹10 Lacs</strong></span>
+                </div>
+                <div className="svc-section-badge">
+                  <Package size={15} />
+                  <span><strong>Turnkey</strong> Execution</span>
+                </div>
+              </div>
             </div>
           </Reveal>
-          <div className="svc-grid">
+          <div className="svc-grid svc-grid--desktop">
             {services.map((svc, i) => (
               <Reveal key={svc.id} delay={i * 0.12}>
                 <ServiceCard service={svc} images={SVC_IMGS[svc.id] || ALL_IMGS.slice(0, 5)} />
+              </Reveal>
+            ))}
+          </div>
+          <div className="svc-mob-stack">
+            {services.map((svc, i) => (
+              <Reveal key={svc.id} delay={i * 0.08}>
+                <ServiceCardMobile service={svc} images={SVC_IMGS[svc.id] || ALL_IMGS.slice(0, 5)} index={i} />
               </Reveal>
             ))}
           </div>
@@ -999,42 +1132,6 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════
-          UPCOMING PROJECTS
-      ══════════════════════════════════════════ */}
-      <section className="section section-linen upcoming-section">
-        <div className="container">
-          <Reveal>
-            <span className="section-label">Coming Soon</span>
-            <h2 className="section-title">Upcoming Projects</h2>
-          </Reveal>
-          <div className="upcoming-grid">
-            {upcomingProjects.map((project, i) => (
-              <Reveal key={project.id} delay={i * 0.15}>
-                <div className="upcoming-card">
-                  <div className="upcoming-card__image">
-                    <SmartImage src={project.image} alt={project.title} />
-                    <span className="upcoming-card__badge text-accent">{project.status}</span>
-                  </div>
-                  <div className="upcoming-card__content">
-                    <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)' }}>{project.title}</h3>
-                    <p style={{ color: 'var(--ash)', fontSize: 13, marginTop: 4 }}>{project.location} • {project.size}</p>
-                    <div className="upcoming-card__progress">
-                      <div className="upcoming-card__progress-bar">
-                        <motion.div className="upcoming-card__progress-fill"
-                          initial={{ width: 0 }} whileInView={{ width: `${project.progress}%` }}
-                          viewport={{ once: true }} transition={{ duration: 1.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }} />
-                      </div>
-                      <span className="text-mono" style={{ fontSize: 12, color: 'var(--gold)' }}>{project.progress}%</span>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════
           TESTIMONIALS — QUOTE STAGE
       ══════════════════════════════════════════ */}
       <TestimonialsStage />
@@ -1052,9 +1149,18 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.1}>
             <div className="partners-marquee-wrap">
-              {[...partners, ...partners].map((p, i) => (
-                <div key={i} className="partner-chip">{p}</div>
-              ))}
+              {[...partners, ...partners].map((p, i) => {
+                const logo = partnerLogo(p.slug)
+                return (
+                  <div key={i} className="partner-chip" title={p.name}>
+                    {logo ? (
+                      <img src={logo} alt={p.name} loading="lazy" />
+                    ) : (
+                      <span>{p.name}</span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </Reveal>
         </div>
@@ -1077,9 +1183,9 @@ export default function Home() {
             </div>
           </Reveal>
           <div className="yt-grid">
-            {YT_CATALOG.map((v, i) => (
+            {YT_CATALOG.slice(0, 6).map((v, i) => (
               <Reveal key={v.id} delay={i * 0.07}>
-                <YouTubeCard video={v} featured={i === 0} />
+                <YouTubeCard video={v} featured={false} />
               </Reveal>
             ))}
           </div>
@@ -1113,51 +1219,82 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════
-          BLOG — MAGAZINE LAYOUT
+          BLOG — EDITORIAL MAGAZINE GRID
       ══════════════════════════════════════════ */}
       <section className="section blog-section">
+        <div className="blog-bg-decor" aria-hidden="true">
+          <div className="blog-bg-circle blog-bg-circle--1" />
+          <div className="blog-bg-circle blog-bg-circle--2" />
+        </div>
         <div className="container">
           <Reveal>
-            <div className="section-header-row" style={{ marginBottom: 48 }}>
-              <div>
-                <span className="section-label">Design Journal</span>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>Latest Insights</h2>
+            <div className="blog-header">
+              <div className="blog-header__left">
+                <div className="blog-header__eyebrow">
+                  <span className="blog-header__line" />
+                  <span className="section-label" style={{ margin: 0 }}>Design Journal</span>
+                </div>
+                <h2 className="section-title blog-header__title">
+                  Latest <em>Insights</em>
+                </h2>
+                <p className="blog-header__sub">
+                  Inspiration, expert tips, and stories from our studio — curated for those who love thoughtful design.
+                </p>
               </div>
-              <Link to="/blog" className="btn btn-outline">All Articles <ArrowRight size={16} /></Link>
+              <div className="blog-header__right">
+                <span className="blog-header__count text-mono">
+                  <span style={{ color: 'var(--gold)' }}>{String(blogPosts.length).padStart(2, '0')}</span>
+                  <span style={{ color: 'var(--ash)' }}> Articles</span>
+                </span>
+                <Link to="/blog" className="btn btn-outline blog-header__cta">
+                  View All <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
           </Reveal>
-          <div className="blog-magazine">
-            {blogPosts[0] && (
-              <Reveal className="blog-featured-wrap">
-                <Link to={`/blog/${blogPosts[0].slug}`} className="blog-featured">
-                  <SmartImage src={blogPosts[0].image} alt={blogPosts[0].title} className="blog-featured__img" tone="dark" />
-                  <div className="blog-featured__overlay" />
-                  <div className="blog-featured__content">
-                    <span className="blog-tag">{blogPosts[0].category}</span>
-                    <h2 className="blog-featured__title">{blogPosts[0].title}</h2>
-                    <p className="blog-featured__exc">{blogPosts[0].excerpt}</p>
-                    <span className="blog-read-more">Read Article <ArrowRight size={14} /></span>
-                  </div>
-                </Link>
-              </Reveal>
-            )}
-            <div className="blog-sidebar">
-              {blogPosts.slice(1).map((post, i) => (
-                <Reveal key={post.id} delay={i * 0.1}>
-                  <Link to={`/blog/${post.slug}`} className="blog-side-card">
-                    <div className="blog-side-img">
+
+          <div className="blog-editorial">
+            {blogPosts.map((post, i) => {
+              const readTime = Math.max(3, Math.ceil(post.excerpt.length / 20))
+              return (
+                <Reveal key={post.id} delay={i * 0.12}>
+                  <Link to={`/blog/${post.slug}`} className={`blog-mag-card ${i === 0 ? 'blog-mag-card--featured' : ''}`}>
+                    <div className="blog-mag-card__media">
                       <SmartImage src={post.image} alt={post.title} />
+                      <div className="blog-mag-card__media-grad" />
+                      <span className="blog-mag-card__date text-mono">{post.date}</span>
+                      {i === 0 && (
+                        <span className="blog-mag-card__pin">
+                          <span className="blog-mag-card__pin-dot" /> Featured
+                        </span>
+                      )}
+                      <span className="blog-mag-card__readtime">
+                        <span className="blog-mag-card__readtime-clock" />
+                        {readTime} min read
+                      </span>
                     </div>
-                    <div className="blog-side-content">
-                      <span className="blog-tag">{post.category}</span>
-                      <h3>{post.title}</h3>
-                      <p>{post.excerpt}</p>
-                      <span className="blog-read-more">Read Article <ArrowRight size={14} /></span>
+                    <div className="blog-mag-card__body">
+                      <div className="blog-mag-card__meta">
+                        <span className="blog-mag-card__index text-mono">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="blog-mag-card__divider" />
+                        <span className="blog-mag-card__cat">{post.category}</span>
+                      </div>
+                      <h3 className="blog-mag-card__title">{post.title}</h3>
+                      <p className="blog-mag-card__exc">{post.excerpt}</p>
+                      <div className="blog-mag-card__footer">
+                        <span className="blog-mag-card__read">
+                          Read Article
+                          <span className="blog-mag-card__read-arrow">
+                            <ArrowRight size={14} />
+                          </span>
+                        </span>
+                      </div>
                     </div>
+                    <div className="blog-mag-card__accent" />
                   </Link>
                 </Reveal>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       </section>

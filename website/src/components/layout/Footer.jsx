@@ -50,7 +50,9 @@ export default function Footer() {
             <div className="footer__brand">
               <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)', marginBottom: 16, letterSpacing: '0.5px' }}>AtticArch</div>
               <p className="footer__desc">
-                ATTICARCH is a multi-disciplinary Consultancy Firm providing Architectural, Interior Designing and Project Management services since 2002.
+                ATTICARCH is Bangalore's trusted interior design studio since 2002 — delivering turnkey
+                residential, commercial and renovation interiors backed by a 10-Year Workmanship Warranty,
+                starting from ₹10 Lacs.
               </p>
               <div className="footer__social">
                 <a href="https://www.facebook.com/atticarch" target="_blank" rel="noopener noreferrer"><FaFacebook size={18} /></a>
@@ -63,11 +65,12 @@ export default function Footer() {
 
             <div className="footer__col">
               <h4 className="footer__heading">Services</h4>
-              <Link to="/services">Interior Design</Link>
-              <Link to="/services">Project Management</Link>
-              <Link to="/services">Architectural Consultation</Link>
-              <Link to="/services/home-interior-designers">Home Interior</Link>
-              <Link to="/services/luxury-interior-designers">Luxury Interior</Link>
+              <Link to="/services">Residential Interiors</Link>
+              <Link to="/services">Commercial Spaces</Link>
+              <Link to="/services">Renovation & Refurbishment</Link>
+              <Link to="/services">Modular Kitchens</Link>
+              <Link to="/services">Wardrobes & Storage</Link>
+              <Link to="/services">False Ceiling & Lighting</Link>
             </div>
 
             <div className="footer__col">
@@ -75,7 +78,7 @@ export default function Footer() {
               <Link to="/about-us">About Us</Link>
               <Link to="/how-we-work">How We Work</Link>
               <Link to="/blog">Blog</Link>
-              <Link to="/estimate">Estimate Calculator</Link>
+              <Link to="/contact-us">Free Consultation</Link>
               <Link to="/contact-us">Contact Us</Link>
               <Link to="/sitemap">Sitemap</Link>
             </div>

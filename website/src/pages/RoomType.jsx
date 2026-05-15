@@ -46,7 +46,11 @@ export default function RoomType() {
   const room = rooms[roomIndex] || rooms[0]
   const otherRooms = rooms.filter((r) => r.slug !== room.slug).slice(0, 4)
 
-  const gallery = pickImages(9, 4 + roomIndex * 6)
+  /* Gallery offsets sit in 56+ range so they never collide with any
+     room.image static offset (0, 6, 13, 20, 27, 34, 48, 55) — that
+     means neither the hero image nor the "other rooms" thumbnails
+     can duplicate a gallery image on the same page. */
+  const gallery = pickImages(9, 56 + roomIndex * 5)
   const [lightbox, setLightbox] = useState(null)
 
   const lightboxProject = {
@@ -214,8 +218,8 @@ export default function RoomType() {
               <Link to="/contact-us" className="btn btn-primary">
                 Book Free Consultation <ArrowRight size={16} />
               </Link>
-              <Link to="/estimate" className="btn btn-outline rt-cta__outline">
-                Get an Estimate
+              <Link to="/services" className="btn btn-outline rt-cta__outline">
+                Explore Services
               </Link>
             </div>
           </Reveal>

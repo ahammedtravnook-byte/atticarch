@@ -138,7 +138,7 @@ export default function HowWeWork() {
       <section className="section section-dark hww-cta">
         <div className="container">
           <Reveal>
-            <h2 className="hww-cta__title">Start Your Project Today</h2>
+            <h2 className="hww-cta__title">Transform Your Space Today</h2>
             <p className="hww-cta__sub">
               Ready to transform your space? Book a free consultation with our design experts.
             </p>
@@ -146,8 +146,8 @@ export default function HowWeWork() {
               <Link to="/contact-us" className="btn btn-primary">
                 Book Consultation <ArrowRight size={16} />
               </Link>
-              <Link to="/estimate" className="btn btn-outline hww-cta__outline">
-                Get an Estimate
+              <Link to="/services" className="btn btn-outline hww-cta__outline">
+                Explore Services
               </Link>
             </div>
           </Reveal>

@@ -10,7 +10,6 @@ import About from './pages/About'
 import HowWeWork from './pages/HowWeWork'
 import Services from './pages/Services'
 import Contact from './pages/Contact'
-import EstimateCalculator from './pages/EstimateCalculator'
 import ProjectCategory from './pages/ProjectCategory'
 import ProjectDetail from './pages/ProjectDetail'
 import RoomType from './pages/RoomType'
@@ -40,7 +39,6 @@ export default function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/services/:slug" element={<Services />} />
           <Route path="/contact-us" element={<Contact />} />
-          <Route path="/estimate" element={<EstimateCalculator />} />
           <Route path="/project-category/:category" element={<ProjectCategory />} />
           <Route path="/project/:slug" element={<ProjectDetail />} />
           <Route path="/blog" element={<Blog />} />

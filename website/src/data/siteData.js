@@ -16,17 +16,62 @@ const imagesFor = (folder) =>
 /* Flat pool of every photo — used to scatter real imagery across the site */
 export const allImages = Object.keys(globbed).sort(natSort).map((k) => globbed[k])
 
-/* deterministic shuffle so layouts stay stable between renders */
+/* Folder-interleaved deterministic shuffle.
+   Why interleave?  A plain Fisher-Yates shuffle was clustering 3-4 photos
+   from the SAME project folder next to each other, so the Instagram grid
+   and Room cyclers (which read consecutive slices) ended up showing
+   visually identical-looking images.
+   We now:
+     1. Group every photo by its source project folder
+     2. Shuffle WITHIN each folder (deterministic seed)
+     3. Round-robin across folders — position 0 = depth-0 from folder 0,
+        position 1 = depth-0 from folder 1, ..., position 9 = depth-0 from
+        folder 9, position 10 = depth-1 from folder 0, etc.
+   Result: every 10 consecutive items in `shuffled` come from 10 different
+   projects, so any slice of N images on a page is visually diverse.        */
 const shuffled = (() => {
-  const a = [...allImages]
+  const byFolder = {}
+  Object.keys(globbed).forEach((k) => {
+    const m = k.match(/projects\/([^/]+)\//)
+    const folder = m ? m[1] : 'misc'
+    if (!byFolder[folder]) byFolder[folder] = []
+    byFolder[folder].push(globbed[k])
+  })
+
+  const folders = Object.keys(byFolder).sort()
+
+  // Sort each folder's images naturally first, then deterministically shuffle within the folder
   let seed = 7
-  for (let i = a.length - 1; i > 0; i--) {
+  const rand = () => {
     seed = (seed * 9301 + 49297) % 233280
-    const j = Math.floor((seed / 233280) * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
+    return seed / 233280
   }
-  return a
+  for (const f of folders) {
+    byFolder[f].sort(natSort)
+    const arr = byFolder[f]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+  }
+
+  // Round-robin interleave by depth
+  const out = []
+  let depth = 0
+  let added = true
+  while (added) {
+    added = false
+    for (const f of folders) {
+      if (byFolder[f][depth] !== undefined) {
+        out.push(byFolder[f][depth])
+        added = true
+      }
+    }
+    depth++
+  }
+  return out
 })()
+
 export const pickImages = (count, offset = 0) =>
   Array.from({ length: count }, (_, i) => shuffled[(offset + i) % shuffled.length])
 
@@ -89,11 +134,89 @@ export const workTypes = [
   'Kids Bedrooms', 'Home Office', 'Wallpaper & Textures', 'Landscaping',
 ]
 
+/* Trusted brand partners — material & hardware suppliers we work with.
+   Drop logo files into `src/assets/partners/{slug}.{png,jpg,svg,webp}`
+   and they will appear automatically. If a logo isn't present, a stylised
+   text chip is shown as a fallback. */
 export const partners = [
-  'Hettich', 'Hafele', 'Asian Paints', 'Jaquar', 'Kohler',
-  'Duravit', 'Grohe', 'Bosch', 'Dorma', 'Pergo',
-  'Armstrong', 'Saint-Gobain',
+  { name: 'CenturyPly',           slug: 'centuryply',   category: 'Plywood & Laminates' },
+  { name: 'Kitply',               slug: 'kitply',       category: 'Plywood & Boards' },
+  { name: 'Evershine Industries', slug: 'evershine',    category: 'Door Hardware & Locks' },
+  { name: 'Hettich',              slug: 'hettich',      category: 'Hinges & Sliding Systems' },
+  { name: 'Blum',                 slug: 'blum',         category: 'Drawer Slides & Hinges' },
+  { name: 'Saint-Gobain',         slug: 'saint-gobain', category: 'Glass & Insulation' },
+  { name: 'Gyproc',               slug: 'gyproc',       category: 'False Ceiling & Drywall' },
+  { name: 'Asian Paints',         slug: 'asian-paints', category: 'Paints & Finishes' },
+  { name: 'KAFF',                 slug: 'kaff',         category: 'Modular Kitchens & Appliances' },
+  { name: 'Elica',                slug: 'elica',        category: 'Kitchen Hoods & Hobs' },
 ]
+
+/* Auto-load logo files dropped into /assets/partners */
+const partnerLogos = import.meta.glob('../assets/partners/*.{png,jpg,jpeg,svg,webp}', { eager: true, import: 'default' })
+export const partnerLogo = (slug) => {
+  const entry = Object.entries(partnerLogos).find(([k]) => k.toLowerCase().includes(`/${slug}.`))
+  return entry ? entry[1] : null
+}
+
+/* ── Principles, Approach & Team — for About page ── */
+export const principles = [
+  {
+    num: '01',
+    title: 'Quality',
+    desc: 'Maintaining the highest quality standards for every project. Under no circumstance do we compromise on the quality of our deliverables.',
+  },
+  {
+    num: '02',
+    title: 'Timeliness',
+    desc: 'We are committed to delivering the end product with the highest specification and within the defined timelines.',
+  },
+  {
+    num: '03',
+    title: 'Budget',
+    desc: 'Clients have a clear budget in mind. We believe in working within those parameters and delivering the very best within them.',
+  },
+]
+
+export const approachPoints = [
+  'Identifying project objectives — clarifying and building the brief, including timelines and budget',
+  'Space planning and concept design',
+  'Detailed drawings, finishes, colour and material specification',
+  'On-site consultation and liaison with contractors and suppliers',
+  'Final quality control inspections, snagging and remedial action',
+  'Equal attention to aesthetics, functionality and operational drivers',
+]
+
+export const team = [
+  {
+    slug: 'kamlesh-kumar-bhargava',
+    name: 'Kamlesh Kumar Bhargava',
+    role: 'Principal Partner & Head Architect',
+    bio: 'Principal founder of ATTICARCH, Kamlesh is a professional architect (BMS College of Architecture) with over two decades of rich experience across interiors consultancy, execution and design. Since founding ATTICARCH in 2002 he has driven the firm to the heights it has reached today — his strength lies in listening to clients and translating their vision into artistic yet functional spaces.',
+    featured: true,
+  },
+  {
+    slug: 'priyanka-bhargava',
+    name: 'Priyanka Bhargava',
+    role: 'Principal Partner & Head of Marketing & Administration',
+    bio: 'Principal owner of ATTICARCH, Priyanka leads sales & marketing, finance and administration. A software engineer (MS Software, BITS Pilani) with 10+ years in software and management, she brings deep operational expertise and drives the firm’s national visibility.',
+    featured: true,
+  },
+  {
+    slug: 'guna-sekhar',
+    name: 'Guna Sekhar',
+    role: 'Manager — Operations',
+    bio: 'With ATTICARCH from the day we entered residential interiors, Guna handles site operations, vendor coordination and project execution end-to-end. A core team asset, his dedication has been pivotal to smooth completions and on-time handovers.',
+    featured: true,
+  },
+  { slug: 'sruthi-raguraj',  name: 'Sruthi Raguraj',  role: 'Architect' },
+  { slug: 'muhammed-ramshad', name: 'Muhammed Ramshad', role: 'Designer' },
+  { slug: 'sumodh-johnson',  name: 'Sumodh Johnson',  role: 'Senior 3D Designer' },
+  { slug: 'reddy-sekhar',    name: 'Reddy Sekhar',    role: 'Senior Site Supervisor' },
+  { slug: 'samson',          name: 'Samson',          role: 'Site Supervisor' },
+]
+
+export const visionStatement =
+  'We aim to revolutionise interior design with innovative, stunning yet workable design concepts. With our remarkably distinctive style we aspire to be a leading interior design firm in India.'
 
 export const rooms = [
   { slug: 'kitchen-interior-designers', title: 'Kitchen', subtitle: 'The Heart of Your Home', image: pickImages(1, 0)[0], description: 'Modular and custom kitchen designs featuring premium materials, smart storage solutions, and world-class appliance integration.' },
@@ -113,10 +236,12 @@ export const testimonials = [
   { id: 4, name: 'Sneha Patel', project: 'Post & Toast', text: 'ATTICARCH designed our commercial space and the result has elevated the entire guest experience. The design perfectly balances aesthetics with functionality.', rating: 5 },
 ]
 
+/* Blog images use offsets 77-79 — outside every Home page section's image range
+   so the Latest Insights cards never duplicate a room/service/insta image. */
 export const blogPosts = [
-  { id: 1, slug: 'winter-ready-homes', title: 'A Guide to Winter-Ready Homes in Bangalore', excerpt: 'As the pleasant Bangalore weather takes a winter turn, ensure your home is ready to embrace the cool breeze.', date: 'Jan 2024', image: pickImages(1, 2)[0], category: 'Tips' },
-  { id: 2, slug: 'office-interior-designers', title: 'Why Choose Atticarch for Your Dream Workspace', excerpt: 'The workplace is more than just a physical space; it influences creativity, collaboration, and productivity.', date: 'Dec 2023', image: pickImages(1, 38)[0], category: 'Commercial' },
-  { id: 3, slug: 'scenic-views-interior-design', title: "Utilizing Bangalore's Scenic Views in Interior Design", excerpt: 'Interior design takes on a new dimension, blending modern aesthetics with breathtaking scenic views.', date: 'Nov 2023', image: pickImages(1, 52)[0], category: 'Design' },
+  { id: 1, slug: 'winter-ready-homes', title: 'A Guide to Winter-Ready Homes in Bangalore', excerpt: 'As the pleasant Bangalore weather takes a winter turn, ensure your home is ready to embrace the cool breeze.', date: 'Jan 2024', image: pickImages(1, 77)[0], category: 'Tips' },
+  { id: 2, slug: 'office-interior-designers', title: 'Why Choose Atticarch for Your Dream Workspace', excerpt: 'The workplace is more than just a physical space; it influences creativity, collaboration, and productivity.', date: 'Dec 2023', image: pickImages(1, 78)[0], category: 'Commercial' },
+  { id: 3, slug: 'scenic-views-interior-design', title: "Utilizing Bangalore's Scenic Views in Interior Design", excerpt: 'Interior design takes on a new dimension, blending modern aesthetics with breathtaking scenic views.', date: 'Nov 2023', image: pickImages(1, 79)[0], category: 'Design' },
 ]
 
 /* Real, defensible value propositions — no fabricated counts */

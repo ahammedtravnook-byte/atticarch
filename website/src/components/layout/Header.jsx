@@ -15,7 +15,7 @@ const navItems = [
     { label: 'Home Interior', path: '/services/home-interior-designers' },
     { label: 'Luxury Interior', path: '/services/luxury-interior-designers' },
   ]},
-  { label: 'Projects', path: '/project-category/projects-residential', children: [
+  { label: 'Portfolio', path: '/project-category/projects-residential', children: [
     { label: 'Residential', path: '/project-category/projects-residential' },
     { label: 'Apartments', path: '/project-category/projects-apartments' },
     { label: 'Villas', path: '/project-category/projects-villas' },
@@ -93,8 +93,8 @@ export default function Header() {
               <Phone size={16} />
               <span>98450 13138</span>
             </a>
-            <Link to="/estimate" className="btn btn-primary header__cta hide-mobile">
-              Get Estimate
+            <Link to="/contact-us" className="btn btn-primary header__cta hide-mobile">
+              Free Consultation
             </Link>
             <button className="header__burger hide-desktop" onClick={() => setMobileOpen(true)}>
               <Menu size={28} />
@@ -131,8 +131,8 @@ export default function Header() {
               <a href="tel:09845013138" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
                 <Phone size={16} /> Call Us
               </a>
-              <Link to="/estimate" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Get Estimate
+              <Link to="/contact-us" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Free Consultation
               </Link>
             </div>
           </motion.div>
