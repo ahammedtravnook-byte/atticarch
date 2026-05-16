@@ -16,6 +16,7 @@ import RoomType from './pages/RoomType'
 import Blog from './pages/Blog'
 import LandingPage from './pages/LandingPage'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import NotFound from './pages/NotFound'
 import AdminPanel from './pages/admin/AdminPanel'
 import './App.css'
 
@@ -24,7 +25,7 @@ import './App.css'
 export default function App() {
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
-  const isLanding = location.pathname === '/get-free-consultation'
+  const isLanding = location.pathname === '/get-free-consultation' || location.pathname === '/landing-page'
 
   return (
     <div className="app grain-overlay">
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<Blog />} />
           <Route path="/get-free-consultation" element={<LandingPage />} />
+          <Route path="/landing-page" element={<LandingPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<PrivacyPolicy />} />
           <Route path="/sitemap" element={<PrivacyPolicy />} />
@@ -57,6 +59,8 @@ export default function App() {
           <Route path="/kids-bedroom" element={<RoomType />} />
           <Route path="/bathrooms" element={<RoomType />} />
           <Route path="/balcony" element={<RoomType />} />
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
       {!isAdmin && !isLanding && <Footer />}

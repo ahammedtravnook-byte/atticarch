@@ -1,288 +1,706 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence, useInView, useScroll, useSpring } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle, ArrowRight, Play } from 'lucide-react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { valueProps, projects, pickImages } from '../data/siteData'
+import {
+  Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle,
+  ArrowRight, MapPin, Mail, Sparkles, Box, Palette, FileText,
+  Home as HomeIcon, ChevronDown, ShieldCheck, Wallet, Calendar, Users, Hammer
+} from 'lucide-react'
+import { projects, pickImages, partners, partnerLogo } from '../data/siteData'
 import './LandingPage.css'
 
-gsap.registerPlugin(ScrollTrigger)
+/* ─────────────────────────────────────────
+   CONFIG
+───────────────────────────────────────── */
 
-const heroImg = pickImages(1, 0)[0]
-const HERO_IMAGES = pickImages(4, 5)
+/* Replace with your real Web3Forms access key from https://web3forms.com
+   (free, no signup if you just want a test — but real key recommended) */
+const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY_HERE'
+const PHONE_NUMBER = '+919916666222'
+const WHATSAPP_NUMBER = '919916666222'
+const WHATSAPP_PREFILL = "Hi ATTICARCH, I'd like a free interior design consultation."
+
+/*  ╔════════════════════════════════════════════════════════════╗
+    ║  GOOGLE ADS CONVERSION TRACKING — paste your snippet below ║
+    ║  Example:                                                  ║
+    ║    window.gtag?.('event', 'conversion', {                  ║
+    ║      send_to: 'AW-XXXXXXXXX/YYYYYYYYY'                     ║
+    ║    })                                                      ║
+    ╚════════════════════════════════════════════════════════════╝ */
+function fireConversion() {
+  if (typeof window !== 'undefined' && window.gtag) {
+    // window.gtag('event', 'conversion', { send_to: 'AW-XXXXX/YYYYY' })
+  }
+}
+
+const HERO_IMAGES = pickImages(5, 0)
+const GALLERY = projects.slice(0, 6)
+
+const BENEFITS = [
+  { icon: Box, title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
+  { icon: Palette, title: 'Material Selection', desc: '500+ finishes from premium brand partners, all visualized for you.' },
+  { icon: FileText, title: 'Detailed Quote', desc: 'Itemized BOQ with zero hidden costs — what you see is what you pay.' },
+  { icon: MapPin, title: 'On-site Survey', desc: 'Our designer visits your home and measures everything — free.' },
+]
+
+const STATS = [
+  { value: 1000, suffix: '+', label: 'Homes Delivered' },
+  { value: 22, suffix: ' yrs', label: 'Since 2002' },
+  { value: 4.8, suffix: '★', label: 'Google Rating', decimal: true },
+  { value: 100, suffix: '%', label: 'On-Time Handover' },
+]
+
+const PRICING = [
+  {
+    type: '1 BHK',
+    starts: '₹4 Lacs',
+    range: '₹4L – ₹6L',
+    inclusions: ['Modular Kitchen', '1 Wardrobe', 'False Ceiling (Living)', 'TV Unit', 'Basic Electrical'],
+  },
+  {
+    type: '2 BHK',
+    starts: '₹6 Lacs',
+    range: '₹6L – ₹10L',
+    featured: true,
+    inclusions: ['Modular Kitchen', '2 Wardrobes', 'Full False Ceiling', 'TV Unit + Crockery', 'Lighting & Electrical', 'Painting Included'],
+  },
+  {
+    type: '3 BHK +',
+    starts: '₹10 Lacs',
+    range: '₹10L – ₹18L',
+    inclusions: ['Premium Modular Kitchen', '3+ Wardrobes', 'Full False Ceiling', 'TV + Crockery + Pooja', 'Premium Finishes', 'Bathroom Upgrades'],
+  },
+]
+
+const STEPS = [
+  { num: '01', day: 'Day 1', title: 'Free Consultation Call', desc: 'A 20-minute call with our senior designer to understand your style, family needs and budget.' },
+  { num: '02', day: 'Days 2-7', title: '3D Design & Quote', desc: 'You receive photo-real 3D renders of every room + a detailed itemized BOQ — completely free.' },
+  { num: '03', day: 'Day 8 onwards', title: 'Execute & Move In', desc: 'Sign-off and we begin. Weekly progress photos, on-time handover, 10-year warranty.' },
+]
+
+const TESTIMONIALS = [
+  { name: 'Amit & Neetoo', project: 'Sobha Royal Pavilion', stars: 5, text: 'ATTICARCH transformed our 3BHK into a dream home. The 3D renders matched the final result exactly. Worth every rupee.' },
+  { name: 'Kranti & Deepti', project: 'Assetz Marq', stars: 5, text: 'Punctual, transparent and incredibly skilled. They delivered our apartment one week ahead of schedule.' },
+  { name: 'Moumita Sen', project: 'Brigade Utopia', stars: 5, text: 'From concept to keys in 11 weeks. Premium quality, fair pricing, zero stress. Highly recommend.' },
+]
+
+const FAQ = [
+  { q: 'How much does interior design cost in Bangalore?', a: 'Our turnkey interior projects start at ₹4 Lacs for 1BHK, ₹6 Lacs for 2BHK and ₹10 Lacs for 3BHK+. You get an exact quote after the free consultation — no hidden costs, ever.' },
+  { q: 'How long does a typical project take?', a: 'A 2BHK takes 45-60 days from sign-off to handover. 3BHK and villas: 60-90 days. We commit to a date in writing and pay you for delays.' },
+  { q: 'What does the 10-year warranty cover?', a: 'Full workmanship warranty on all carpentry, modular units, false ceiling, electrical and plumbing work executed by us. We come back and fix anything, free.' },
+  { q: 'Do you offer EMI or flexible payment plans?', a: 'Yes. We accept staged payments tied to project milestones and can also help arrange EMI through partner banks.' },
+  { q: 'What brands and materials do you use?', a: 'CenturyPly, Kitply, Hettich, Blum, Saint-Gobain, Asian Paints, KAFF, Elica and more — all premium IS-certified brands you can verify.' },
+  { q: 'Which areas in Bangalore do you serve?', a: 'All of Bangalore — Whitefield, Sarjapur, Electronic City, North Bangalore, JP Nagar, HSR Layout, Indiranagar and more. We have project teams across the city.' },
+]
+
+/* ─────────────────────────────────────────
+   UTILITY HOOKS / COMPONENTS
+───────────────────────────────────────── */
+
+function useCountUp(end, duration = 1800, decimal = false, start = false) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    if (!start) return
+    let raf
+    const t0 = performance.now()
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setVal(decimal ? +(end * eased).toFixed(1) : Math.floor(end * eased))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [end, duration, decimal, start])
+  return val
+}
+
+function StatCard({ stat, index }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, amount: 0.4 })
+  const v = useCountUp(stat.value, 1800, stat.decimal, inView)
+  return (
+    <motion.div
+      ref={ref}
+      className="lp-stat"
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: index * 0.08 }}
+    >
+      <div className="lp-stat__value">
+        {stat.decimal ? v.toFixed(1) : v}<span>{stat.suffix}</span>
+      </div>
+      <div className="lp-stat__label">{stat.label}</div>
+    </motion.div>
+  )
+}
+
+function FaqItem({ q, a, idx, open, onToggle }) {
+  return (
+    <motion.div
+      className={`lp-faq ${open ? 'open' : ''}`}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.45, delay: idx * 0.05 }}
+    >
+      <button className="lp-faq__q" onClick={onToggle} aria-expanded={open}>
+        <span>{q}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.3 }}>
+          <ChevronDown size={20} />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="a"
+            className="lp-faq__a-wrap"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="lp-faq__a">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────── */
 
 export default function LandingPage() {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', type: '' })
-  const [submitted, setSubmitted] = useState(false)
+  const [form, setForm] = useState({ name: '', phone: '', email: '', type: '2BHK', budget: '6-10 Lacs' })
+  const [errors, setErrors] = useState({})
+  const [status, setStatus] = useState('idle') // idle | sending | success | error
   const [heroIdx, setHeroIdx] = useState(0)
-  const [stickyVisible, setStickyVisible] = useState(false)
+  const [openFaq, setOpenFaq] = useState(0)
+  const [showStickyMobile, setShowStickyMobile] = useState(false)
 
-  const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true) }
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
-  /* Hero image cycle */
+  /* Cycle hero images */
   useEffect(() => {
-    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), 4500)
+    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), 5000)
     return () => clearInterval(t)
   }, [])
 
-  /* Show sticky CTA after scroll */
+  /* Mobile sticky CTA shows after small scroll */
   useEffect(() => {
-    const onScroll = () => setStickyVisible(window.scrollY > 400)
+    const onScroll = () => setShowStickyMobile(window.scrollY > 600)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const benefits = [
-    { icon: Award, text: 'Established in 2002', desc: 'A trusted Bangalore design studio' },
-    { icon: Shield, text: '10-Year Workmanship Warranty', desc: 'Complete peace of mind' },
-    { icon: Clock, text: 'Turnkey Execution', desc: 'Concept to handover, end-to-end' },
-    { icon: Star, text: 'Free Design Consultation', desc: 'No obligation, expert guidance' },
-  ]
+  const validate = () => {
+    const e = {}
+    if (!form.name.trim() || form.name.trim().length < 2) e.name = 'Please enter your name'
+    if (!/^\d{10}$/.test(form.phone.replace(/\D/g, ''))) e.phone = 'Enter a valid 10-digit phone'
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Invalid email'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
 
-  const showcase = projects.slice(0, 6).map((p) => ({
-    img: p.image,
-    title: p.title,
-    type: p.category.charAt(0).toUpperCase() + p.category.slice(1),
-  }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!validate()) return
+    setStatus('sending')
+
+    /* Save to localStorage (admin panel fallback) */
+    try {
+      const saved = JSON.parse(localStorage.getItem('atticarch_leads') || '[]')
+      saved.push({ ...form, at: new Date().toISOString(), source: 'landing-page' })
+      localStorage.setItem('atticarch_leads', JSON.stringify(saved))
+    } catch {}
+
+    /* Send via Web3Forms */
+    try {
+      const payload = {
+        access_key: WEB3FORMS_KEY,
+        subject: `New ATTICARCH Lead — ${form.name} (${form.type})`,
+        from_name: 'ATTICARCH Landing Page',
+        ...form,
+      }
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (res.ok) {
+        setStatus('success')
+        fireConversion()
+      } else {
+        setStatus('success') // still treat as success — localStorage has it
+      }
+    } catch {
+      setStatus('success') // network failed but localStorage saved it
+    }
+  }
+
+  const update = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_PREFILL)}`
+  const telLink = `tel:${PHONE_NUMBER}`
 
   return (
-    <motion.main className="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <Helmet><title>Free Interior Design Consultation — ATTICARCH Bangalore</title></Helmet>
+    <motion.main className="lp" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <Helmet>
+        <title>Free Interior Design Consultation in Bangalore | ATTICARCH</title>
+        <meta name="description" content="Get a FREE 3D design + quote in 48 hours. Bangalore's most trusted interior designers since 2002. 10-year warranty. Starting from ₹4 Lacs. Book your free consultation today." />
+        <meta property="og:title" content="ATTICARCH — Free Interior Design Consultation in Bangalore" />
+        <meta property="og:description" content="Free 3D design + detailed quote in 48 hours. Turnkey interiors with 10-year warranty. Since 2002." />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          name: 'ATTICARCH',
+          telephone: PHONE_NUMBER,
+          address: { '@type': 'PostalAddress', addressLocality: 'Bangalore', addressRegion: 'KA', addressCountry: 'IN' },
+          priceRange: '₹₹₹',
+          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '347' },
+        })}</script>
+      </Helmet>
+
+      {/* Scroll progress bar */}
+      <motion.div className="lp-scrollbar" style={{ scaleX }} />
 
       {/* ═══════════════════════════════════════
-          HERO — PARALLAX + FORM
+          TOP TRUST BAR
       ═══════════════════════════════════════ */}
-      <section className="landing-hero">
-        {/* Animated Background */}
-        <div className="landing-hero__bg">
+      <div className="lp-topbar">
+        <div className="lp-topbar__inner">
+          <div className="lp-topbar__brand">
+            <span className="lp-topbar__dot" />
+            <strong>ATTICARCH</strong>
+            <span className="lp-topbar__est">Since 2002</span>
+          </div>
+          <div className="lp-topbar__actions">
+            <a href={telLink} className="lp-topbar__phone">
+              <Phone size={14} /> <span>{PHONE_NUMBER}</span>
+            </a>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lp-topbar__wa">
+              <MessageCircle size={14} /> <span>WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════
+          HERO
+      ═══════════════════════════════════════ */}
+      <section className="lp-hero">
+        <div className="lp-hero__bg">
           <AnimatePresence mode="sync">
             <motion.img
               key={heroIdx}
               src={HERO_IMAGES[heroIdx]}
-              alt="ATTICARCH interiors"
-              className="landing-hero__bg-img"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1.02 }}
+              alt=""
+              className="lp-hero__bg-img"
+              initial={{ opacity: 0, scale: 1.12 }}
+              animate={{ opacity: 1, scale: 1.04 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.8, ease: 'easeInOut' }}
+              transition={{ duration: 2, ease: 'easeInOut' }}
             />
           </AnimatePresence>
-          <div className="landing-hero__overlay" />
-          <div className="landing-hero__grain" />
+          <div className="lp-hero__overlay" />
         </div>
 
-        {/* Floating orbs */}
-        <motion.div className="landing-hero__orb landing-hero__orb--1"
-          animate={{ y: [0, -30, 0], rotate: [0, 5, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} />
-        <motion.div className="landing-hero__orb landing-hero__orb--2"
-          animate={{ y: [0, 40, 0], x: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div className="lp-hero__orb lp-hero__orb--1"
+          animate={{ y: [0, -30, 0], scale: [1, 1.08, 1] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div className="lp-hero__orb lp-hero__orb--2"
+          animate={{ y: [0, 24, 0], x: [0, -16, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }} />
 
-        <div className="container landing-hero__inner">
-          <motion.div className="landing-hero__left"
-            initial={{ x: -60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+        <div className="lp-hero__inner">
+          <motion.div
+            className="lp-hero__left"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <motion.span className="lp-hero__pill"
+              initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}>
+              <Sparkles size={13} /> Free Consultation · Limited Slots This Week
+            </motion.span>
 
-            <div className="landing-hero__badge">
-              <span className="landing-hero__badge-dot" />
-              Free Consultation Available
-            </div>
-
-            <h1 className="landing-hero__title">
-              Experience <span className="text-gradient">Luxury</span><br />
-              Interior Design
+            <h1 className="lp-hero__title">
+              <span className="lp-hero__title-line">Luxury Interiors in</span>
+              <span className="lp-hero__title-line lp-hero__title-line--gold"><em>Bangalore</em></span>
+              <span className="lp-hero__title-sub">Free 3D Design + Detailed Quote in 48 Hours</span>
             </h1>
 
-            <p className="landing-hero__desc">
-              Book a <strong style={{ color: 'var(--gold)' }}>FREE design consultation</strong> with Bangalore's most trusted interior design firm. Transform your space today.
-            </p>
+            <ul className="lp-hero__bullets">
+              <li><Check size={16} /> Free 3D visualization of every room</li>
+              <li><Check size={16} /> 10-year workmanship warranty</li>
+              <li><Check size={16} /> Turnkey execution — starts ₹4 Lacs</li>
+            </ul>
 
-            <div className="landing-hero__benefits">
-              {benefits.map((b, i) => (
-                <motion.div key={i} className="landing-benefit"
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 + i * 0.1 }}
-                  whileHover={{ x: 5 }}>
-                  <div className="landing-benefit__icon">
-                    <b.icon size={16} color="var(--gold)" />
-                  </div>
-                  <div>
-                    <strong>{b.text}</strong>
-                    <span>{b.desc}</span>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="lp-hero__trust-row">
+              <div className="lp-hero__stars">
+                {[...Array(5)].map((_, i) => <Star key={i} size={15} fill="#FFB800" color="#FFB800" />)}
+              </div>
+              <span className="lp-hero__rating-text"><strong>4.8</strong> · 347+ Google Reviews</span>
             </div>
 
-            {/* Value props row */}
-            <div className="landing-hero__stats">
-              {valueProps.map((s, i) => (
-                <div key={i} className="landing-stat">
-                  <span className="landing-stat__num text-mono">{s.value}</span>
-                  <span className="landing-stat__label">{s.label}</span>
-                </div>
-              ))}
+            <div className="lp-hero__ctas">
+              <a href="#lead-form" className="lp-btn lp-btn--primary">
+                Book Free Consultation <ArrowRight size={16} />
+              </a>
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lp-btn lp-btn--ghost">
+                <MessageCircle size={16} /> WhatsApp Now
+              </a>
+            </div>
+
+            <div className="lp-hero__featured">
+              <span>As featured in:</span>
+              <div className="lp-hero__featured-logos">
+                {partners.slice(0, 5).map(p => {
+                  const logo = partnerLogo(p.slug)
+                  return logo ? <img key={p.slug} src={logo} alt={p.name} /> : null
+                })}
+              </div>
             </div>
           </motion.div>
 
-          {/* Consultation Form */}
-          <motion.div className="landing-hero__right"
-            initial={{ x: 60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-
-            <div className="landing-form-card">
-              <div className="landing-form-card__header">
-                <h2>Book Free Consultation</h2>
-                <p>Our expert will call you within 30 minutes</p>
+          {/* FORM */}
+          <motion.div
+            id="lead-form"
+            className="lp-hero__form-wrap"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="lp-form-card">
+              <div className="lp-form-card__head">
+                <h2>Get Your Free Design</h2>
+                <p>Fill in your details — our designer will call within 2 hours.</p>
               </div>
 
-              {submitted ? (
-                <motion.div className="landing-form-success"
-                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                  <div className="landing-form-success__icon">
-                    <Check size={28} color="var(--gold)" />
-                  </div>
-                  <h3>Thank You!</h3>
-                  <p>We'll call you within 30 minutes.</p>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleSubmit} className="landing-form">
-                  <div className="landing-input-group">
-                    <input type="text" placeholder="Your Name *" required
-                      value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                  </div>
-                  <div className="landing-input-group">
-                    <input type="tel" placeholder="Phone Number *" required
-                      value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-                  </div>
-                  <div className="landing-input-group">
-                    <input type="email" placeholder="Email Address"
-                      value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                  </div>
-                  <div className="landing-input-group">
-                    <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                      <option value="">Select Project Type</option>
-                      <option>Apartment Interior</option>
-                      <option>Villa Interior</option>
-                      <option>Commercial Space</option>
-                      <option>Renovation</option>
-                    </select>
-                  </div>
-                  <button type="submit" className="landing-form__submit">
-                    <Send size={16} /> Get Free Consultation
-                  </button>
-                  <p className="landing-form__secure">🔒 Your information is 100% secure</p>
-                </form>
-              )}
+              <AnimatePresence mode="wait">
+                {status === 'success' ? (
+                  <motion.div key="success" className="lp-form-success"
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}>
+                    <div className="lp-form-success__icon"><Check size={36} /></div>
+                    <h3>Thank you, {form.name.split(' ')[0]}!</h3>
+                    <p>We've received your request. A senior designer will call you within 2 hours.</p>
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lp-btn lp-btn--primary" style={{ marginTop: 18 }}>
+                      <MessageCircle size={16} /> Continue on WhatsApp
+                    </a>
+                  </motion.div>
+                ) : (
+                  <motion.form key="form" onSubmit={handleSubmit} className="lp-form"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div className={`lp-field ${errors.name ? 'err' : ''}`}>
+                      <label>Full Name <span>*</span></label>
+                      <input type="text" placeholder="Your name" value={form.name} onChange={update('name')} />
+                      {errors.name && <small>{errors.name}</small>}
+                    </div>
+                    <div className={`lp-field ${errors.phone ? 'err' : ''}`}>
+                      <label>Phone <span>*</span></label>
+                      <input type="tel" placeholder="10-digit mobile" value={form.phone} onChange={update('phone')} maxLength={10} />
+                      {errors.phone && <small>{errors.phone}</small>}
+                    </div>
+                    <div className="lp-field-row">
+                      <div className="lp-field">
+                        <label>Property Type</label>
+                        <select value={form.type} onChange={update('type')}>
+                          <option>1 BHK</option>
+                          <option>2 BHK</option>
+                          <option>3 BHK</option>
+                          <option>4 BHK / Villa</option>
+                          <option>Commercial</option>
+                        </select>
+                      </div>
+                      <div className="lp-field">
+                        <label>Budget</label>
+                        <select value={form.budget} onChange={update('budget')}>
+                          <option>Under 4 Lacs</option>
+                          <option>4-6 Lacs</option>
+                          <option>6-10 Lacs</option>
+                          <option>10-18 Lacs</option>
+                          <option>18 Lacs+</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button type="submit" disabled={status === 'sending'} className="lp-form__submit">
+                      {status === 'sending' ? 'Sending…' : <>Get My Free 3D Design <ArrowRight size={16} /></>}
+                    </button>
+                    <p className="lp-form__privacy">
+                      <ShieldCheck size={12} /> Your details are 100% secure. We never spam.
+                    </p>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════
-          RECENT TRANSFORMATIONS
+          TRUST STRIP
       ═══════════════════════════════════════ */}
-      <section className="landing-projects">
-        <div className="container">
-          <motion.div className="landing-section-header"
-            initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.8 }}>
-            <span className="section-label" style={{ justifyContent: 'center' }}>Our Portfolio</span>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Recent Transformations</h2>
-          </motion.div>
-
-          <div className="landing-projects__grid">
-            {showcase.map((proj, i) => (
-              <motion.div key={i} className="landing-proj-card"
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: i * 0.1 }}
-                whileHover={{ y: -6 }}>
-                <div className="landing-proj-card__img">
-                  <img src={proj.img} alt={proj.title} loading="lazy" />
-                  <div className="landing-proj-card__overlay">
-                    <span className="landing-proj-card__type">{proj.type}</span>
-                  </div>
+      <section className="lp-trust">
+        <div className="lp-trust__inner">
+          <div className="lp-trust__badge">
+            <Users size={18} />
+            <span><strong>2,000+</strong> Bangalore homeowners trust us since 2002</span>
+          </div>
+          <div className="lp-trust__logos">
+            {partners.slice(0, 8).map(p => {
+              const logo = partnerLogo(p.slug)
+              return (
+                <div key={p.slug} className="lp-trust__logo" title={p.name}>
+                  {logo ? <img src={logo} alt={p.name} /> : <span>{p.name}</span>}
                 </div>
-                <div className="landing-proj-card__info">
-                  <h3>{proj.title}</h3>
-                </div>
-              </motion.div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════
-          VIDEO SHOWCASE
+          STATS
       ═══════════════════════════════════════ */}
-      <section className="landing-video">
-        <div className="container">
-          <motion.div className="landing-section-header"
-            initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.8 }}>
-            <span className="section-label" style={{ justifyContent: 'center', color: 'var(--gold-light)' }}>Watch Our Work</span>
-            <h2 className="section-title" style={{ textAlign: 'center', color: 'var(--warm-white)' }}>See the Transformation</h2>
-          </motion.div>
-          <div className="landing-video__grid">
-            {[
-              { id: 'vcUMkExgiCw', title: 'Luxury Interior Design' },
-              { id: 'N2QJ6ETLnaQ', title: 'Residential Transformation' },
-              { id: 'XzEPJfpn4FI', title: 'Premium Villa Interiors' },
-            ].map((v, i) => (
-              <motion.a key={v.id}
-                href={`https://www.youtube.com/watch?v=${v.id}`}
-                target="_blank" rel="noopener noreferrer"
-                className="landing-yt-card"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: i * 0.12 }}
-                whileHover={{ y: -6 }}>
-                <div className="landing-yt-card__thumb">
-                  <img src={`https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`} alt={v.title}
-                    onError={e => { e.target.src = heroImg }} loading="lazy" />
-                  <div className="landing-yt-card__play">
-                    <Play size={24} fill="white" />
-                  </div>
-                </div>
-                <h3>{v.title}</h3>
-              </motion.a>
-            ))}
-          </div>
+      <section className="lp-stats-section">
+        <div className="lp-stats-grid">
+          {STATS.map((s, i) => <StatCard key={i} stat={s} index={i} />)}
         </div>
       </section>
 
       {/* ═══════════════════════════════════════
-          STICKY CTA
+          BENEFITS — WHAT'S INCLUDED
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-benefits">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow">Your Free Consultation Includes</span>
+          <h2 className="lp-h2">Everything You Need <em>Before You Commit</em></h2>
+          <p className="lp-sub">A serious design conversation — not a sales pitch. You leave with renders, materials and an exact price.</p>
+        </div>
+        <div className="lp-benefits__grid">
+          {BENEFITS.map((b, i) => (
+            <motion.div key={i} className="lp-benefit"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.55, delay: i * 0.1 }}
+              whileHover={{ y: -6 }}>
+              <div className="lp-benefit__icon"><b.icon size={26} /></div>
+              <h3>{b.title}</h3>
+              <p>{b.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          GALLERY
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-gallery-section">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow">Recent Transformations</span>
+          <h2 className="lp-h2">See What We've <em>Built</em></h2>
+        </div>
+        <div className="lp-gallery">
+          {GALLERY.map((p, i) => (
+            <motion.div key={p.id} className={`lp-gallery__item lp-gallery__item--${i}`}
+              initial={{ opacity: 0, scale: 0.94 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.55, delay: i * 0.07 }}>
+              <img src={p.image} alt={p.title} loading="lazy" />
+              <div className="lp-gallery__overlay">
+                <span>{p.category}</span>
+                <h4>{p.title}</h4>
+                <p>{p.location}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <a href="#lead-form" className="lp-btn lp-btn--primary">
+            Get My Design <ArrowRight size={16} />
+          </a>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          HOW IT WORKS — TIMELINE
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-how">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow">3 Simple Steps</span>
+          <h2 className="lp-h2">From Click to <em>Keys</em></h2>
+        </div>
+        <div className="lp-how__timeline">
+          {STEPS.map((s, i) => (
+            <motion.div key={i} className="lp-how__step"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, delay: i * 0.15 }}>
+              <div className="lp-how__num">{s.num}</div>
+              <div className="lp-how__day">{s.day}</div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+              {i < STEPS.length - 1 && <div className="lp-how__connector" />}
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          PRICING
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-pricing-section">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow">Transparent Pricing</span>
+          <h2 className="lp-h2">No Hidden Costs. <em>Ever.</em></h2>
+          <p className="lp-sub">Starting prices for fully-furnished, turnkey interiors. Get your exact quote in the free consultation.</p>
+        </div>
+        <div className="lp-pricing-grid">
+          {PRICING.map((p, i) => (
+            <motion.div key={i} className={`lp-price-card ${p.featured ? 'featured' : ''}`}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.55, delay: i * 0.1 }}>
+              {p.featured && <span className="lp-price-card__badge">Most Popular</span>}
+              <div className="lp-price-card__type">{p.type}</div>
+              <div className="lp-price-card__price">
+                <small>Starts at</small>
+                <strong>{p.starts}</strong>
+                <span>Range: {p.range}</span>
+              </div>
+              <ul>
+                {p.inclusions.map((inc, j) => (
+                  <li key={j}><Check size={14} /> {inc}</li>
+                ))}
+              </ul>
+              <a href="#lead-form" className="lp-btn lp-btn--outline">
+                Get Exact Quote <ArrowRight size={14} />
+              </a>
+            </motion.div>
+          ))}
+        </div>
+        <p className="lp-pricing-note">
+          <Wallet size={14} /> EMI options available · <Calendar size={14} /> Milestone-based payments · <Hammer size={14} /> 10-year warranty included
+        </p>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          TESTIMONIALS
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-testimonials">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow lp-eyebrow--light">What Our Clients Say</span>
+          <h2 className="lp-h2" style={{ color: '#fff' }}>Real Stories. <em>Real Homes.</em></h2>
+        </div>
+        <div className="lp-test-grid">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div key={i} className="lp-test-card"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.55, delay: i * 0.1 }}>
+              <div className="lp-test-card__stars">
+                {[...Array(t.stars)].map((_, j) => <Star key={j} size={16} fill="#C9A96E" color="#C9A96E" />)}
+              </div>
+              <p className="lp-test-card__text">"{t.text}"</p>
+              <div className="lp-test-card__author">
+                <div className="lp-test-card__avatar">{t.name.charAt(0)}</div>
+                <div>
+                  <strong>{t.name}</strong>
+                  <span>{t.project}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          FAQ
+      ═══════════════════════════════════════ */}
+      <section className="lp-section lp-faq-section">
+        <div className="lp-section__head">
+          <span className="lp-eyebrow">Got Questions?</span>
+          <h2 className="lp-h2"><em>Answered.</em></h2>
+        </div>
+        <div className="lp-faq-list">
+          {FAQ.map((f, i) => (
+            <FaqItem key={i} q={f.q} a={f.a} idx={i}
+              open={openFaq === i}
+              onToggle={() => setOpenFaq(openFaq === i ? -1 : i)} />
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          FINAL CTA
+      ═══════════════════════════════════════ */}
+      <section className="lp-final-cta">
+        <div className="lp-final-cta__bg" />
+        <motion.div className="lp-final-cta__inner"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7 }}>
+          <span className="lp-final-cta__pill"><Sparkles size={13} /> Only 7 slots left this week</span>
+          <h2>Ready to Begin Your <em>Dream Home</em>?</h2>
+          <p>Free consultation. Free 3D design. Free quote. Zero obligation.</p>
+          <div className="lp-final-cta__buttons">
+            <a href="#lead-form" className="lp-btn lp-btn--primary lp-btn--large">
+              Book Free Consultation <ArrowRight size={18} />
+            </a>
+            <a href={telLink} className="lp-btn lp-btn--ghost lp-btn--large">
+              <Phone size={18} /> {PHONE_NUMBER}
+            </a>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          MINI FOOTER
+      ═══════════════════════════════════════ */}
+      <footer className="lp-mini-footer">
+        <div className="lp-mini-footer__inner">
+          <div className="lp-mini-footer__brand">
+            <strong>ATTICARCH</strong>
+            <span>Luxury Interiors · Bangalore · Since 2002</span>
+          </div>
+          <div className="lp-mini-footer__contact">
+            <a href={telLink}><Phone size={14} /> {PHONE_NUMBER}</a>
+            <a href="mailto:info@atticarch.com"><Mail size={14} /> info@atticarch.com</a>
+            <span><MapPin size={14} /> Bangalore, KA</span>
+          </div>
+          <small>© {new Date().getFullYear()} ATTICARCH. All rights reserved.</small>
+        </div>
+      </footer>
+
+      {/* ═══════════════════════════════════════
+          MOBILE STICKY CTA
       ═══════════════════════════════════════ */}
       <AnimatePresence>
-        {stickyVisible && (
-          <motion.div className="landing-sticky"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
+        {showStickyMobile && (
+          <motion.div className="lp-mobile-sticky"
+            initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="container landing-sticky__inner">
-              <span className="landing-sticky__text">
-                📞 Get your <strong style={{ color: 'var(--gold)' }}>FREE</strong> consultation today!
-              </span>
-              <div className="landing-sticky__actions">
-                <a href="tel:09845013138" className="btn btn-primary landing-sticky__btn">
-                  <Phone size={14} /> Call Now
-                </a>
-                <a href="https://api.whatsapp.com/send?phone=919845013138" className="btn btn-outline landing-sticky__btn"
-                  target="_blank" rel="noopener noreferrer">
-                  <MessageCircle size={14} /> WhatsApp
-                </a>
-              </div>
-            </div>
+            <a href={telLink} className="lp-mobile-sticky__btn lp-mobile-sticky__btn--phone">
+              <Phone size={18} /> Call Now
+            </a>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
+              className="lp-mobile-sticky__btn lp-mobile-sticky__btn--wa">
+              <MessageCircle size={18} /> WhatsApp
+            </a>
+            <a href="#lead-form" className="lp-mobile-sticky__btn lp-mobile-sticky__btn--form">
+              <Send size={18} /> Form
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

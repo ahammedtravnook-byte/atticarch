@@ -1149,18 +1149,20 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.1}>
             <div className="partners-marquee-wrap">
-              {[...partners, ...partners].map((p, i) => {
-                const logo = partnerLogo(p.slug)
-                return (
-                  <div key={i} className="partner-chip" title={p.name}>
-                    {logo ? (
-                      <img src={logo} alt={p.name} loading="lazy" />
-                    ) : (
-                      <span>{p.name}</span>
-                    )}
-                  </div>
-                )
-              })}
+              <div className="partners-marquee-track">
+                {[...partners, ...partners].map((p, i) => {
+                  const logo = partnerLogo(p.slug)
+                  return (
+                    <div key={i} className="partner-chip" title={p.name}>
+                      {logo ? (
+                        <img src={logo} alt={p.name} loading="lazy" />
+                      ) : (
+                        <span>{p.name}</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </Reveal>
         </div>
