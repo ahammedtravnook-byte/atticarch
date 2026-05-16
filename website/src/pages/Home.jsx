@@ -542,10 +542,10 @@ function AboutMosaic() {
         <motion.div
           key={i}
           className={`mosaic-cell mosaic-cell--${i + 1}`}
-          initial={{ opacity: 0, clipPath: 'inset(100% 0 0 0)' }}
-          whileInView={{ opacity: 1, clipPath: 'inset(0% 0 0 0)' }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 1, delay: i * 0.14, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, y: 40, scale: 0.96 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, amount: 0.05 }}
+          transition={{ duration: 0.8, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.img
             src={img} alt=""

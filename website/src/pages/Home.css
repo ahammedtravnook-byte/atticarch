@@ -1172,6 +1172,8 @@
   position: relative;
   overflow: hidden;
   border-radius: 16px;
+  background: #1A1A1A;
+  min-height: 200px;
 }
 
 .mosaic-cell--1 { grid-row: span 2; border-radius: 20px; }
