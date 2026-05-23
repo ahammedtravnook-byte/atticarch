@@ -60,29 +60,29 @@ export default function Services() {
           </Reveal>
           <Reveal delay={0.1}>
             <h1 className="svc-hero__title">
-              Turnkey Interior <em>Solutions</em>
+              Three Practices.<br />One <em>Atelier</em>.
             </h1>
           </Reveal>
           <Reveal delay={0.2}>
             <p className="svc-hero__sub">
-              From concept to keys — ATTICARCH delivers residential, commercial and renovation
-              interiors under one roof. Backed by a 10-Year Workmanship Warranty, with bespoke
-              interiors starting from ₹10 Lacs.
+              Residential, commercial and renovation interiors — delivered end-to-end by the same
+              in-house team that designs them. From the first mood board to the final snag list,
+              you work with one studio and one point of contact.
             </p>
           </Reveal>
           <Reveal delay={0.25}>
             <div className="svc-hero__badges">
               <div className="svc-hero-badge">
                 <ShieldCheck size={16} />
-                <span><strong>10-Year</strong> Workmanship Warranty</span>
-              </div>
-              <div className="svc-hero-badge">
-                <Wallet size={16} />
-                <span>Starting from <strong>₹10 Lacs</strong></span>
+                <span><strong>Residential</strong> — Apartments, villas, penthouses</span>
               </div>
               <div className="svc-hero-badge">
                 <Package size={16} />
-                <span><strong>Turnkey</strong> End-to-End Execution</span>
+                <span><strong>Commercial</strong> — Offices, retail, hospitality</span>
+              </div>
+              <div className="svc-hero-badge">
+                <Wallet size={16} />
+                <span><strong>Renovation</strong> — Refurbishment & retrofit</span>
               </div>
             </div>
           </Reveal>

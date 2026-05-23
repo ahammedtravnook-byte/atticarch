@@ -2,41 +2,64 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Image as ImageIcon, Briefcase, FileText, Settings, LogOut, Plus, Trash2, Edit } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
+import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from '../../lib/firebase'
 
 export default function AdminPanel() {
+  const [authReady, setAuthReady] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Simple auth using localStorage for MVP
   useEffect(() => {
-    const auth = localStorage.getItem('atticarch_admin_auth')
-    if (auth === 'true') {
-      setIsAuthenticated(true)
-    } else if (location.pathname !== '/admin') {
-      navigate('/admin')
-    }
-  }, [location, navigate])
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user)
+      setAuthReady(true)
+      if (!user && location.pathname !== '/admin') {
+        navigate('/admin')
+      }
+    })
+    return () => unsub()
+  }, [])
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    // Hardcoded credentials for MVP
-    if (username === 'admin' && password === 'atticarch@2024') {
-      localStorage.setItem('atticarch_admin_auth', 'true')
-      setIsAuthenticated(true)
+    setError('')
+    setSubmitting(true)
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password)
       navigate('/admin/dashboard')
-    } else {
-      alert('Invalid credentials')
+    } catch (err) {
+      const code = err?.code || ''
+      const msg =
+        code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'
+          ? 'Invalid email or password.'
+          : code === 'auth/too-many-requests'
+          ? 'Too many attempts. Try again in a few minutes.'
+          : code === 'auth/invalid-email'
+          ? 'Please enter a valid email address.'
+          : err?.message || 'Login failed.'
+      setError(msg)
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('atticarch_admin_auth')
-    setIsAuthenticated(false)
+  const handleLogout = async () => {
+    await signOut(auth)
     navigate('/admin')
+  }
+
+  if (!authReady) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--charcoal)' }}>
+        <p style={{ color: 'var(--mist)', fontSize: 14 }}>Loading…</p>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -47,24 +70,29 @@ export default function AdminPanel() {
           <h1 className="text-heading" style={{ fontSize: 'var(--text-3xl)', marginBottom: 8, color: 'var(--charcoal)' }}>Admin Login</h1>
           <p style={{ color: 'var(--ash)', fontSize: 14, marginBottom: 32 }}>Sign in to manage website content</p>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <input 
-              type="text" 
-              placeholder="Username" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)}
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
               style={{ width: '100%', padding: '14px 16px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-md)', background: 'var(--cream)' }}
-              required 
+              required
             />
-            <input 
-              type="password" 
-              placeholder="Password" 
-              value={password} 
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               style={{ width: '100%', padding: '14px 16px', border: '1px solid var(--pearl)', borderRadius: 'var(--radius-md)', background: 'var(--cream)' }}
-              required 
+              required
             />
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>
-              Login
+            {error && (
+              <p style={{ color: '#c0392b', fontSize: 13, margin: 0, textAlign: 'left' }}>{error}</p>
+            )}
+            <button type="submit" disabled={submitting} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8, opacity: submitting ? 0.7 : 1 }}>
+              {submitting ? 'Signing in…' : 'Login'}
             </button>
           </form>
         </div>

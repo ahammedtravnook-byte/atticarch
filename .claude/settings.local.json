@@ -20,7 +20,21 @@
       "Bash(sed -i '1818,1954d' src/pages/Home.css)",
       "Bash(sed -n '1814,1820p' src/pages/Home.css)",
       "Bash(taskkill //F //IM node.exe)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/project/42-mark-3-villament)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/project/42-mark-3-villament)",
+      "Bash(npm install *)",
+      "Bash(Select-Object Name)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\" -Force | ForEach-Object { $_.Name })",
+      "Bash(npx vite *)",
+      "PowerShell(npx vite build --logLevel=warn 2>&1 | Select-Object -Last 30)",
+      "PowerShell($out = npx vite build --logLevel=warn 2>&1; $out | Select-Object -Last 25 | ForEach-Object { $_.ToString\\(\\) })",
+      "PowerShell($out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 2000\\)\\))",
+      "PowerShell($out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 800\\)\\))",
+      "PowerShell($out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 600\\)\\))",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\"; $out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 600\\)\\))",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\"; $out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 500\\)\\))",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\"; $out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 400\\)\\))",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\"; $out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 350\\)\\))",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Tariq\\\\OneDrive\\\\Desktop\\\\Ahammed\\\\atticarch\\\\website\"; $out = & npx vite build 2>&1 | Out-String; $out.Substring\\([Math]::Max\\(0, $out.Length - 300\\)\\))"
     ]
   }
 }

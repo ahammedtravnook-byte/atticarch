@@ -1,0 +1,332 @@
+================================================================================
+ATTICARCH — UI REDESIGN BRIEF (V2)
+Reference inspiration: Zendesk (2026 redesign)
+Goal: same content & site structure, brand-new visual language
+================================================================================
+
+# 1. DESIGN PHILOSOPHY
+
+Build an editorial, magazine-quality interior-design site that feels closer to a
+high-end fashion / architecture publication than a typical service business
+website. The Zendesk reference is for *layout language and structural rhythm*
+only — NOT for color or copy tone. We are a luxury interior design studio in
+Bangalore (est. 2002), not a SaaS product. Every section should feel curated,
+generous, confident, and quiet.
+
+Core principles:
+  - Mostly white. Light is the dominant material.
+  - Dark "editorial" sections used sparingly as punctuation — never the default.
+  - Generous whitespace. Letters, photos, and buttons all breathe.
+  - Photography is the hero. Type and chrome step back.
+  - Motion is subtle: ease, fades, parallax, sticky pins. No bouncy/playful.
+
+================================================================================
+# 2. COLOR SYSTEM
+================================================================================
+
+PRIMARY (dominant — 75% of surface area)
+  --white            #FFFFFF        Default page background
+  --paper            #FAF7F2        Subtle warm off-white for alternating sections
+  --ink              #0F0F0E        Primary text on light surfaces
+  --ink-soft         #4A4A47        Secondary text on light surfaces
+
+SECONDARY (used for accent sections, ~20%)
+  --forest           #1F2D24        Deep forest green — editorial dark sections
+  --forest-soft      #2A3A30        Slightly lighter for cards on forest bg
+  --moss             #6B7F6B        Muted moss for icons/labels on dark bg
+  --cream            #F2EBDF        Text/elements on the forest background
+
+ACCENT (~5% — CTAs, highlights, links)
+  --clay             #C2613A        Warm terracotta — primary CTA fill
+  --clay-deep        #9E4E2D        Hover state for clay
+  --gold             #B89968        Optional inline editorial highlights / underlines
+
+UTILITY
+  --line             rgba(15,15,14,0.08)    Hairline dividers on white
+  --line-dark        rgba(255,255,255,0.10) Hairline dividers on forest
+
+USAGE RULES
+  - Default page = white background, ink text.
+  - 1–2 "punch" sections per page use forest bg + cream text (e.g., the
+    Milestones section, a CTA band before the footer, the footer itself).
+  - Clay is ONLY for primary CTA buttons and one or two intentional accents
+    (an underline on a hovered word, a small badge). Never used as a fill
+    behind text blocks.
+  - No gradients. No drop shadows on cards (use hairlines + ink-soft instead).
+    Photography may have its own natural shadow.
+
+================================================================================
+# 3. TYPOGRAPHY
+================================================================================
+
+Font pairing (load from Google Fonts):
+  - Display:   "Fraunces"    — variable serif for headlines (weight 300–700)
+  - UI/Body:   "Inter"       — for body, labels, buttons (weight 400/500/600)
+
+Scale (clamp() for responsive):
+  --text-xs      clamp(0.75rem, 0.72rem + 0.15vw, 0.85rem)   labels, eyebrows
+  --text-sm      clamp(0.875rem, 0.85rem + 0.15vw, 0.95rem)  meta, captions
+  --text-base    clamp(1rem, 0.95rem + 0.25vw, 1.0625rem)    body
+  --text-lg      clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem)   lead paragraphs
+  --text-xl      clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem)      sub-headings
+  --text-2xl     clamp(2rem, 1.6rem + 1.6vw, 2.75rem)        section titles
+  --text-3xl     clamp(2.6rem, 2rem + 2.6vw, 4rem)           page titles
+  --text-display clamp(3.6rem, 2.4rem + 5vw, 6.5rem)         hero headlines
+
+Style rules:
+  - Headlines: Fraunces, weight 400, optical size LARGE, tracking -0.02em.
+  - Hero headline can mix roman + italic (e.g., "Interiors that feel like
+    *home*" — italic for the emotional word).
+  - Eyebrows / labels: Inter 500, uppercase, tracking 0.14em, size --text-xs,
+    paired with a 24px clay-colored line.
+  - Body line-height 1.6; headlines 1.05–1.15.
+  - Use roman numerals or "01 / 02 / 03" for section indices (Inter mono if
+    available, otherwise tabular-nums).
+
+================================================================================
+# 4. LAYOUT SYSTEM
+================================================================================
+
+Grid:
+  - Max content width: 1240px (.container)
+  - Editorial wide max: 1440px (.container--wide) for hero & gallery sections
+  - 12-column grid, 32px gutters on desktop, 20px on tablet, 16px on mobile
+  - Section vertical padding: clamp(96px, 12vw, 160px) top & bottom
+  - Subsection spacing within a section: 64px
+
+Radius:
+  --radius-sm    8px     small chips, inputs
+  --radius-md    16px    cards
+  --radius-lg    28px    feature panels, image frames
+  --radius-pill  999px   buttons
+
+Borders:
+  - 1px hairlines only. No 2–4px borders anywhere.
+  - Forest sections use --line-dark for internal dividers.
+
+================================================================================
+# 5. CORE COMPONENTS
+================================================================================
+
+5.1 BUTTON — PRIMARY
+  - Background: --clay, text: white
+  - Padding: 14px 28px
+  - Radius: --radius-pill
+  - Font: Inter 500, 0.95rem
+  - Hover: bg --clay-deep, slight translateY(-1px), 200ms ease
+  - Icon (optional): arrow-right, 16px, 8px left margin, slides 4px on hover
+
+5.2 BUTTON — SECONDARY (GHOST)
+  - Transparent bg, 1px solid --ink (or cream on dark sections), --ink text
+  - Same padding/radius as primary
+  - Hover: bg --ink, text white (inversion)
+
+5.3 EYEBROW LABEL
+  - 24px clay line + " " + uppercase Inter 500 text in --ink-soft
+
+5.4 SECTION TITLE BLOCK
+  Eyebrow above, then Fraunces headline (--text-2xl or --text-3xl), then
+  optional one-line subtitle in --ink-soft, max-width 60ch.
+
+5.5 EDITORIAL CARD (for services, project teasers)
+  - White bg, 1px --line, --radius-lg
+  - Image fills top with --radius-lg --radius-lg 0 0 (4:5 aspect)
+  - 28px padding for content
+  - Small "01" index top-right in --ink-soft
+  - Title (Fraunces, --text-xl), one-paragraph description (--text-base,
+    --ink-soft), then a small "Read more →" link in --ink
+  - Hover: image scales 1.03 over 600ms, card border darkens to --ink
+
+5.6 IMAGE FRAME
+  - Wrap every project image in a div with overflow:hidden, --radius-lg.
+  - Subtle inner shadow at top: inset 0 30px 60px -30px rgba(0,0,0,0.25).
+  - On scroll-in: clip-path reveal from left (GSAP).
+
+5.7 STAT TILE
+  - Number (Fraunces, --text-display, --ink)
+  - Label (Inter 500, --text-xs, uppercase, --ink-soft)
+  - Thin clay underline that animates from 0 → 64px on scroll-in.
+
+5.8 NAVBAR
+  - Sticky, 72px tall, white bg with 1px bottom hairline
+  - Logo left (wordmark "ATTICARCH" in Fraunces, weight 500, tracking 0.06em)
+  - Center: nav links (Inter 500, 0.95rem, --ink), underline on hover
+  - Right: ghost button "Estimate" + primary button "Book Consultation"
+  - On scroll past 100px: nav background goes from transparent (on hero) to
+    rgba(255,255,255,0.92) with backdrop-filter: blur(12px)
+
+5.9 FOOTER (DARK)
+  - Bg --forest, text --cream
+  - Top: huge "ATTICARCH" wordmark (--text-display, weight 300, --cream,
+    tracking 0.04em) — anchors the bottom of every page (Zendesk-style)
+  - Above wordmark: 5-column link grid (Services / Projects / Studio /
+    Resources / Connect), each column with eyebrow + 6–8 links
+  - Above grid: a one-line CTA — "Designing in Bangalore? *Let's talk.*"
+    with clay underline on "Let's talk."
+  - Below wordmark: legal row + social icons (X, IG, LinkedIn, YouTube)
+
+================================================================================
+# 6. PAGE-BY-PAGE BLUEPRINTS
+================================================================================
+
+Keep ALL existing content/copy and section order. Only the visual shell changes.
+
+6.1 HOMEPAGE (Home.jsx)
+  SECTION 1 — HERO (white bg, full viewport)
+    Layout: 60/40 split. Left = headline + sub + email-capture + ghost button.
+    Right = single tall editorial photograph in --radius-lg frame, slight
+    parallax on scroll. Headline mixes roman + italic Fraunces. Below sub,
+    a thin row of 4 trust signals (Inter --text-xs uppercase: "10-Yr Warranty
+    • 200+ Homes • Est. 2002 • Bangalore").
+
+  SECTION 2 — LOGO STRIP (white bg)
+    Left: small "AS FEATURED IN" eyebrow. Right: row of 6 publication logos
+    in --ink at 60% opacity, grayscale.
+
+  SECTION 3 — VALUE PROP (forest bg) ← punctuation section
+    Centered Fraunces title "Designed for how people actually live." Below it,
+    a Zendesk-style tabbed module: left column = 5 vertical tabs, right column
+    = a phone/room mockup that swaps as the user clicks each tab. Active tab
+    has cream bg + ink text; inactive tabs are forest-soft + cream text.
+
+  SECTION 4 — SERVICES GRID (white bg)
+    Eyebrow + section title "What we design." Then a 2-column grid of large
+    EDITORIAL CARDs (5.5) — Residential, Commercial, Renovation, Turnkey.
+
+  SECTION 5 — PROCESS (paper bg)
+    Horizontal sticky-scroll: 6 steps that slide left as the user scrolls down
+    (use the same matchMedia GSAP pattern already in About.jsx). Each step:
+    huge "01" Fraunces numeral in --moss, then step title + 2-line description.
+
+  SECTION 6 — FEATURED PROJECTS (white bg)
+    Eyebrow "Selected Work" + title. Asymmetric masonry-feel grid (3 items,
+    middle one offset down by 80px). Hover reveals project name + category.
+
+  SECTION 7 — TESTIMONIAL (forest bg) ← punctuation
+    Large Fraunces pull-quote in cream, italic. Below: client name, project,
+    year. Side: small 64px avatar circle.
+
+  SECTION 8 — CTA BAND (white bg)
+    Centered. Fraunces headline "Let's design something honest." Single primary
+    clay button "Book a consultation" + ghost "Download brochure."
+
+  FOOTER (5.9)
+
+6.2 ABOUT PAGE (About.jsx)
+  Hero (white) → Mission split (paper bg, image left + text right) → Stats
+  row (white, 4 STAT TILES) → MILESTONES (forest bg, horizontal sticky-scroll
+  timeline — keep current GSAP logic, just restyle cards: cream bg cards on
+  forest, ink text, Fraunces year) → Team grid (white, EDITORIAL CARDs with
+  role + LinkedIn) → Partners logo strip → CTA band → Footer.
+
+6.3 SERVICES (Services.jsx)
+  Hero with category nav chips → For each service category: a full-width
+  alternating row (image left/right, text the other side, swap each row) →
+  Pricing-ranges table (clean rows, hairlines only) → FAQ accordion
+  (hairlines, no boxes, plus icon rotates 45°) → CTA → Footer.
+
+6.4 PROJECTS / PROJECT DETAIL
+  Listing: filter chips + 3-col grid of EDITORIAL CARDs, masonry feel.
+  Detail: huge full-bleed hero image → meta row (year, location, category,
+  area sqft) → text intro 2-col (left: brief, right: client quote) →
+  alternating large images and rooms with captions → "More projects" carousel
+  → Footer.
+
+6.5 CONTACT
+  Split: left form (clean inputs, hairlines only, no boxes; floating labels),
+  right large studio photograph + studio address card overlapping. Map at
+  bottom (muted Mapbox style, single forest pin).
+
+================================================================================
+# 7. MOTION / INTERACTION
+================================================================================
+
+  - Page transitions: 350ms fade + 8px y-translate on Framer Motion <main>.
+  - Section reveals: opacity 0→1, y 24→0, 700ms, ease [0.16,1,0.3,1],
+    triggered at 80% viewport.
+  - Image reveals: clip-path inset from left, 1.1s, ease "power3.inOut".
+  - Number counters: count up over 1.8s on intersection.
+  - Horizontal sticky-scroll (Milestones, Process): GSAP ScrollTrigger pin
+    with scrub:1, invalidateOnRefresh:true, and ScrollTrigger.refresh() on
+    window.load + document.fonts.ready (avoids prod measurement bugs).
+  - Lenis smooth scroll: init ONCE app-wide (not per route), smoothTouch:false.
+  - Hover lifts: max translateY(-2px), 200ms ease.
+  - Nothing bouncy. No spring scales > 1.05.
+
+================================================================================
+# 8. ACCESSIBILITY & PERFORMANCE
+================================================================================
+
+  - All interactive elements: 44×44px min hit area, visible :focus-visible
+    ring (2px clay, 2px offset).
+  - Color contrast: ink on white ≥ 14:1; cream on forest ≥ 11:1; clay button
+    text white ≥ 4.5:1 (verify with actual hex values).
+  - All images: lazy loading, explicit width/height, AVIF/WebP via picture.
+  - Respect prefers-reduced-motion: disable parallax, sticky pins, reveal
+    animations.
+  - Lighthouse target: Performance 90+, Accessibility 100, Best Practices 100.
+
+================================================================================
+# 9. FILE STRUCTURE FOR THE NEW UI
+================================================================================
+
+Create the new design as a parallel set of pages so the old version stays
+intact while you iterate:
+
+  website/src/pages/v2/
+    Home.jsx            Home.css
+    About.jsx           About.css
+    Services.jsx        Services.css
+    Projects.jsx        Projects.css
+    ProjectDetail.jsx   ProjectDetail.css
+    Contact.jsx         Contact.css
+
+  website/src/components/v2/
+    Navbar.jsx          Navbar.css
+    Footer.jsx          Footer.css
+    Button.jsx          Button.css
+    EditorialCard.jsx   EditorialCard.css
+    SectionTitle.jsx
+    StatTile.jsx
+    ImageFrame.jsx
+
+  website/src/styles/v2/
+    tokens.css          (all CSS variables from §2, §3, §4)
+    reset.css           (small, modern reset)
+    typography.css      (Fraunces + Inter @font-face / Google import)
+
+Add a /v2 route group in the router so the new pages are reachable at
+/v2, /v2/about, etc. — once approved, swap them in as the canonical routes
+and archive the old ones.
+
+================================================================================
+# 10. WHAT TO PRESERVE FROM CURRENT SITE
+================================================================================
+
+  - All copy text in current pages — DO NOT rewrite it.
+  - The five Milestones entries and the entire `siteData.js` content.
+  - Existing project images and team photos.
+  - SEO meta tags & Helmet usage.
+  - The 10-Year Workmanship Warranty messaging and ₹10 Lacs starting price.
+  - The current GSAP horizontal-scroll Milestones interaction (just restyle
+    the cards & section background — keep the scroll behavior).
+
+================================================================================
+# 11. DELIVERABLE CHECKLIST FOR THE IMPLEMENTING AGENT
+================================================================================
+
+  [ ] tokens.css with every variable from §2, §3, §4
+  [ ] Fraunces + Inter loaded (preconnect + font-display:swap)
+  [ ] Navbar component matching §5.8 (sticky, blur on scroll)
+  [ ] Footer component matching §5.9 (huge wordmark, dark)
+  [ ] Button, EditorialCard, SectionTitle, StatTile, ImageFrame primitives
+  [ ] Home page with all 8 sections in §6.1
+  [ ] About page restyle keeping current Milestones GSAP logic
+  [ ] Services, Projects (list + detail), Contact pages from §6.3–6.5
+  [ ] Lenis init once, smoothTouch:false, ScrollTrigger.refresh on load
+  [ ] All sections pass §8 accessibility + reduced-motion rules
+  [ ] /v2 route group in App router, original site untouched
+
+================================================================================
+END OF BRIEF
+================================================================================

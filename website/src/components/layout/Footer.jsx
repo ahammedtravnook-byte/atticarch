@@ -50,9 +50,9 @@ export default function Footer() {
             <div className="footer__brand">
               <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)', marginBottom: 16, letterSpacing: '0.5px' }}>AtticArch</div>
               <p className="footer__desc">
-                ATTICARCH is Bangalore's trusted interior design studio since 2002 — delivering turnkey
-                residential, commercial and renovation interiors backed by a 10-Year Workmanship Warranty,
-                starting from ₹10 Lacs.
+                ATTICARCH is Bangalore's trusted interior design studio since 2002 — crafting homes,
+                workspaces and renovations through an in-house atelier built around considered detail
+                and slow, supervised craft.
               </p>
               <div className="footer__social">
                 <a href="https://www.facebook.com/atticarch" target="_blank" rel="noopener noreferrer"><FaFacebook size={18} /></a>

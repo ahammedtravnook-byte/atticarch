@@ -19,7 +19,7 @@ const IconInstagram = ({ size = 16, ...p }) => (
 )
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { projects, services, rooms, testimonials, valueProps, processSteps, blogPosts, workTypes, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
+import { projects, services, rooms, testimonials, processSteps, blogPosts, workTypes, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
 import ProjectLightbox from '../components/ui/ProjectLightbox'
 import SmartImage from '../components/ui/SmartImage'
 import './Home.css'
@@ -114,11 +114,8 @@ function ImageCycler({ images, interval = 2800, className = '', style = {} }) {
    Zero iframes = zero lag.
 ───────────────────────────────────────── */
 
-const HERO_ROTATING_WORDS = ['Luxury', 'Elegance', 'Comfort', 'Perfection']
-
 function HeroParallax() {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [wordIdx, setWordIdx] = useState(0)
   const [progress, setProgress] = useState(0)
   const heroRef = useRef(null)
   const bgRef = useRef(null)
@@ -133,12 +130,6 @@ function HeroParallax() {
     const cycle = setInterval(() => setSlideIdx(i => (i + 1) % HERO_IMAGES.length), HERO_SLIDE_INTERVAL)
     return () => { clearInterval(frame); clearInterval(cycle) }
   }, [slideIdx])
-
-  /* Rotate words */
-  useEffect(() => {
-    const t = setInterval(() => setWordIdx(i => (i + 1) % HERO_ROTATING_WORDS.length), 2800)
-    return () => clearInterval(t)
-  }, [])
 
   /* GSAP parallax on scroll */
   useEffect(() => {
@@ -194,179 +185,89 @@ function HeroParallax() {
           transition={{ duration: 80, repeat: Infinity, ease: 'linear' }} />
       </div>
 
-      {/* Main content — Split layout */}
+      {/* Main content — centered editorial */}
       <div className="hero__content container">
-        <div className="hero__grid">
-          {/* Left: Text */}
-          <motion.div className="hero__left"
-            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+        <motion.div className="hero__center"
+          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}>
 
-            <motion.div className="hero__eyebrow"
-              initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}>
-              <span className="hero__eyebrow-dot" />
-              <span>Est. 2002 · Award-Winning Studio</span>
-            </motion.div>
-
-            <h1 className="hero__title">
-              <div style={{ overflow: 'hidden' }}>
-                <motion.span className="hero__title-line"
-                  initial={{ y: 130 }} animate={{ y: 0 }}
-                  transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}>
-                  Designing Homes
-                </motion.span>
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <motion.span className="hero__title-line hero__title-line--accent"
-                  initial={{ y: 130 }} animate={{ y: 0 }}
-                  transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-                  That Tell <em>Your</em> Story
-                </motion.span>
-              </div>
-            </h1>
-
-            {/* Animated tagline pill */}
-            <motion.div className="hero__tagline"
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.85 }}>
-              <span className="hero__tagline-label">We Specialize In</span>
-              <div className="hero__tagline-word">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={wordIdx}
-                    initial={{ y: 24, opacity: 0, filter: 'blur(4px)' }}
-                    animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                    exit={{ y: -24, opacity: 0, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-                    {HERO_ROTATING_WORDS[wordIdx]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-            </motion.div>
-
-            <motion.p className="hero__subtitle"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.95 }}>
-              From concept to keys, we create breathtaking interiors that blend functionality with unmatched elegance. Bangalore's most trusted design studio.
-            </motion.p>
-
-            {/* Feature highlights */}
-            <motion.div className="hero__features"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.05 }}>
-              <div className="hero__feature">
-                <Check size={14} />
-                <span>10-Year Warranty</span>
-              </div>
-              <div className="hero__feature">
-                <Check size={14} />
-                <span>Turnkey Execution</span>
-              </div>
-              <div className="hero__feature">
-                <Check size={14} />
-                <span>Starting ₹10 Lacs</span>
-              </div>
-            </motion.div>
-
-            <motion.div className="hero__actions"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1.15 }}>
-              <Link to="/contact-us" className="btn btn-primary hero__cta-primary">
-                Free Consultation <ArrowUpRight size={18} />
-              </Link>
-              <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">
-                Explore Portfolio
-              </Link>
-            </motion.div>
+          <motion.div className="hero__eyebrow hero__eyebrow--center"
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}>
+            <span className="hero__eyebrow-dot" />
+            <span>Award-Winning Bangalore Studio</span>
           </motion.div>
 
-          {/* Right: Preview + Stats */}
-          <motion.div className="hero__right"
-            initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}>
-
-            {/* Floating image preview */}
-            <div className="hero__preview">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={slideIdx}
-                  src={HERO_IMAGES[slideIdx]}
-                  alt="Latest project"
-                  className="hero__preview-img"
-                  initial={{ opacity: 0, scale: 1.08 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1.2, ease: 'easeInOut' }}
-                />
-              </AnimatePresence>
-              <div className="hero__preview-border" />
+          <h1 className="hero__title hero__title--center">
+            <div style={{ overflow: 'hidden' }}>
+              <motion.span className="hero__title-line"
+                initial={{ y: 130 }} animate={{ y: 0 }}
+                transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}>
+                Designing Homes
+              </motion.span>
             </div>
-
-            {/* Value props grid */}
-            <div className="hero__stats-grid">
-              {valueProps.map((s, i) => (
-                <motion.div key={i} className="hero__stat-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1.0 + i * 0.1 }}>
-                  <span className="hero__stat-number text-mono">{s.value}</span>
-                  <span className="hero__stat-label">{s.label}</span>
-                </motion.div>
-              ))}
+            <div style={{ overflow: 'hidden' }}>
+              <motion.span className="hero__title-line hero__title-line--accent"
+                initial={{ y: 130 }} animate={{ y: 0 }}
+                transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+                That Tell <em>Your</em> Story
+              </motion.span>
             </div>
+          </h1>
+
+          <motion.p className="hero__subtitle hero__subtitle--center"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.85 }}>
+            Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002.
+          </motion.p>
+
+          {/* Gold ornament divider */}
+          <motion.div className="hero__ornament" aria-hidden="true"
+            initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ duration: 1, delay: 0.95 }}>
+            <span className="hero__ornament-line" />
+            <span className="hero__ornament-diamond" />
+            <span className="hero__ornament-line" />
           </motion.div>
-        </div>
 
-        {/* YouTube video testimonials strip */}
-        <motion.div className="hero__yt-strip"
-          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1.9 }}>
-          <div className="hero__yt-label">
-            <IconYoutube size={14} />
-            <span>Watch Our Transformations</span>
-          </div>
-          <div className="hero__yt-thumbs">
-            {YT_CATALOG.slice(0, 4).map((v) => (
-              <motion.a
-                key={v.id}
-                href={`https://www.youtube.com/watch?v=${v.id}`}
-                target="_blank" rel="noopener noreferrer"
-                className="hero__yt-thumb"
-                whileHover={{ scale: 1.07, y: -4 }}
-                transition={{ duration: 0.3 }}
-                title={v.title}
-              >
-                <img
-                  src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`}
-                  alt={v.title}
-                  loading="lazy"
-                  onError={e => { e.target.src = FALLBACK_IMG }}
-                />
-                <div className="hero__yt-play">
-                  <Play size={12} fill="white" />
-                </div>
-              </motion.a>
-            ))}
-            <a
-              href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA"
-              target="_blank" rel="noopener noreferrer"
-              className="hero__yt-more"
-            >
-              <IconYoutube size={18} />
-              <small>More Videos</small>
-            </a>
-          </div>
+          <motion.div className="hero__actions hero__actions--center"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1.05 }}>
+            <Link to="/contact-us" className="btn btn-primary hero__cta-primary">
+              Free Consultation <ArrowUpRight size={18} />
+            </Link>
+            <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">
+              Explore Portfolio
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
 
-      {/* Slide indicators */}
-      <div className="hero__slide-nav">
-        <div className="hero__slide-dots">
-          {HERO_IMAGES.map((_, i) => (
-            <button key={i} className={`hero__slide-dot ${i === slideIdx ? 'active' : ''}`} onClick={() => setSlideIdx(i)}>
+      {/* Bottom rail: YT label · thumbnails · slide dots */}
+      <motion.div className="hero__rail container"
+        initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}>
+
+        <a
+          href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA"
+          target="_blank" rel="noopener noreferrer"
+          className="hero__rail-yt"
+        >
+          <span className="hero__rail-yt-icon"><Play size={10} fill="currentColor" /></span>
+          <span>Watch Our Transformations</span>
+        </a>
+
+        <div className="hero__rail-thumbs">
+          {HERO_IMAGES.map((img, i) => (
+            <button
+              key={i}
+              className={`hero__rail-thumb ${i === slideIdx ? 'active' : ''}`}
+              onClick={() => setSlideIdx(i)}
+              aria-label={`Show project ${i + 1}`}
+            >
+              <img src={img} alt="" loading="lazy" />
               {i === slideIdx && (
-                <motion.div className="hero__slide-dot-fill"
+                <motion.div className="hero__rail-thumb-progress"
                   initial={{ scaleX: 0 }} animate={{ scaleX: progress }}
                   transition={{ duration: 0, ease: 'linear' }}
                   style={{ transformOrigin: 'left' }} />
@@ -374,15 +275,21 @@ function HeroParallax() {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Scroll indicator */}
-      <div className="hero__scroll-cue">
-        <motion.div className="hero__scroll-line"
-          animate={{ y: [0, 16, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }} />
-        <span className="hero__scroll-text">Scroll</span>
-      </div>
+        <div className="hero__rail-dots">
+          {HERO_IMAGES.map((_, i) => (
+            <button
+              key={i}
+              className={`hero__rail-dot ${i === slideIdx ? 'active' : ''}`}
+              onClick={() => setSlideIdx(i)}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+          <span className="hero__rail-counter text-mono">
+            {String(slideIdx + 1).padStart(2, '0')} / {String(HERO_IMAGES.length).padStart(2, '0')}
+          </span>
+        </div>
+      </motion.div>
     </section>
   )
 }
@@ -624,12 +531,12 @@ function ServiceCardMobile({ service, images, index }) {
 ───────────────────────────────────────── */
 
 const STEP_PERKS = [
-  ['Vision & lifestyle discovery', 'Budget framework', 'Site measurement'],
-  ['3D visualisations & mood boards', 'Material & finish palette', 'Client approval session'],
-  ['Technical drawings & BOQ', 'Vendor & product selection', 'Detailed cost estimation'],
-  ['Contract & timeline sign-off', 'Team briefing & kickoff', 'Procurement begins'],
-  ['Premium on-site craftsmanship', 'Weekly progress reports', 'Quality checkpoints'],
-  ['Final client walkthrough', 'Snag rectification', '3-Month post-delivery warranty'],
+  ['Understand your style & needs', 'Set a clear budget', 'Site measurement'],
+  ['3D views & mood boards', 'Material & finish samples', 'Your approval'],
+  ['Detailed drawings & cost sheet', 'Pick brands & products', 'Final price estimate'],
+  ['Contract & timeline locked in', 'Team briefing & kickoff', 'Material ordering starts'],
+  ['Skilled on-site work', 'Weekly progress updates', 'Quality checks at each stage'],
+  ['Final walk-through with you', 'Fix any small issues', '3-Month after-handover support'],
 ]
 
 function HwwImage({ src, alt }) {
@@ -945,7 +852,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48, flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <span className="section-label">Room by Room</span>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>Every Space, Crafted to Perfection</h2>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>Every Room, Done Right</h2>
               </div>
               <span style={{ fontSize: 13, color: 'var(--ash)', fontFamily: 'var(--font-accent)', letterSpacing: '0.06em' }}>
                 Hover to explore
@@ -964,26 +871,30 @@ export default function Home() {
         <div className="container">
           <div className="about-teaser__grid">
             <Reveal className="about-teaser__text" dir="left">
-              <span className="section-label" style={{ color: 'var(--gold-light)' }}>About ATTICARCH</span>
+              <span className="section-label" style={{ color: 'var(--gold-light)' }}>Inside the Studio</span>
               <h2 className="section-title" style={{ color: 'var(--warm-white)' }}>
-                Crafting Luxury Interiors<br />Since <span className="text-gold">2002</span>
+                Built Around You.<br />Made by <span className="text-gold">Hand</span>.
               </h2>
               <p className="about-teaser__desc">
-                ATTICARCH is Bangalore's premier luxury interior design studio — crafting exceptional residential
-                and commercial interiors since 2002. We transform ordinary spaces into extraordinary living
-                experiences tailored to your unique lifestyle, backed by a 10-Year Workmanship Warranty and
-                bespoke interiors starting from ₹10 Lacs.
+                Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of
+                designers and on-site experts work side-by-side under one roof — drawing, picking materials
+                and finishing each room with care, so the work lasts long after we hand over the keys.
               </p>
               <div className="about-teaser__highlights">
-                {valueProps.map((h, i) => (
+                {[
+                  { value: '200+', label: 'Homes Finished' },
+                  { value: 'In-House', label: 'Design & Build Team' },
+                  { value: '100%', label: 'On-Site Supervision' },
+                  { value: '48 Hrs', label: 'Quick Quote' },
+                ].map((h, i) => (
                   <div key={i} className="highlight-item">
                     <span className="highlight-number text-mono">{h.value}</span>
                     <span>{h.label}</span>
                   </div>
                 ))}
               </div>
-              <Link to="/about-us" className="btn btn-outline" style={{ marginTop: 40 }}>
-                Know More <ArrowRight size={16} />
+              <Link to="/how-we-work" className="btn btn-outline" style={{ marginTop: 40 }}>
+                See How We Work <ArrowRight size={16} />
               </Link>
             </Reveal>
             <AboutMosaic />
@@ -1001,21 +912,21 @@ export default function Home() {
               <span className="section-label" style={{ justifyContent: 'center' }}>What We Do</span>
               <h2 className="section-title">Our Core Services</h2>
               <p className="svc-section-sub">
-                Three focused practices — one accountable team. Every project covers civil, electrical,
-                plumbing, joinery and finishes under a single 10-Year Workmanship Warranty.
+                Three areas of work — one team you can count on. Homes, offices and renovations done by the
+                same in-house team, with every job handled under one roof.
               </p>
               <div className="svc-section-badges">
                 <div className="svc-section-badge">
+                  <Package size={15} />
+                  <span><strong>In-House</strong> Team</span>
+                </div>
+                <div className="svc-section-badge">
                   <ShieldCheck size={15} />
-                  <span><strong>10-Year</strong> Warranty</span>
+                  <span><strong>Best Materials</strong> Picked First</span>
                 </div>
                 <div className="svc-section-badge">
                   <Wallet size={15} />
-                  <span>Starting from <strong>₹10 Lacs</strong></span>
-                </div>
-                <div className="svc-section-badge">
-                  <Package size={15} />
-                  <span><strong>Turnkey</strong> Execution</span>
+                  <span><strong>One</strong> Person to Call</span>
                 </div>
               </div>
             </div>
@@ -1176,8 +1087,8 @@ export default function Home() {
           <Reveal>
             <div className="section-header-row" style={{ marginBottom: 48 }}>
               <div>
-                <span className="section-label">Video Testimonials & Project Tours</span>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>See the Transformation</h2>
+                <span className="section-label">Client Videos & Project Tours</span>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>See the Before & After</h2>
               </div>
               <a href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
                 <IconYoutube size={15} /> Subscribe
@@ -1203,7 +1114,7 @@ export default function Home() {
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span className="section-label" style={{ justifyContent: 'center', color: 'var(--gold-light)' }}>Follow Along</span>
               <h2 className="section-title" style={{ color: 'var(--warm-white)' }}>@atticarch2020</h2>
-              <p style={{ color: 'var(--mist)', marginTop: 8 }}>Daily design inspiration from our studio</p>
+              <p style={{ color: 'var(--mist)', marginTop: 8 }}>Daily design ideas from our studio</p>
             </div>
           </Reveal>
           <div className="insta-grid">
@@ -1234,13 +1145,13 @@ export default function Home() {
               <div className="blog-header__left">
                 <div className="blog-header__eyebrow">
                   <span className="blog-header__line" />
-                  <span className="section-label" style={{ margin: 0 }}>Design Journal</span>
+                  <span className="section-label" style={{ margin: 0 }}>Our Blog</span>
                 </div>
                 <h2 className="section-title blog-header__title">
-                  Latest <em>Insights</em>
+                  Latest <em>Posts</em>
                 </h2>
                 <p className="blog-header__sub">
-                  Inspiration, expert tips, and stories from our studio — curated for those who love thoughtful design.
+                  Ideas, simple tips and stories from our studio — for anyone who loves good design.
                 </p>
               </div>
               <div className="blog-header__right">

@@ -79,11 +79,16 @@ export default function About() {
       const track = timelineTrackRef.current
       const section = timelineSectionRef.current
       if (!track || !section) return
-      const totalScroll = track.scrollWidth - window.innerWidth + 200
+      const getTotalScroll = () => track.scrollWidth - window.innerWidth + 200
       const tl = gsap.to(track, {
-        x: -totalScroll, ease: 'none',
+        x: () => -getTotalScroll(),
+        ease: 'none',
         scrollTrigger: {
-          trigger: section, pin: true, scrub: 1, end: () => `+=${totalScroll}`,
+          trigger: section,
+          pin: true,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          end: () => `+=${getTotalScroll()}`,
           onUpdate: (self) => {
             if (timelineProgressRef.current) {
               timelineProgressRef.current.style.width = `${self.progress * 100}%`
@@ -93,6 +98,17 @@ export default function About() {
       })
       return () => tl.scrollTrigger?.kill()
     })
+
+    const refresh = () => ScrollTrigger.refresh()
+    window.addEventListener('load', refresh)
+    const refreshTimeout = setTimeout(refresh, 500)
+    if (document.fonts?.ready) document.fonts.ready.then(refresh)
+
+    return () => {
+      window.removeEventListener('load', refresh)
+      clearTimeout(refreshTimeout)
+      mm.revert()
+    }
   }, { scope: heroRef })
 
   const splitTitle = (text) =>
