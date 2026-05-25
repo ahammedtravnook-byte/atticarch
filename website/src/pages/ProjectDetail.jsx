@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, MapPin, Maximize2, Calendar, Layers, Plus } from 'lucide-react'
-import { projects } from '../data/siteData'
+import { useData } from '../context/DataContext'
 import SmartImage from '../components/ui/SmartImage'
 import ProjectLightbox from '../components/ui/ProjectLightbox'
 import './ProjectDetail.css'
@@ -14,8 +14,26 @@ const fade = {
 }
 
 export default function ProjectDetail() {
+  const { projects, loading } = useData()
   const { slug } = useParams()
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)' }}>
+        <p style={{ color: 'var(--ash)', fontSize: 14 }}>Loading Project Details…</p>
+      </div>
+    )
+  }
+
   const project = projects.find((p) => String(p.id) === slug) || projects[0]
+  if (!project) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)' }}>
+        <p style={{ color: 'var(--ash)', fontSize: 14 }}>Project not found.</p>
+      </div>
+    )
+  }
+
   const idx = projects.findIndex((p) => p.id === project.id)
   const nextProject = projects[(idx + 1) % projects.length]
 

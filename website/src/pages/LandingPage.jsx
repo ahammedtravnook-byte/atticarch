@@ -6,27 +6,16 @@ import {
   ArrowRight, MapPin, Mail, Sparkles, Box, Palette, FileText,
   Home as HomeIcon, ChevronDown, ShieldCheck, Wallet, Calendar, Users, Hammer
 } from 'lucide-react'
-import { projects, pickImages, partners, partnerLogo } from '../data/siteData'
+import { projects as staticProjects, pickImages, partners, partnerLogo } from '../data/siteData'
+import { useData } from '../context/DataContext'
 import './LandingPage.css'
 
 /* ─────────────────────────────────────────
-   CONFIG
+   CONFIG / FALLBACKS
 ───────────────────────────────────────── */
 
-/* Replace with your real Web3Forms access key from https://web3forms.com
-   (free, no signup if you just want a test — but real key recommended) */
 const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY_HERE'
-const PHONE_NUMBER = '+919916666222'
-const WHATSAPP_NUMBER = '919916666222'
-const WHATSAPP_PREFILL = "Hi ATTICARCH, I'd like a free interior design consultation."
 
-/*  ╔════════════════════════════════════════════════════════════╗
-    ║  GOOGLE ADS CONVERSION TRACKING — paste your snippet below ║
-    ║  Example:                                                  ║
-    ║    window.gtag?.('event', 'conversion', {                  ║
-    ║      send_to: 'AW-XXXXXXXXX/YYYYYYYYY'                     ║
-    ║    })                                                      ║
-    ╚════════════════════════════════════════════════════════════╝ */
 function fireConversion() {
   if (typeof window !== 'undefined' && window.gtag) {
     // window.gtag('event', 'conversion', { send_to: 'AW-XXXXX/YYYYY' })
@@ -34,7 +23,7 @@ function fireConversion() {
 }
 
 const HERO_IMAGES = pickImages(5, 0)
-const GALLERY = projects.slice(0, 6)
+const GALLERY = staticProjects.slice(0, 6)
 
 const BENEFITS = [
   { icon: Box, title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
@@ -94,8 +83,27 @@ const FAQ = [
 ]
 
 /* ─────────────────────────────────────────
-   UTILITY HOOKS / COMPONENTS
+   UTILITY HELPERS
 ───────────────────────────────────────── */
+
+const getBenefitIcon = (iconName) => {
+  switch (iconName) {
+    case 'Box': return Box
+    case 'Palette': return Palette
+    case 'FileText': return FileText
+    case 'MapPin': return MapPin
+    case 'Shield': return Shield
+    case 'Clock': return Clock
+    case 'Award': return Award
+    default: return Box
+  }
+}
+
+const parseInclusions = (inc) => {
+  if (Array.isArray(inc)) return inc
+  if (typeof inc === 'string') return inc.split(',').map(s => s.trim()).filter(Boolean)
+  return []
+}
 
 function useCountUp(end, duration = 1800, decimal = false, start = false) {
   const [val, setVal] = useState(0)
@@ -173,6 +181,7 @@ function FaqItem({ q, a, idx, open, onToggle }) {
 ───────────────────────────────────────── */
 
 export default function LandingPage() {
+  const { landingSettings, projects, testimonials } = useData()
   const [form, setForm] = useState({ name: '', phone: '', email: '', type: '2BHK', budget: '6-10 Lacs' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle') // idle | sending | success | error
@@ -183,11 +192,40 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
+  // Database settings bindings with fallbacks
+  const heroTitleLine1 = landingSettings?.heroTitleLine1 || 'Luxury Interiors in'
+  const heroTitleLine2 = landingSettings?.heroTitleLine2 || 'Bangalore'
+  const heroSubtitle = landingSettings?.heroSubtitle || 'Free 3D Design + Detailed Quote in 48 Hours'
+  const bullets = landingSettings?.bullets || [
+    'Free 3D visualization of every room',
+    '10-year workmanship warranty',
+    'Turnkey execution — starts ₹4 Lacs'
+  ]
+  const phone = landingSettings?.phone || '+919916666222'
+  const whatsapp = landingSettings?.whatsapp || '919916666222'
+  const whatsappPrefill = landingSettings?.whatsappPrefill || "Hi ATTICARCH, I'd like a free interior design consultation."
+
+  const displayBenefits = landingSettings?.benefits || BENEFITS
+  const displayStats = landingSettings?.stats || STATS
+  const displayPricing = landingSettings?.pricing || PRICING
+  const displaySteps = landingSettings?.steps || STEPS
+  const displayFAQs = landingSettings?.faqs || FAQ
+  const displayTestimonials = testimonials?.length > 0 ? testimonials : TESTIMONIALS
+
+  const heroImages = projects?.length > 0
+    ? projects.slice(0, 5).map(p => p.image || p.imageUrl || p.images?.[0]).filter(Boolean)
+    : HERO_IMAGES
+
+  const galleryProjects = projects?.length > 0
+    ? projects.filter(p => p.category !== 'residential').slice(0, 6)
+    : GALLERY
+
   /* Cycle hero images */
   useEffect(() => {
-    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), 5000)
+    if (heroImages.length === 0) return
+    const t = setInterval(() => setHeroIdx(i => (i + 1) % heroImages.length), 5000)
     return () => clearInterval(t)
-  }, [])
+  }, [heroImages.length])
 
   /* Mobile sticky CTA shows after small scroll */
   useEffect(() => {
@@ -243,8 +281,8 @@ export default function LandingPage() {
 
   const update = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_PREFILL)}`
-  const telLink = `tel:${PHONE_NUMBER}`
+  const whatsappLink = `https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappPrefill)}`
+  const telLink = `tel:${phone}`
 
   return (
     <motion.main className="lp" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -257,7 +295,7 @@ export default function LandingPage() {
           '@context': 'https://schema.org',
           '@type': 'LocalBusiness',
           name: 'ATTICARCH',
-          telephone: PHONE_NUMBER,
+          telephone: phone,
           address: { '@type': 'PostalAddress', addressLocality: 'Bangalore', addressRegion: 'KA', addressCountry: 'IN' },
           priceRange: '₹₹₹',
           aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '347' },
@@ -279,7 +317,7 @@ export default function LandingPage() {
           </div>
           <div className="lp-topbar__actions">
             <a href={telLink} className="lp-topbar__phone">
-              <Phone size={14} /> <span>{PHONE_NUMBER}</span>
+              <Phone size={14} /> <span>{phone}</span>
             </a>
             <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lp-topbar__wa">
               <MessageCircle size={14} /> <span>WhatsApp</span>
@@ -294,16 +332,18 @@ export default function LandingPage() {
       <section className="lp-hero">
         <div className="lp-hero__bg">
           <AnimatePresence mode="sync">
-            <motion.img
-              key={heroIdx}
-              src={HERO_IMAGES[heroIdx]}
-              alt=""
-              className="lp-hero__bg-img"
-              initial={{ opacity: 0, scale: 1.12 }}
-              animate={{ opacity: 1, scale: 1.04 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 2, ease: 'easeInOut' }}
-            />
+            {heroImages[heroIdx] && (
+              <motion.img
+                key={heroIdx}
+                src={heroImages[heroIdx]}
+                alt=""
+                className="lp-hero__bg-img"
+                initial={{ opacity: 0, scale: 1.12 }}
+                animate={{ opacity: 1, scale: 1.04 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2, ease: 'easeInOut' }}
+              />
+            )}
           </AnimatePresence>
           <div className="lp-hero__overlay" />
         </div>
@@ -329,15 +369,17 @@ export default function LandingPage() {
             </motion.span>
 
             <h1 className="lp-hero__title">
-              <span className="lp-hero__title-line">Luxury Interiors in</span>
-              <span className="lp-hero__title-line lp-hero__title-line--gold"><em>Bangalore</em></span>
-              <span className="lp-hero__title-sub">Free 3D Design + Detailed Quote in 48 Hours</span>
+              <span className="lp-hero__title-line">{heroTitleLine1}</span>
+              <span className="lp-hero__title-line lp-hero__title-line--gold">
+                <em>{heroTitleLine2}</em>
+              </span>
+              <span className="lp-hero__title-sub">{heroSubtitle}</span>
             </h1>
 
             <ul className="lp-hero__bullets">
-              <li><Check size={16} /> Free 3D visualization of every room</li>
-              <li><Check size={16} /> 10-year workmanship warranty</li>
-              <li><Check size={16} /> Turnkey execution — starts ₹4 Lacs</li>
+              {bullets.map((b, i) => (
+                <li key={i}><Check size={16} /> {b}</li>
+              ))}
             </ul>
 
             <div className="lp-hero__trust-row">
@@ -469,7 +511,7 @@ export default function LandingPage() {
       ═══════════════════════════════════════ */}
       <section className="lp-stats-section">
         <div className="lp-stats-grid">
-          {STATS.map((s, i) => <StatCard key={i} stat={s} index={i} />)}
+          {displayStats.map((s, i) => <StatCard key={i} stat={s} index={i} />)}
         </div>
       </section>
 
@@ -483,18 +525,21 @@ export default function LandingPage() {
           <p className="lp-sub">A serious design conversation — not a sales pitch. You leave with renders, materials and an exact price.</p>
         </div>
         <div className="lp-benefits__grid">
-          {BENEFITS.map((b, i) => (
-            <motion.div key={i} className="lp-benefit"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.55, delay: i * 0.1 }}
-              whileHover={{ y: -6 }}>
-              <div className="lp-benefit__icon"><b.icon size={26} /></div>
-              <h3>{b.title}</h3>
-              <p>{b.desc}</p>
-            </motion.div>
-          ))}
+          {displayBenefits.map((b, i) => {
+            const IconComponent = b.icon || getBenefitIcon(b.iconName)
+            return (
+              <motion.div key={i} className="lp-benefit"
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.55, delay: i * 0.1 }}
+                whileHover={{ y: -6 }}>
+                <div className="lp-benefit__icon"><IconComponent size={26} /></div>
+                <h3>{b.title}</h3>
+                <p>{b.desc}</p>
+              </motion.div>
+            )
+          })}
         </div>
       </section>
 
@@ -507,7 +552,7 @@ export default function LandingPage() {
           <h2 className="lp-h2">See What We've <em>Built</em></h2>
         </div>
         <div className="lp-gallery">
-          {GALLERY.map((p, i) => (
+          {galleryProjects.map((p, i) => (
             <motion.div key={p.id} className={`lp-gallery__item lp-gallery__item--${i}`}
               initial={{ opacity: 0, scale: 0.94 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -538,7 +583,7 @@ export default function LandingPage() {
           <h2 className="lp-h2">From Click to <em>Keys</em></h2>
         </div>
         <div className="lp-how__timeline">
-          {STEPS.map((s, i) => (
+          {displaySteps.map((s, i) => (
             <motion.div key={i} className="lp-how__step"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -548,7 +593,7 @@ export default function LandingPage() {
               <div className="lp-how__day">{s.day}</div>
               <h3>{s.title}</h3>
               <p>{s.desc}</p>
-              {i < STEPS.length - 1 && <div className="lp-how__connector" />}
+              {i < displaySteps.length - 1 && <div className="lp-how__connector" />}
             </motion.div>
           ))}
         </div>
@@ -564,7 +609,7 @@ export default function LandingPage() {
           <p className="lp-sub">Starting prices for fully-furnished, turnkey interiors. Get your exact quote in the free consultation.</p>
         </div>
         <div className="lp-pricing-grid">
-          {PRICING.map((p, i) => (
+          {displayPricing.map((p, i) => (
             <motion.div key={i} className={`lp-price-card ${p.featured ? 'featured' : ''}`}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -578,7 +623,7 @@ export default function LandingPage() {
                 <span>Range: {p.range}</span>
               </div>
               <ul>
-                {p.inclusions.map((inc, j) => (
+                {parseInclusions(p.inclusions).map((inc, j) => (
                   <li key={j}><Check size={14} /> {inc}</li>
                 ))}
               </ul>
@@ -588,9 +633,11 @@ export default function LandingPage() {
             </motion.div>
           ))}
         </div>
-        <p className="lp-pricing-note">
-          <Wallet size={14} /> EMI options available · <Calendar size={14} /> Milestone-based payments · <Hammer size={14} /> 10-year warranty included
-        </p>
+        <div className="lp-pricing-note">
+          <span><Wallet size={13} /> EMI options available</span>
+          <span><Calendar size={13} /> Milestone Stage payments</span>
+          <span><Hammer size={13} /> 10-year carpentry warranty</span>
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════
@@ -602,21 +649,27 @@ export default function LandingPage() {
           <h2 className="lp-h2" style={{ color: '#fff' }}>Real Stories. <em>Real Homes.</em></h2>
         </div>
         <div className="lp-test-grid">
-          {TESTIMONIALS.map((t, i) => (
+          {displayTestimonials.map((t, i) => (
             <motion.div key={i} className="lp-test-card"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55, delay: i * 0.1 }}>
               <div className="lp-test-card__stars">
-                {[...Array(t.stars)].map((_, j) => <Star key={j} size={16} fill="#C9A96E" color="#C9A96E" />)}
+                {[...Array(t.stars || 5)].map((_, j) => <Star key={j} size={16} fill="#C9A96E" color="#C9A96E" />)}
               </div>
               <p className="lp-test-card__text">"{t.text}"</p>
               <div className="lp-test-card__author">
-                <div className="lp-test-card__avatar">{t.name.charAt(0)}</div>
+                <div className="lp-test-card__avatar">
+                  {t.avatar ? (
+                    <img src={t.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  ) : (
+                    t.name.charAt(0)
+                  )}
+                </div>
                 <div>
                   <strong>{t.name}</strong>
-                  <span>{t.project}</span>
+                  <span>{t.project || 'Bangalore'}</span>
                 </div>
               </div>
             </motion.div>
@@ -633,7 +686,7 @@ export default function LandingPage() {
           <h2 className="lp-h2"><em>Answered.</em></h2>
         </div>
         <div className="lp-faq-list">
-          {FAQ.map((f, i) => (
+          {displayFAQs.map((f, i) => (
             <FaqItem key={i} q={f.q} a={f.a} idx={i}
               open={openFaq === i}
               onToggle={() => setOpenFaq(openFaq === i ? -1 : i)} />
@@ -659,7 +712,7 @@ export default function LandingPage() {
               Book Free Consultation <ArrowRight size={18} />
             </a>
             <a href={telLink} className="lp-btn lp-btn--ghost lp-btn--large">
-              <Phone size={18} /> {PHONE_NUMBER}
+              <Phone size={18} /> {phone}
             </a>
           </div>
         </motion.div>
@@ -675,7 +728,7 @@ export default function LandingPage() {
             <span>Luxury Interiors · Bangalore · Since 2002</span>
           </div>
           <div className="lp-mini-footer__contact">
-            <a href={telLink}><Phone size={14} /> {PHONE_NUMBER}</a>
+            <a href={telLink}><Phone size={14} /> {phone}</a>
             <a href="mailto:info@atticarch.com"><Mail size={14} /> info@atticarch.com</a>
             <span><MapPin size={14} /> Bangalore, KA</span>
           </div>

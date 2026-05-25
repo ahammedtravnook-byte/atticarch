@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowUpRight, ArrowRight, MapPin, Maximize2, Calendar, Layers } from 'lucide-react'
-import { projects } from '../data/siteData'
+import { useData } from '../context/DataContext'
 import SmartImage from '../components/ui/SmartImage'
 import './ProjectCategory.css'
 
@@ -20,14 +20,6 @@ function Reveal({ children, delay = 0, className = '' }) {
       {children}
     </motion.div>
   )
-}
-
-const categoryMap = {
-  'projects-residential': { title: 'Residential Projects', short: 'Residential', filter: ['apartments', 'villas'] },
-  'projects-apartments':  { title: 'Apartment Projects',   short: 'Apartments',   filter: ['apartments'] },
-  'projects-villas':      { title: 'Villa Projects',       short: 'Villas',       filter: ['villas'] },
-  'projects-commercial':  { title: 'Commercial Projects',  short: 'Commercial',   filter: ['commercial'] },
-  'projects-renovation':  { title: 'Renovation Projects',  short: 'Renovation',   filter: ['renovation'] },
 }
 
 /* Tilt-on-hover card that follows the cursor */
@@ -112,9 +104,20 @@ function ProjectCard({ project, index }) {
 }
 
 export default function ProjectCategory() {
+  const { projects, categories } = useData()
   const { category } = useParams()
-  const cat = categoryMap[category] || { title: 'All Projects', short: 'All', filter: [] }
-  const filtered = cat.filter.length ? projects.filter((p) => cat.filter.includes(p.category)) : projects
+
+  const categoryMap = categories.reduce((map, catItem) => {
+    map[catItem.slug] = {
+      title: catItem.title,
+      short: catItem.short,
+      filter: catItem.filter || [catItem.id]
+    }
+    return map
+  }, {})
+
+  const cat = categoryMap[category] || (categories.length ? categoryMap[categories[0].slug] : { title: 'All Projects', short: 'All', filter: [] })
+  const filtered = cat.filter && cat.filter.length ? projects.filter((p) => cat.filter.includes(p.category)) : projects
 
   /* Stats */
   const uniqueLocations = new Set(filtered.map((p) => p.location.split(',')[0].trim())).size || filtered.length
@@ -124,8 +127,8 @@ export default function ProjectCategory() {
 
   /* Preview thumbnails for hero (3 from this category) */
   const previewProjects = filtered.slice(0, 3)
-  const titleAccent = cat.title.split(' ').slice(-1)[0]
-  const titleMain = cat.title.split(' ').slice(0, -1).join(' ')
+  const titleAccent = cat.title ? cat.title.split(' ').slice(-1)[0] : 'Projects'
+  const titleMain = cat.title ? cat.title.split(' ').slice(0, -1).join(' ') : 'Portfolio'
 
   return (
     <motion.main
@@ -254,22 +257,18 @@ export default function ProjectCategory() {
           <div className="pc-filter">
             <span className="pc-filter__label">Filter by:</span>
             <div className="pc-filter__pills">
-              <Link
-                to="/project-category/projects-residential"
-                className={`pc-pill ${!category || category === 'projects-residential' ? 'is-active' : ''}`}
-              >
-                <span>All</span>
-                <span className="pc-pill__count">{projects.length}</span>
-              </Link>
-              {Object.entries(categoryMap).filter(([k]) => k !== 'projects-residential').map(([key, val]) => {
-                const count = projects.filter((p) => val.filter.includes(p.category)).length
+              {categories.map((catItem) => {
+                const filterArr = catItem.filter || [catItem.id]
+                const count = projects.filter((p) => filterArr.includes(p.category)).length
+                const isActive = category === catItem.slug || (!category && catItem.slug === (categories[0]?.slug || ''))
+
                 return (
                   <Link
-                    key={key}
-                    to={`/project-category/${key}`}
-                    className={`pc-pill ${category === key ? 'is-active' : ''}`}
+                    key={catItem.id}
+                    to={`/project-category/${catItem.slug}`}
+                    className={`pc-pill ${isActive ? 'is-active' : ''}`}
                   >
-                    <span>{val.short}</span>
+                    <span>{catItem.short}</span>
                     <span className="pc-pill__count">{count}</span>
                   </Link>
                 )
@@ -318,7 +317,7 @@ export default function ProjectCategory() {
                 to discuss your own home, office or space.
               </p>
               <div className="pc-empty__actions">
-                <Link to="/project-category/projects-residential" className="btn btn-outline">
+                <Link to="/project-category/projects-apartments" className="btn btn-outline">
                   See All Projects
                 </Link>
                 <Link to="/contact-us" className="btn btn-primary">

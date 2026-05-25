@@ -19,7 +19,8 @@ const IconInstagram = ({ size = 16, ...p }) => (
 )
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { projects, services, rooms, testimonials, processSteps, blogPosts, workTypes, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
+import { services, rooms, processSteps, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
+import { useData } from '../context/DataContext'
 import ProjectLightbox from '../components/ui/ProjectLightbox'
 import SmartImage from '../components/ui/SmartImage'
 import './Home.css'
@@ -28,17 +29,7 @@ gsap.registerPlugin(ScrollTrigger)
 
 /* ── constants — all imagery is now real, optimized project photos ── */
 const FALLBACK_IMG = allImages[0]
-const HERO_IMAGES = projects.slice(0, 5).map((p) => p.image)
 const HERO_SLIDE_INTERVAL = 5000
-const YT_CATALOG = [
-  { id: 'vcUMkExgiCw', title: 'ATTICARCH — Luxury Interior Design' },
-  { id: 'N2QJ6ETLnaQ', title: 'ATTICARCH — Residential Transformation' },
-  { id: 'XzEPJfpn4FI', title: 'ATTICARCH — Premium Villa Interiors' },
-  { id: 'qRjYhNeu1To', title: 'Step Inside Modern Luxury with ATTICARCH' },
-  { id: 'zPJQttiz4SQ', title: 'Luxury 4BHK Villa Interiors — Samruddhi Lake Drive' },
-  { id: 'Kp0BATDxKFI', title: '3BHK Flat Interiors at Prestige Tranquility' },
-  { id: 'yvptQo71mnw', title: '3BHK Apartment Tour — Prestige Song of the South' },
-]
 const ALL_IMGS = allImages
 /* Non-overlapping offset map — every section on the Home page consumes
    a unique slice of the shuffled image pool so the same image never
@@ -115,13 +106,34 @@ function ImageCycler({ images, interval = 2800, className = '', style = {} }) {
 ───────────────────────────────────────── */
 
 function HeroParallax() {
+  const { heroSettings, projects, youtubeVideos } = useData()
   const [slideIdx, setSlideIdx] = useState(0)
   const [progress, setProgress] = useState(0)
+  const [showYtModal, setShowYtModal] = useState(false)
+  const [selectedVideoId, setSelectedVideoId] = useState(null)
   const heroRef = useRef(null)
   const bgRef = useRef(null)
 
+  const playlist = youtubeVideos && youtubeVideos.length
+    ? youtubeVideos
+    : [{ videoId: 'vcUMkExgiCw', title: 'ATTICARCH — Luxury Interior Design' }]
+
+  useEffect(() => {
+    if (playlist.length && !selectedVideoId) {
+      setSelectedVideoId(playlist[0].videoId || playlist[0].id)
+    }
+  }, [playlist, selectedVideoId])
+
+  const slides = heroSettings.slides && heroSettings.slides.length ? heroSettings.slides : []
+  const HERO_IMAGES = slides.length
+    ? slides.map((s) => s.imageUrl)
+    : projects.length
+    ? projects.slice(0, 5).map((p) => p.image || FALLBACK_IMG)
+    : [FALLBACK_IMG]
+
   /* Cycle hero images */
   useEffect(() => {
+    if (!HERO_IMAGES.length) return
     const start = Date.now()
     const frame = setInterval(() => {
       const p = ((Date.now() - start) % HERO_SLIDE_INTERVAL) / HERO_SLIDE_INTERVAL
@@ -129,7 +141,7 @@ function HeroParallax() {
     }, 50)
     const cycle = setInterval(() => setSlideIdx(i => (i + 1) % HERO_IMAGES.length), HERO_SLIDE_INTERVAL)
     return () => { clearInterval(frame); clearInterval(cycle) }
-  }, [slideIdx])
+  }, [slideIdx, HERO_IMAGES.length])
 
   /* GSAP parallax on scroll */
   useEffect(() => {
@@ -149,21 +161,34 @@ function HeroParallax() {
     return () => ctx.revert()
   }, [])
 
+  const eyebrow = heroSettings.eyebrow || 'Award-Winning Bangalore Studio'
+  const titleLine1 = heroSettings.titleLine1 || 'Designing Homes'
+  const titleLine2 = heroSettings.titleLine2 || 'That Tell Your Story'
+  const subtitle = heroSettings.subtitle || "Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002."
+  const primaryCtaText = heroSettings.primaryCtaText || 'Free Consultation'
+  const primaryCtaPath = heroSettings.primaryCtaPath || '/contact-us'
+  const secondaryCtaText = heroSettings.secondaryCtaText || 'Explore Portfolio'
+  const secondaryCtaPath = heroSettings.secondaryCtaPath || '/project-category/projects-apartments'
+  const ytText = heroSettings.ytText || 'Watch Our Transformations'
+  const ytUrl = heroSettings.ytUrl || 'https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA'
+
   return (
     <section className="hero" ref={heroRef}>
       {/* Parallax background layer */}
       <div className="hero__bg" ref={bgRef}>
         <AnimatePresence mode="sync">
-          <motion.img
-            key={slideIdx}
-            src={HERO_IMAGES[slideIdx]}
-            alt="ATTICARCH luxury interior"
-            className="hero__bg-img"
-            initial={{ opacity: 0, scale: 1.15 }}
-            animate={{ opacity: 1, scale: 1.05 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2, ease: 'easeInOut' }}
-          />
+          {HERO_IMAGES[slideIdx] && (
+            <motion.img
+              key={slideIdx}
+              src={HERO_IMAGES[slideIdx]}
+              alt="ATTICARCH luxury interior"
+              className="hero__bg-img"
+              initial={{ opacity: 0, scale: 1.15 }}
+              animate={{ opacity: 1, scale: 1.05 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 2, ease: 'easeInOut' }}
+            />
+          )}
         </AnimatePresence>
         <div className="hero__grain" />
         <div className="hero__overlay" />
@@ -195,7 +220,7 @@ function HeroParallax() {
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}>
             <span className="hero__eyebrow-dot" />
-            <span>Award-Winning Bangalore Studio</span>
+            <span>{eyebrow}</span>
           </motion.div>
 
           <h1 className="hero__title hero__title--center">
@@ -203,14 +228,18 @@ function HeroParallax() {
               <motion.span className="hero__title-line"
                 initial={{ y: 130 }} animate={{ y: 0 }}
                 transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}>
-                Designing Homes
+                {titleLine1}
               </motion.span>
             </div>
             <div style={{ overflow: 'hidden' }}>
               <motion.span className="hero__title-line hero__title-line--accent"
                 initial={{ y: 130 }} animate={{ y: 0 }}
                 transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-                That Tell <em>Your</em> Story
+                {titleLine2.includes('<em>') ? (
+                  <span dangerouslySetInnerHTML={{ __html: titleLine2 }} />
+                ) : (
+                  titleLine2
+                )}
               </motion.span>
             </div>
           </h1>
@@ -218,7 +247,7 @@ function HeroParallax() {
           <motion.p className="hero__subtitle hero__subtitle--center"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.85 }}>
-            Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002.
+            {subtitle}
           </motion.p>
 
           {/* Gold ornament divider */}
@@ -233,11 +262,11 @@ function HeroParallax() {
           <motion.div className="hero__actions hero__actions--center"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.05 }}>
-            <Link to="/contact-us" className="btn btn-primary hero__cta-primary">
-              Free Consultation <ArrowUpRight size={18} />
+            <Link to={primaryCtaPath} className="btn btn-primary hero__cta-primary">
+              {primaryCtaText} <ArrowUpRight size={18} />
             </Link>
-            <Link to="/project-category/projects-residential" className="btn btn-outline hero__outline-btn">
-              Explore Portfolio
+            <Link to={secondaryCtaPath} className="btn btn-outline hero__outline-btn">
+              {secondaryCtaText}
             </Link>
           </motion.div>
         </motion.div>
@@ -248,14 +277,19 @@ function HeroParallax() {
         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}>
 
-        <a
-          href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA"
-          target="_blank" rel="noopener noreferrer"
+        <button
+          onClick={() => {
+            if (playlist.length > 0 && !selectedVideoId) {
+              setSelectedVideoId(playlist[0].videoId || playlist[0].id)
+            }
+            setShowYtModal(true)
+          }}
           className="hero__rail-yt"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', outline: 'none' }}
         >
           <span className="hero__rail-yt-icon"><Play size={10} fill="currentColor" /></span>
-          <span>Watch Our Transformations</span>
-        </a>
+          <span>{ytText}</span>
+        </button>
 
         <div className="hero__rail-thumbs">
           {HERO_IMAGES.map((img, i) => (
@@ -290,6 +324,56 @@ function HeroParallax() {
           </span>
         </div>
       </motion.div>
+      {/* YouTube playlist overlay modal */}
+      {showYtModal && (
+        <div className="hero-yt-modal" onClick={() => setShowYtModal(false)}>
+          <div className="hero-yt-modal__container" onClick={e => e.stopPropagation()}>
+            {/* Player */}
+            <div className="hero-yt-modal__player">
+              {selectedVideoId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&rel=0`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <p style={{ color: 'var(--smoke)' }}>Select a video to play</p>
+              )}
+            </div>
+            {/* Playlist Sidebar */}
+            <div className="hero-yt-modal__playlist">
+              <div className="hero-yt-modal__playlist-header">
+                <h3>Video Tours</h3>
+                <button className="hero-yt-modal__close" onClick={() => setShowYtModal(false)}>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>✕ Close</span>
+                </button>
+              </div>
+              <div className="hero-yt-modal__playlist-items">
+                {playlist.map((v, i) => {
+                  const id = v.videoId || v.id
+                  const isActive = selectedVideoId === id
+                  return (
+                    <button
+                      key={i}
+                      className={`hero-yt-modal__item ${isActive ? 'active' : ''}`}
+                      onClick={() => setSelectedVideoId(id)}
+                    >
+                      <div className="hero-yt-modal__item-thumb">
+                        <img src={`https://img.youtube.com/vi/${id}/mqdefault.jpg`} alt="" />
+                        <div className="hero-yt-modal__item-thumb-play">
+                          <Play size={12} fill="currentColor" />
+                        </div>
+                      </div>
+                      <span className="hero-yt-modal__item-title">{v.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -442,10 +526,18 @@ function RoomAccordion() {
 ───────────────────────────────────────── */
 
 function AboutMosaic() {
-  const imgs = pickImages(4, 84)
+  const { studioSettings } = useData()
+  const staticImgs = pickImages(4, 84)
+  const imgs = studioSettings?.images && studioSettings.images.length
+    ? studioSettings.images.map(img => img.imageUrl)
+    : staticImgs
+
+  // Ensure we always have exactly 4 images (fill placeholders if less than 4)
+  const finalImgs = Array.from({ length: 4 }).map((_, i) => imgs[i] || staticImgs[i])
+
   return (
     <div className="about-mosaic">
-      {imgs.map((img, i) => (
+      {finalImgs.map((img, i) => (
         <motion.div
           key={i}
           className={`mosaic-cell mosaic-cell--${i + 1}`}
@@ -691,17 +783,24 @@ function HowWeWork() {
 ───────────────────────────────────────── */
 
 function TestimonialsStage() {
+  const { testimonials } = useData()
   const [active, setActive] = useState(0)
   const [dir, setDir] = useState(1)
 
   useEffect(() => {
+    if (!testimonials || testimonials.length === 0) return
     const t = setInterval(() => { setDir(1); setActive(i => (i + 1) % testimonials.length) }, 6500)
     return () => clearInterval(t)
-  }, [])
+  }, [testimonials])
 
   const go = n => {
+    if (!testimonials || testimonials.length === 0) return
     setDir(n)
     setActive(i => (i + n + testimonials.length) % testimonials.length)
+  }
+
+  if (!testimonials || testimonials.length === 0) {
+    return null
   }
 
   const t = testimonials[active]
@@ -717,13 +816,13 @@ function TestimonialsStage() {
         <div className="testimonials-stage">
           <div className="testimonials-quote-bg"><Quote size={200} /></div>
           <AnimatePresence mode="wait" custom={dir}>
-            <motion.div key={active} custom={dir}
+            <motion.div key={t.id || active} custom={dir}
               variants={slideV} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               className="testimonials-inner"
             >
               <div className="testimonials-stars">
-                {Array.from({ length: t.rating }).map((_, i) => (
+                {Array.from({ length: t.rating || 5 }).map((_, i) => (
                   <motion.span key={i} initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
                     transition={{ delay: i * 0.08, type: 'spring', stiffness: 300 }}>
                     <Star size={20} fill="var(--gold)" color="var(--gold)" />
@@ -732,7 +831,13 @@ function TestimonialsStage() {
               </div>
               <blockquote className="testimonials-quote">"{t.text}"</blockquote>
               <div className="testimonials-author">
-                <div className="testimonials-avatar">{t.name.charAt(0)}</div>
+                <div className="testimonials-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {t.avatar ? (
+                    <img src={t.avatar} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    t.name ? t.name.charAt(0) : 'U'
+                  )}
+                </div>
                 <div>
                   <strong>{t.name}</strong>
                   <span>{t.project}</span>
@@ -766,10 +871,11 @@ function TestimonialsStage() {
 
 function YouTubeCard({ video, featured }) {
   const [hov, setHov] = useState(false)
-  const thumb = `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`
+  const vid = video.videoId || video.id
+  const thumb = `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`
   return (
     <motion.a
-      href={`https://www.youtube.com/watch?v=${video.id}`}
+      href={`https://www.youtube.com/watch?v=${vid}`}
       target="_blank" rel="noopener noreferrer"
       className={`yt-card ${featured ? 'yt-card--featured' : ''}`}
       onHoverStart={() => setHov(true)} onHoverEnd={() => setHov(false)}
@@ -796,17 +902,20 @@ function YouTubeCard({ video, featured }) {
    INSTAGRAM GRID
 ───────────────────────────────────────── */
 
-function InstaCard({ img, index }) {
+function InstaCard({ post, index }) {
+  const imageUrl = post?.imageUrl || post
+  const link = post?.link || 'https://www.instagram.com/atticarch2020/'
+
   return (
     <Reveal delay={index * 0.05} dir="scale">
       <motion.a
-        href="https://www.instagram.com/atticarch2020/"
+        href={link}
         target="_blank" rel="noopener noreferrer"
         className="insta-card"
         whileHover={{ scale: 1.04 }}
         transition={{ duration: 0.4 }}
       >
-        <img src={img} alt="ATTICARCH Instagram" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <img src={imageUrl} alt="ATTICARCH Instagram" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <div className="insta-card__overlay">
           <IconInstagram size={28} />
         </div>
@@ -815,11 +924,41 @@ function InstaCard({ img, index }) {
   )
 }
 
-/* ─────────────────────────────────────────
-   MAIN HOME COMPONENT
-───────────────────────────────────────── */
+const workTypeContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.04
+    }
+  }
+}
+
+const workTypeCardVariants = {
+  hidden: { opacity: 0, y: 25, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1]
+    }
+  }
+}
 
 export default function Home() {
+  const {
+    projects,
+    testimonials,
+    blogPosts,
+    workTypes,
+    studioSettings,
+    youtubeVideos,
+    instagramPosts,
+    loading
+  } = useData()
+
   const [activeCategory, setActiveCategory] = useState('all')
   const categories = ['all', ...new Set(projects.map(p => p.category))]
   const filtered = activeCategory === 'all' ? projects : projects.filter(p => p.category === activeCategory)
@@ -829,7 +968,7 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => ScrollTrigger.refresh(), 800)
     return () => { clearTimeout(timer); ScrollTrigger.getAll().forEach(tr => tr.kill()) }
-  }, [])
+  }, [projects])
 
   return (
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
@@ -871,22 +1010,34 @@ export default function Home() {
         <div className="container">
           <div className="about-teaser__grid">
             <Reveal className="about-teaser__text" dir="left">
-              <span className="section-label" style={{ color: 'var(--gold-light)' }}>Inside the Studio</span>
+              <span className="section-label" style={{ color: 'var(--gold-light)' }}>
+                {studioSettings?.eyebrow || 'Inside the Studio'}
+              </span>
               <h2 className="section-title" style={{ color: 'var(--warm-white)' }}>
-                Built Around You.<br />Made by <span className="text-gold">Hand</span>.
+                {(() => {
+                  const title = studioSettings?.title || 'Built Around You.\nMade by Hand.'
+                  return title.includes('<span') ? (
+                    <span dangerouslySetInnerHTML={{ __html: title }} />
+                  ) : (
+                    title.split('\n').map((line, idx) => (
+                      <span key={idx}>
+                        {line}
+                        {idx < title.split('\n').length - 1 && <br />}
+                      </span>
+                    ))
+                  )
+                })()}
               </h2>
               <p className="about-teaser__desc">
-                Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of
-                designers and on-site experts work side-by-side under one roof — drawing, picking materials
-                and finishing each room with care, so the work lasts long after we hand over the keys.
+                {studioSettings?.desc || 'Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of designers and on-site experts work side-by-side under one roof — drawing, picking materials and finishing each room with care, so the work lasts long after we hand over the keys.'}
               </p>
               <div className="about-teaser__highlights">
-                {[
+                {(studioSettings?.highlights || [
                   { value: '200+', label: 'Homes Finished' },
                   { value: 'In-House', label: 'Design & Build Team' },
                   { value: '100%', label: 'On-Site Supervision' },
                   { value: '48 Hrs', label: 'Quick Quote' },
-                ].map((h, i) => (
+                ]).map((h, i) => (
                   <div key={i} className="highlight-item">
                     <span className="highlight-number text-mono">{h.value}</span>
                     <span>{h.label}</span>
@@ -954,23 +1105,37 @@ export default function Home() {
       <section className="section section-linen work-types-section">
         <div className="container">
           <Reveal>
-            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span className="section-label" style={{ justifyContent: 'center' }}>Everything Under One Roof</span>
               <h2 className="section-title">What We Build</h2>
             </div>
           </Reveal>
-          <Reveal delay={0.1}>
-            <div className="work-types-grid">
-              {workTypes.map((w, i) => (
-                <motion.div key={i} className="work-type-chip"
-                  whileHover={{ scale: 1.06, background: 'var(--gold-glow)', borderColor: 'var(--gold)' }}
-                  transition={{ duration: 0.25 }}>
-                  <span className="work-type-num text-mono">{String(i + 1).padStart(2, '0')}</span>
-                  <span>{w}</span>
-                </motion.div>
-              ))}
-            </div>
-          </Reveal>
+          <motion.div 
+            className="work-types-grid"
+            variants={workTypeContainerVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.05 }}
+          >
+            {workTypes.map((w, i) => (
+              <motion.div
+                key={i}
+                className="work-type-card"
+                variants={workTypeCardVariants}
+                whileHover={{ y: -6 }}
+              >
+                {w.imageUrl && (
+                  <div className="work-type-card__img-bg">
+                    <img src={w.imageUrl} alt={w.title} loading="lazy" />
+                  </div>
+                )}
+                <div className="work-type-card__bg" />
+                <div className="work-type-card__line" />
+                <span className="work-type-card__num text-mono">{String(i + 1).padStart(2, '0')}</span>
+                <h3 className="work-type-card__title">{w.title || w}</h3>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
@@ -990,7 +1155,7 @@ export default function Home() {
                 <span className="section-label">Our Portfolio</span>
                 <h2 className="section-title" style={{ marginBottom: 0 }}>Recently Completed</h2>
               </div>
-              <Link to="/project-category/projects-residential" className="btn btn-outline">
+              <Link to="/project-category/projects-apartments" className="btn btn-outline">
                 View All <ArrowRight size={16} />
               </Link>
             </div>
@@ -1096,8 +1261,8 @@ export default function Home() {
             </div>
           </Reveal>
           <div className="yt-grid">
-            {YT_CATALOG.slice(0, 6).map((v, i) => (
-              <Reveal key={v.id} delay={i * 0.07}>
+            {(youtubeVideos || []).slice(0, 6).map((v, i) => (
+              <Reveal key={v.videoId || v.id || i} delay={i * 0.07}>
                 <YouTubeCard video={v} featured={false} />
               </Reveal>
             ))}
@@ -1118,7 +1283,9 @@ export default function Home() {
             </div>
           </Reveal>
           <div className="insta-grid">
-            {INSTA_IMGS.map((img, i) => <InstaCard key={i} img={img} index={i} />)}
+            {(instagramPosts || []).map((post, i) => (
+              <InstaCard key={i} post={post} index={i} />
+            ))}
           </div>
           <Reveal>
             <div style={{ textAlign: 'center', marginTop: 40 }}>

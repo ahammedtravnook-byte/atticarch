@@ -10,7 +10,7 @@ import './NotFound.css'
 
 const QUICK_LINKS = [
   { to: '/', icon: HomeIcon, title: 'Home', desc: 'Back to where it all begins' },
-  { to: '/project-category/projects-residential', icon: Briefcase, title: 'Our Projects', desc: 'Explore our portfolio' },
+  { to: '/project-category/projects-apartments', icon: Briefcase, title: 'Our Projects', desc: 'Explore our portfolio' },
   { to: '/services', icon: Sparkles, title: 'Services', desc: 'What we design & build' },
   { to: '/about-us', icon: Users, title: 'About Us', desc: 'The team since 2002' },
   { to: '/blog', icon: BookOpen, title: 'Blog', desc: 'Design insights & ideas' },

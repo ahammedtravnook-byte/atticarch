@@ -30,7 +30,7 @@ export default function App() {
   return (
     <div className="app grain-overlay">
       <Preloader />
-      <SmoothScroll />
+      {!isAdmin && <SmoothScroll />}
       {!isAdmin && !isLanding && <Header />}
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>

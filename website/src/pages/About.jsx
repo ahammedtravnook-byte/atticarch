@@ -609,7 +609,7 @@ export default function About() {
               <Link to="/contact-us" className="btn btn-primary">
                 Free Consultation <ArrowUpRight size={16} />
               </Link>
-              <Link to="/project-category/projects-residential" className="btn btn-outline">
+              <Link to="/project-category/projects-apartments" className="btn btn-outline">
                 See Our Portfolio <ArrowRight size={16} />
               </Link>
             </div>
