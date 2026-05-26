@@ -1,577 +1,550 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { 
-  Phone, Mail, MapPin, Send, MessageCircle, Check, 
-  ChevronRight, ChevronLeft, ShieldCheck, Clock, Award, Sparkles, AlertCircle
+import {
+  Phone, Mail, MapPin, Send, MessageCircle, Check,
+  ChevronRight, ChevronLeft, Sparkles, AlertCircle,
+  Shield, Star, Home, Loader2
 } from 'lucide-react'
+import {
+  auth, db, doc, setDoc, getDocs, collection, query, where,
+  RecaptchaVerifier, signInWithPhoneNumber, signOut as fbSignOut
+} from '../lib/firebase'
 import './Contact.css'
 
 function Reveal({ children, delay = 0 }) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 30 }} 
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }} 
+      viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-      style={{ willChange: 'transform, opacity' }}
     >
       {children}
     </motion.div>
   )
 }
 
+const WHATSAPP_NUM = '919845013138'
+const WHATSAPP_MSG = encodeURIComponent("Hi ATTICARCH, I'd like a free interior design consultation.")
+const RATE_LIMIT_MAX = 3
+const RATE_LIMIT_WINDOW_HRS = 24
+
 export default function Contact() {
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState({ 
-    name: '', 
-    email: '', 
-    phone: '', 
-    projectType: '', 
-    size: '', 
-    budget: '', 
-    timeline: '', 
-    message: '' 
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '',
+    projectType: '', size: '', budget: '', timeline: '', message: ''
   })
-  
   const [errors, setErrors] = useState({})
-  
-  // OTP States
-  const [otpCode, setOtpCode] = useState('')
-  const [generatedOtp, setGeneratedOtp] = useState('')
+
+  // OTP states
+  const [otpSending, setOtpSending] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
   const [otpVerified, setOtpVerified] = useState(false)
-  const [smsNotification, setSmsNotification] = useState(null)
-  const [timer, setTimer] = useState(60)
+  const [otpCode, setOtpCode] = useState('')
   const [otpError, setOtpError] = useState('')
-  
-  // Final Submitted state
-  const [submitted, setSubmitted] = useState(false)
+  const [timer, setTimer] = useState(60)
+  const [verifying, setVerifying] = useState(false)
 
-  // OTP Countdown timer
+  // Firebase phone auth
+  const confirmationRef = useRef(null)
+  const recaptchaRef = useRef(null)
+
+  // Submit states
+  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  // OTP countdown
   useEffect(() => {
     let interval = null
     if (otpSent && timer > 0 && !otpVerified) {
-      interval = setInterval(() => {
-        setTimer(prev => prev - 1)
-      }, 1000)
-    } else if (timer === 0) {
-      clearInterval(interval)
+      interval = setInterval(() => setTimer(p => p - 1), 1000)
     }
     return () => clearInterval(interval)
   }, [otpSent, timer, otpVerified])
 
-  const sendOtp = () => {
-    if (!form.phone || !/^\d{10}$/.test(form.phone.replace(/\D/g, ''))) {
-      setErrors({ ...errors, phone: 'Please enter a valid 10-digit phone number' })
+  // Init invisible reCAPTCHA once
+  const setupRecaptcha = useCallback(() => {
+    if (recaptchaRef.current) return
+    recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'invisible',
+      callback: () => {},
+      'expired-callback': () => { recaptchaRef.current = null }
+    })
+  }, [])
+
+  // ── Rate limit check: max 3 submissions per phone per 24h ──
+  const checkRateLimit = async (phone) => {
+    const cutoff = new Date(Date.now() - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000).toISOString()
+    const q = query(
+      collection(db, 'leads'),
+      where('phone', '==', phone),
+      where('createdAt', '>=', cutoff)
+    )
+    const snap = await getDocs(q)
+    return snap.size < RATE_LIMIT_MAX
+  }
+
+  // ── Send real OTP via Firebase Phone Auth ──
+  const sendOtp = async () => {
+    const cleanPhone = form.phone.replace(/\D/g, '')
+    if (cleanPhone.length !== 10) {
+      setErrors(e => ({ ...e, phone: 'Please enter a valid 10-digit phone number' }))
       return
     }
-    setErrors({ ...errors, phone: null })
-    
-    // Generate 4 digit code
-    const code = Math.floor(1000 + Math.random() * 9000).toString()
-    setGeneratedOtp(code)
-    setOtpSent(true)
-    setTimer(60)
+    setErrors(e => ({ ...e, phone: null }))
     setOtpError('')
-    setOtpCode('')
-    
-    // Show simulated SMS notification
-    setSmsNotification(`💬 SMS Received: Your ATTICARCH verification code is ${code}. Valid for 10 minutes.`)
-    
-    // Auto-hide SMS banner after 8 seconds
-    setTimeout(() => {
-      setSmsNotification(null)
-    }, 8500)
-  }
+    setOtpSending(true)
 
-  const verifyOtp = () => {
-    if (otpCode === generatedOtp) {
-      setOtpVerified(true)
-      setOtpError('')
-      // Automatically advance to step 3 after a brief delay
-      setTimeout(() => {
-        setStep(3)
-      }, 800)
-    } else {
-      setOtpError('Invalid OTP code. Please try again.')
-    }
-  }
-
-  const handleNextStep = () => {
-    const errs = {}
-    if (step === 1) {
-      if (!form.name.trim()) errs.name = 'Full name is required'
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Valid email is required'
-      if (!form.projectType) errs.projectType = 'Please select a project type'
-      
-      if (Object.keys(errs).length > 0) {
-        setErrors(errs)
+    try {
+      // Rate limit check before sending OTP
+      const allowed = await checkRateLimit(cleanPhone)
+      if (!allowed) {
+        setOtpError(`Too many submissions from this number. Please try after ${RATE_LIMIT_WINDOW_HRS} hours.`)
+        setOtpSending(false)
         return
       }
-      setErrors({})
-      setStep(2)
+
+      setupRecaptcha()
+      const phoneNumber = `+91${cleanPhone}`
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaRef.current)
+      confirmationRef.current = confirmation
+      setOtpSent(true)
+      setTimer(60)
+      setOtpCode('')
+    } catch (err) {
+      console.error('OTP send error:', err)
+      if (err.code === 'auth/too-many-requests') {
+        setOtpError('Too many OTP requests. Please wait a few minutes and try again.')
+      } else if (err.code === 'auth/invalid-phone-number') {
+        setOtpError('Invalid phone number. Please check and try again.')
+      } else {
+        setOtpError('Failed to send OTP. Please try again.')
+      }
+      // Reset recaptcha on failure
+      recaptchaRef.current = null
+    } finally {
+      setOtpSending(false)
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!otpVerified) {
-      setStep(2)
-      setOtpError('Please verify your mobile number first.')
+  // ── Verify OTP code ──
+  const verifyOtp = async () => {
+    if (!confirmationRef.current) {
+      setOtpError('Session expired. Please resend OTP.')
       return
     }
-    
-    // Final submit logic
-    setSubmitted(true)
-    // Save to local storage mock leads
+    setVerifying(true)
+    setOtpError('')
+
     try {
-      const saved = JSON.parse(localStorage.getItem('atticarch_leads') || '[]')
-      saved.push({ ...form, verified: true, at: new Date().toISOString(), source: 'contact-page' })
-      localStorage.setItem('atticarch_leads', JSON.stringify(saved))
-    } catch (e) {
-      console.error(e)
+      await confirmationRef.current.confirm(otpCode)
+      setOtpVerified(true)
+      setTimeout(() => setStep(3), 800)
+    } catch (err) {
+      console.error('OTP verify error:', err)
+      if (err.code === 'auth/invalid-verification-code') {
+        setOtpError('Invalid code. Please check and try again.')
+      } else if (err.code === 'auth/code-expired') {
+        setOtpError('Code expired. Please resend OTP.')
+      } else {
+        setOtpError('Verification failed. Please try again.')
+      }
+    } finally {
+      setVerifying(false)
     }
   }
 
+  // ── Step 1 validation ──
+  const handleNextStep = () => {
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Full name is required'
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Valid email is required'
+    if (!form.projectType) errs.projectType = 'Please select a project type'
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+    setErrors({})
+    setStep(2)
+  }
+
+  // ── Final submit → Firestore ──
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!otpVerified) { setStep(2); setOtpError('Please verify your mobile number first.'); return }
+
+    setSubmitting(true)
+    setSubmitError('')
+
+    try {
+      const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      await setDoc(doc(db, 'leads', leadId), {
+        id: leadId,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.replace(/\D/g, ''),
+        projectType: form.projectType,
+        size: form.size || '',
+        budget: form.budget || '',
+        timeline: form.timeline || '',
+        message: form.message || '',
+        verified: true,
+        source: 'contact-page',
+        createdAt: new Date().toISOString(),
+      })
+
+      // Sign out the temporary phone auth user
+      try { await fbSignOut(auth) } catch (_) {}
+
+      setSubmitted(true)
+    } catch (err) {
+      console.error('Submit error:', err)
+      setSubmitError('Failed to submit. Please try again or call us directly.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const projectTypes = [
+    'Apartment Interior', 'Villa Interior', 'Commercial Interior',
+    'Renovation & Refurbishment', 'Modular Kitchen / Wardrobes', 'Other'
+  ]
+
   return (
-    <motion.main className="contact-page-wrapper" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+    <motion.main className="ct" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
       <Helmet>
         <title>Book Design Consultation — ATTICARCH Bangalore</title>
-        <meta name="description" content="Talk to AtticArch's senior architects. Book a free 3D design consultation, select materials, and receive a complete itemized budget estimate." />
+        <meta name="description" content="Talk to AtticArch's senior architects. Book a free 3D design consultation and receive a complete itemized budget estimate." />
       </Helmet>
 
-      {/* Simulated SMS Notification Popup */}
-      <AnimatePresence>
-        {smsNotification && (
-          <motion.div 
-            className="sms-toast-notification"
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          >
-            <div className="sms-toast-content">
-              <Sparkles size={16} color="var(--gold)" />
-              <span>{smsNotification}</span>
-              <button className="sms-toast-close" onClick={() => setSmsNotification(null)}>&times;</button>
-            </div>
-            <div className="sms-toast-progress" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Invisible reCAPTCHA container */}
+      <div id="recaptcha-container" />
 
-      <section className="contact-hero">
-        <div className="contact-hero__bg">
-          <div className="contact-hero__orb-1" />
-          <div className="contact-hero__orb-2" />
+      {/* ── HERO ── */}
+      <section className="ct-hero">
+        <div className="ct-hero__bg">
+          <div className="ct-hero__orb ct-hero__orb--1" />
+          <div className="ct-hero__orb ct-hero__orb--2" />
+          <div className="ct-hero__grain" />
         </div>
-        <div className="container contact-hero__inner">
+        <div className="container ct-hero__inner">
           <Reveal>
-            <span className="contact-hero__label">AtticArch Design Studio</span>
-            <h1 className="contact-hero__title">
-              Let's Create <span className="text-gold">Together</span>
+            <div className="ct-hero__badge">
+              <span className="ct-hero__badge-dot" />
+              <span>Get in Touch</span>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h1 className="ct-hero__title">
+              Let's Create<br /><em>Together</em>
             </h1>
-            <p className="contact-hero__subtitle">
-              Have a villa, apartment, or commercial space in mind? Step through our interactive planner to request your free 3D layout consultation.
+          </Reveal>
+          <Reveal delay={0.2}>
+            <p className="ct-hero__sub">
+              Have a villa, apartment, or commercial space in mind? Step through our interactive
+              planner to request your free 3D layout consultation.
             </p>
+          </Reveal>
+          <Reveal delay={0.3}>
+            <div className="ct-hero__stats">
+              {[
+                { icon: <Shield size={16} />, text: '10-Year Warranty' },
+                { icon: <Star size={16} />, text: '4.8★ Google Rating' },
+                { icon: <Home size={16} />, text: '200+ Homes Delivered' },
+              ].map((s, i) => (
+                <div key={i} className="ct-hero__stat">
+                  {s.icon} <span>{s.text}</span>
+                </div>
+              ))}
+            </div>
           </Reveal>
         </div>
       </section>
 
-      <section className="contact-body-section">
+      {/* ── BODY ── */}
+      <section className="ct-body">
         <div className="container">
-          <div className="contact-grid">
-            
-            {/* Left: Detailed Information & Process Highlights */}
-            <div className="contact-info-col">
+          <div className="ct-grid">
+
+            {/* LEFT — Info */}
+            <div className="ct-info">
               <Reveal>
-                <div className="contact-info-card">
-                  <h2 className="info-title">Why Consult With Us?</h2>
-                  <p className="info-desc">
-                    Every AtticArch space starts with a collaborative brief. Over a cup of tea, we will map out your functional requirements, layout possibilities, and material choices.
-                  </p>
-                  
-                  <div className="consultation-framework">
-                    <div className="framework-item">
-                      <div className="framework-icon"><Check size={14} /></div>
-                      <div>
-                        <h4>1. Detailed Style Assessment</h4>
-                        <p>We review your design preferences, color palettes, and family requirements to draft a bespoke aesthetic profile.</p>
-                      </div>
-                    </div>
-                    <div className="framework-item">
-                      <div className="framework-icon"><Check size={14} /></div>
-                      <div>
-                        <h4>2. Free 3D Layout Blueprint</h4>
-                        <p>Get photo-real, multi-view 3D layouts showing exactly how your cabinetry, ceilings, and lights will sit.</p>
-                      </div>
-                    </div>
-                    <div className="framework-item">
-                      <div className="framework-icon"><Check size={14} /></div>
-                      <div>
-                        <h4>3. Material Sampling Session</h4>
-                        <p>Feel physical samples of Hettich sliding sets, CenturyPly panels, Blum hinges, and premium finishes in our meeting.</p>
-                      </div>
-                    </div>
-                    <div className="framework-item">
-                      <div className="framework-icon"><Check size={14} /></div>
-                      <div>
-                        <h4>4. Fully Itemized BOQ Quote</h4>
-                        <p>Receive a completely transparent billing sheet with zero hidden margins. What we quote is what you pay.</p>
-                      </div>
-                    </div>
-                  </div>
+                <h2 className="ct-info__title">Why Consult With Us?</h2>
+                <p className="ct-info__desc">
+                  Every AtticArch space starts with a collaborative brief. Over a cup of tea,
+                  we map out your functional requirements, layout possibilities, and material choices.
+                </p>
+              </Reveal>
 
-                  <div className="quick-contacts-row">
-                    <a href="tel:09845013138" className="quick-contact-link">
-                      <Phone size={16} />
-                      <div>
-                        <span className="label">Call Studio</span>
-                        <span className="val">98450 13138</span>
-                      </div>
-                    </a>
-                    <a href="mailto:info@atticarch.com" className="quick-contact-link">
-                      <Mail size={16} />
-                      <div>
-                        <span className="label">Email Enquiries</span>
-                        <span className="val">info@atticarch.com</span>
-                      </div>
-                    </a>
+              <Reveal delay={0.1}>
+                <div className="ct-contacts">
+                  <a href="tel:09845013138" className="ct-contact">
+                    <div className="ct-contact__icon"><Phone size={18} /></div>
+                    <div>
+                      <span className="ct-contact__label">Call Studio</span>
+                      <span className="ct-contact__value">98450 13138</span>
+                    </div>
+                  </a>
+                  <a href="mailto:info@atticarch.com" className="ct-contact">
+                    <div className="ct-contact__icon"><Mail size={18} /></div>
+                    <div>
+                      <span className="ct-contact__label">Email Enquiries</span>
+                      <span className="ct-contact__value">info@atticarch.com</span>
+                    </div>
+                  </a>
+                  <div className="ct-contact ct-contact--address">
+                    <div className="ct-contact__icon"><MapPin size={18} /></div>
+                    <div>
+                      <span className="ct-contact__label">Visit Studio</span>
+                      <span className="ct-contact__value">Bangalore, Karnataka</span>
+                    </div>
                   </div>
+                </div>
+              </Reveal>
 
-                  <div className="map-embed-wrapper">
-                    <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d248849.84916296526!2d77.6309395!3d12.9539974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1"
-                      width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
-                      title="ATTICARCH Location map"
-                    />
-                  </div>
+              <Reveal delay={0.3}>
+                <div className="ct-map">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d248849.84916296526!2d77.6309395!3d12.9539974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1"
+                    width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
+                    title="ATTICARCH Location"
+                  />
                 </div>
               </Reveal>
             </div>
 
-            {/* Right: Premium Multi-step Form Card */}
-            <div className="contact-form-col">
+            {/* RIGHT — Form */}
+            <div className="ct-form-col">
               <Reveal delay={0.15}>
-                <div className="contact-form-card glass-panel">
-                  
-                  {/* Step Indicators */}
-                  <div className="form-steps-header">
-                    <div className="steps-progress-track">
-                      <div className="steps-progress-fill" style={{ width: `${((step - 1) / 2) * 100}%` }} />
+                <div className="ct-card">
+                  <div className="ct-card__header">
+                    <h3 className="ct-card__title">Book Free Consultation</h3>
+                    <p className="ct-card__sub">Takes under 2 minutes</p>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="ct-progress">
+                    <div className="ct-progress__track">
+                      <div className="ct-progress__fill" style={{ width: `${((step - 1) / 2) * 100}%` }} />
                     </div>
-                    {[1, 2, 3].map((s) => (
-                      <button 
-                        key={s} 
-                        className={`step-dot ${s === step ? 'active' : ''} ${s < step || submitted ? 'completed' : ''}`}
-                        onClick={() => {
-                          if (submitted) return
-                          if (s < step) setStep(s)
-                        }}
+                    {[1, 2, 3].map(s => (
+                      <button
+                        key={s}
+                        className={`ct-progress__dot ${s === step ? 'ct-progress__dot--active' : ''} ${s < step || submitted ? 'ct-progress__dot--done' : ''}`}
+                        onClick={() => { if (!submitted && s < step) setStep(s) }}
                         disabled={s > step || submitted}
-                        aria-label={`Go to step ${s}`}
                       >
-                        {s < step || submitted ? <Check size={12} /> : s}
+                        {s < step || submitted ? <Check size={11} /> : s}
                       </button>
                     ))}
                   </div>
-
-                  <div className="step-labels-row">
-                    <span>1. Basic Info</span>
-                    <span>2. OTP Verify</span>
-                    <span>3. Project Details</span>
+                  <div className="ct-progress__labels">
+                    <span className={step >= 1 ? 'active' : ''}>Basic Info</span>
+                    <span className={step >= 2 ? 'active' : ''}>Verify Phone</span>
+                    <span className={step >= 3 ? 'active' : ''}>Project Details</span>
                   </div>
 
                   <AnimatePresence mode="wait">
                     {submitted ? (
-                      <motion.div 
-                        key="success-state"
-                        className="form-success-wrapper"
+                      <motion.div
+                        key="success"
+                        className="ct-success"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <div className="success-icon-badge"><Check size={36} /></div>
+                        <div className="ct-success__icon"><Check size={32} /></div>
                         <h3>Consultation Booked!</h3>
-                        <p>We've successfully verified your phone number and recorded your project details.</p>
-                        
-                        <div className="receipt-box">
-                          <div className="receipt-line"><span>Name:</span> <strong>{form.name}</strong></div>
-                          <div className="receipt-line"><span>Verified Mobile:</span> <strong>{form.phone}</strong></div>
-                          <div className="receipt-line"><span>Space Type:</span> <strong>{form.projectType}</strong></div>
-                          {form.size && <div className="receipt-line"><span>Approx. Size:</span> <strong>{form.size} sq.ft</strong></div>}
+                        <p>We've verified your phone and recorded your project details.</p>
+
+                        <div className="ct-receipt">
+                          <div className="ct-receipt__row"><span>Name</span><strong>{form.name}</strong></div>
+                          <div className="ct-receipt__row"><span>Verified Mobile</span><strong>+91 {form.phone}</strong></div>
+                          <div className="ct-receipt__row"><span>Space Type</span><strong>{form.projectType}</strong></div>
+                          {form.size && <div className="ct-receipt__row"><span>Approx. Size</span><strong>{form.size} sq.ft</strong></div>}
+                          {form.budget && <div className="ct-receipt__row"><span>Budget</span><strong>{form.budget}</strong></div>}
                         </div>
-                        
-                        <p className="success-hint">Our senior designer will contact you within 2 hours to confirm your meeting slot.</p>
-                        
-                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 24 }}>
+
+                        <p className="ct-success__hint">Our senior designer will contact you within 2 hours.</p>
+
+                        <a
+                          href={`https://wa.me/${WHATSAPP_NUM}?text=${WHATSAPP_MSG}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="ct-btn ct-btn--whatsapp"
+                        >
                           <MessageCircle size={16} /> Continue on WhatsApp
                         </a>
                       </motion.div>
                     ) : (
-                      <form onSubmit={handleSubmit} className="planner-form">
-                        
-                        {/* STEP 1: Basic Info */}
+                      <form onSubmit={handleSubmit}>
+                        {/* STEP 1 */}
                         {step === 1 && (
-                          <motion.div 
-                            key="step1" 
-                            className="form-step-content"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.35 }}
-                          >
-                            <h3 className="step-title">Let's start with the basics</h3>
-                            <p className="step-subtitle">Introduce yourself and tell us what type of space you are planning.</p>
+                          <motion.div key="s1" className="ct-step-content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                            <h4 className="ct-step-heading">Let's start with the basics</h4>
+                            <p className="ct-step-sub">Introduce yourself and tell us about your space.</p>
 
-                            <div className="form-group-wrap">
-                              <div className="form-group">
-                                <label>Your Full Name <span>*</span></label>
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter your name" 
-                                  value={form.name} 
-                                  onChange={e => setForm({ ...form, name: e.target.value })} 
-                                  required 
-                                />
-                                {errors.name && <span className="error-text">{errors.name}</span>}
+                            <div className="ct-fields">
+                              <div className="ct-field">
+                                <label>Full Name <span>*</span></label>
+                                <input type="text" placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                                {errors.name && <span className="ct-err">{errors.name}</span>}
                               </div>
-
-                              <div className="form-group">
-                                <label>Email Address <span>*</span></label>
-                                <input 
-                                  type="email" 
-                                  placeholder="name@example.com" 
-                                  value={form.email} 
-                                  onChange={e => setForm({ ...form, email: e.target.value })} 
-                                  required 
-                                />
-                                {errors.email && <span className="error-text">{errors.email}</span>}
+                              <div className="ct-field">
+                                <label>Email <span>*</span></label>
+                                <input type="email" placeholder="name@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                                {errors.email && <span className="ct-err">{errors.email}</span>}
                               </div>
-
-                              <div className="form-group">
-                                <label>Property / Project Type <span>*</span></label>
-                                <select 
-                                  value={form.projectType} 
-                                  onChange={e => setForm({ ...form, projectType: e.target.value })}
-                                  required
-                                >
+                              <div className="ct-field">
+                                <label>Project Type <span>*</span></label>
+                                <select value={form.projectType} onChange={e => setForm({ ...form, projectType: e.target.value })}>
                                   <option value="">Select type...</option>
-                                  <option value="Apartment Interior">Apartment Interior</option>
-                                  <option value="Villa Interior">Villa Interior</option>
-                                  <option value="Commercial Interior">Commercial Interior</option>
-                                  <option value="Renovation & Refurbishment">Renovation & Refurbishment</option>
-                                  <option value="Modular Kitchen / Wardrobes">Modular Kitchen / Wardrobes</option>
-                                  <option value="Other">Other</option>
+                                  {projectTypes.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
-                                {errors.projectType && <span className="error-text">{errors.projectType}</span>}
+                                {errors.projectType && <span className="ct-err">{errors.projectType}</span>}
                               </div>
-
-                              <div className="form-group">
-                                <label>Approximate Area Size (Optional)</label>
-                                <input 
-                                  type="text" 
-                                  placeholder="e.g. 1800 sq.ft" 
-                                  value={form.size} 
-                                  onChange={e => setForm({ ...form, size: e.target.value })} 
-                                />
+                              <div className="ct-field">
+                                <label>Approximate Size <span className="opt">(optional)</span></label>
+                                <input type="text" placeholder="e.g. 1800 sq.ft" value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} />
                               </div>
                             </div>
 
-                            <button type="button" onClick={handleNextStep} className="btn btn-primary step-next-btn">
-                              Next: Verify Mobile <ChevronRight size={16} />
+                            <button type="button" onClick={handleNextStep} className="ct-btn ct-btn--primary ct-btn--full">
+                              Next: Verify Mobile <ChevronRight size={15} />
                             </button>
                           </motion.div>
                         )}
 
-                        {/* STEP 2: Mobile OTP Verification */}
+                        {/* STEP 2 — Real Firebase OTP */}
                         {step === 2 && (
-                          <motion.div 
-                            key="step2" 
-                            className="form-step-content"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.35 }}
-                          >
-                            <h3 className="step-title">Verify Phone Number</h3>
-                            <p className="step-subtitle">To prevent spam bookings, we verify your phone number via a quick OTP.</p>
+                          <motion.div key="s2" className="ct-step-content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                            <h4 className="ct-step-heading">Verify Phone Number</h4>
+                            <p className="ct-step-sub">We'll send a real SMS code to verify your number.</p>
 
-                            <div className="form-group-wrap">
-                              <div className="form-group">
-                                <label>10-Digit Mobile Number <span>*</span></label>
-                                <div className="phone-input-row">
-                                  <div className="prefix">+91</div>
-                                  <input 
-                                    type="tel" 
-                                    placeholder="Enter mobile number" 
-                                    value={form.phone} 
-                                    onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} 
+                            <div className="ct-fields">
+                              <div className="ct-field">
+                                <label>Mobile Number <span>*</span></label>
+                                <div className="ct-phone-row">
+                                  <div className="ct-phone-prefix">+91</div>
+                                  <input
+                                    type="tel" placeholder="10-digit number"
+                                    value={form.phone}
+                                    onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                                     disabled={otpVerified || otpSent}
-                                    required 
                                   />
                                   {!otpVerified && (
-                                    <button 
-                                      type="button" 
-                                      className="btn-otp-action"
+                                    <button
+                                      type="button" className="ct-otp-send"
                                       onClick={sendOtp}
-                                      disabled={form.phone.length !== 10}
+                                      disabled={form.phone.length !== 10 || otpSending}
                                     >
-                                      {otpSent ? 'Resend' : 'Send Code'}
+                                      {otpSending ? <Loader2 size={14} className="ct-spin" /> : otpSent ? 'Resend' : 'Send OTP'}
                                     </button>
                                   )}
                                 </div>
-                                {errors.phone && <span className="error-text">{errors.phone}</span>}
+                                {errors.phone && <span className="ct-err">{errors.phone}</span>}
                               </div>
 
                               {otpSent && !otpVerified && (
-                                <motion.div 
-                                  className="otp-entry-box"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                >
-                                  <label>Enter 4-Digit Verification Code</label>
-                                  <div className="otp-verify-row">
-                                    <input 
-                                      type="text" 
-                                      placeholder="0 0 0 0" 
-                                      maxLength={4}
+                                <motion.div className="ct-otp-box" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                  <label>Enter 6-Digit Verification Code</label>
+                                  <div className="ct-otp-row">
+                                    <input
+                                      type="text" placeholder="• • • • • •" maxLength={6}
                                       value={otpCode}
                                       onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                                      className="otp-code-input text-mono"
+                                      className="ct-otp-input"
                                     />
-                                    <button 
-                                      type="button" 
-                                      className="btn-verify-submit"
+                                    <button
+                                      type="button" className="ct-btn ct-btn--gold"
                                       onClick={verifyOtp}
-                                      disabled={otpCode.length !== 4}
+                                      disabled={otpCode.length !== 6 || verifying}
                                     >
-                                      Verify Code
+                                      {verifying ? <Loader2 size={14} className="ct-spin" /> : 'Verify'}
                                     </button>
                                   </div>
-                                  
-                                  {otpError && (
-                                    <div className="otp-alert-message text-red">
-                                      <AlertCircle size={14} /> <span>{otpError}</span>
-                                    </div>
-                                  )}
-
-                                  <div className="otp-timer-row">
-                                    {timer > 0 ? (
-                                      <span>Resend code in <strong>{timer}s</strong></span>
-                                    ) : (
-                                      <button type="button" className="lnk-resend" onClick={sendOtp}>Resend code now</button>
-                                    )}
+                                  {otpError && <div className="ct-otp-err"><AlertCircle size={13} /> {otpError}</div>}
+                                  <div className="ct-otp-timer">
+                                    {timer > 0
+                                      ? <>Resend in <strong>{timer}s</strong></>
+                                      : <button type="button" className="ct-link" onClick={sendOtp} disabled={otpSending}>Resend code</button>
+                                    }
                                   </div>
                                 </motion.div>
+                              )}
+
+                              {!otpSent && !otpVerified && otpError && (
+                                <div className="ct-otp-err"><AlertCircle size={13} /> {otpError}</div>
                               )}
 
                               {otpVerified && (
-                                <motion.div 
-                                  className="otp-verified-badge"
-                                  initial={{ scale: 0.9, opacity: 0 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                >
-                                  <div className="icon-wrap"><Check size={16} /></div>
-                                  <span>Mobile Verified Successfully</span>
+                                <motion.div className="ct-verified" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                                  <Check size={15} /> Mobile Verified Successfully
                                 </motion.div>
                               )}
                             </div>
 
-                            <div className="step-navigation-row">
-                              <button type="button" onClick={() => setStep(1)} className="btn-back">
+                            <div className="ct-nav-row">
+                              <button type="button" className="ct-back" onClick={() => setStep(1)}>
                                 <ChevronLeft size={14} /> Back
                               </button>
-                              
-                              <button 
-                                type="button" 
-                                onClick={() => setStep(3)} 
-                                className="btn btn-primary"
-                                disabled={!otpVerified}
-                              >
-                                Next Step <ChevronRight size={16} />
+                              <button type="button" className="ct-btn ct-btn--primary" onClick={() => setStep(3)} disabled={!otpVerified}>
+                                Next <ChevronRight size={15} />
                               </button>
                             </div>
                           </motion.div>
                         )}
 
-                        {/* STEP 3: Budget & Preferences */}
+                        {/* STEP 3 */}
                         {step === 3 && (
-                          <motion.div 
-                            key="step3" 
-                            className="form-step-content"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.35 }}
-                          >
-                            <h3 className="step-title">Budget & Timeline</h3>
-                            <p className="step-subtitle">Help us align with your parameters to prepare options beforehand.</p>
+                          <motion.div key="s3" className="ct-step-content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                            <h4 className="ct-step-heading">Budget & Timeline</h4>
+                            <p className="ct-step-sub">Help us prepare options ahead of your consultation.</p>
 
-                            <div className="form-group-wrap">
-                              <div className="form-group">
-                                <label>Expected Budget Range</label>
-                                <select 
-                                  value={form.budget} 
-                                  onChange={e => setForm({ ...form, budget: e.target.value })}
-                                >
+                            <div className="ct-fields">
+                              <div className="ct-field">
+                                <label>Budget Range</label>
+                                <select value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })}>
                                   <option value="">Select range...</option>
-                                  <option value="Under 4 Lacs">Under 4 Lacs</option>
-                                  <option value="4-6 Lacs">4-6 Lacs</option>
-                                  <option value="6-10 Lacs">6-10 Lacs</option>
-                                  <option value="10-18 Lacs">10-18 Lacs</option>
-                                  <option value="18 Lacs+">18 Lacs+</option>
+                                  <option value="Under ₹4 Lacs">Under ₹4 Lacs</option>
+                                  <option value="₹4-6 Lacs">₹4–6 Lacs</option>
+                                  <option value="₹6-10 Lacs">₹6–10 Lacs</option>
+                                  <option value="₹10-18 Lacs">₹10–18 Lacs</option>
+                                  <option value="₹18 Lacs+">₹18 Lacs+</option>
                                 </select>
                               </div>
-
-                              <div className="form-group">
-                                <label>Required Timeline</label>
-                                <select 
-                                  value={form.timeline} 
-                                  onChange={e => setForm({ ...form, timeline: e.target.value })}
-                                >
+                              <div className="ct-field">
+                                <label>Timeline</label>
+                                <select value={form.timeline} onChange={e => setForm({ ...form, timeline: e.target.value })}>
                                   <option value="">Select timeline...</option>
-                                  <option value="Immediate (Within 30 days)">Immediate (Within 30 days)</option>
-                                  <option value="1 to 3 Months">1 to 3 Months</option>
-                                  <option value="3+ Months out">3+ Months out</option>
+                                  <option value="Immediate (30 days)">Immediate (30 days)</option>
+                                  <option value="1-3 Months">1–3 Months</option>
+                                  <option value="3+ Months">3+ Months</option>
                                 </select>
                               </div>
-
-                              <div className="form-group">
+                              <div className="ct-field">
                                 <label>Message / Special Requirements</label>
-                                <textarea 
-                                  placeholder="Tell us details about your project, styling preferences, or configurations..." 
-                                  rows={4}
-                                  value={form.message} 
-                                  onChange={e => setForm({ ...form, message: e.target.value })}
-                                />
+                                <textarea rows={4} placeholder="Tell us about your project, styling preferences..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
                               </div>
                             </div>
 
-                            <div className="step-navigation-row">
-                              <button type="button" onClick={() => setStep(2)} className="btn-back">
+                            {submitError && <div className="ct-otp-err" style={{ marginBottom: 16 }}><AlertCircle size={13} /> {submitError}</div>}
+
+                            <div className="ct-nav-row">
+                              <button type="button" className="ct-back" onClick={() => setStep(2)}>
                                 <ChevronLeft size={14} /> Back
                               </button>
-                              
-                              <button 
-                                type="submit" 
-                                className="btn btn-primary submit-finish-btn"
-                                disabled={!otpVerified}
-                              >
-                                Book Consultation <Send size={15} />
+                              <button type="submit" className="ct-btn ct-btn--primary" disabled={!otpVerified || submitting}>
+                                {submitting ? <><Loader2 size={14} className="ct-spin" /> Submitting...</> : <>Book Consultation <Send size={14} /></>}
                               </button>
                             </div>
                           </motion.div>
                         )}
-                        
                       </form>
                     )}
                   </AnimatePresence>
                 </div>
               </Reveal>
             </div>
-
           </div>
         </div>
       </section>

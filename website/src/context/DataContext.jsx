@@ -13,6 +13,16 @@ import {
   blogPosts as staticBlogPosts,
   testimonials as staticTestimonials,
   workTypes as staticWorkTypes,
+  services as staticServices,
+  rooms as staticRooms,
+  team as staticTeam,
+  partners as staticPartners,
+  upcomingProjects as staticUpcomingProjects,
+  principles as staticPrinciples,
+  approachPoints as staticApproachPoints,
+  visionStatement as staticVisionStatement,
+  valueProps as staticValueProps,
+  processSteps as staticProcessSteps,
   pickImages,
 } from '../data/siteData'
 
@@ -143,7 +153,19 @@ export function DataProvider({ children }) {
   const [categories, setCategories] = useState(defaultCategories.filter(c => c.id !== 'residential'))
   const [testimonials, setTestimonials] = useState(staticTestimonials)
   const [blogPosts, setBlogPosts] = useState(staticBlogPosts)
-  
+  const [services, setServices] = useState(staticServices)
+  const [rooms, setRooms] = useState(staticRooms)
+  const [teamMembers, setTeamMembers] = useState(staticTeam)
+  const [brandPartners, setBrandPartners] = useState(staticPartners)
+  const [upcomingProjects, setUpcomingProjects] = useState(staticUpcomingProjects)
+  const [aboutContent, setAboutContent] = useState({
+    visionStatement: staticVisionStatement,
+    principles: staticPrinciples,
+    approachPoints: staticApproachPoints,
+    valueProps: staticValueProps,
+    processSteps: staticProcessSteps,
+  })
+
   // Single document settings
   const [heroSettings, setHeroSettings] = useState(defaultHeroSettings)
   const [studioSettings, setStudioSettings] = useState(defaultStudioSettings)
@@ -165,7 +187,15 @@ export function DataProvider({ children }) {
       setIsDatabaseEmpty(emptyDb)
 
       if (!projectsSnap.empty) {
-        const fetchedProjects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const fetchedProjects = projectsSnap.docs.map(d => {
+          const data = { id: d.id, ...d.data() }
+          const staticMatch = staticProjects.find(sp => String(sp.id) === String(d.id))
+          if (staticMatch) {
+            if (!data.image || data.image === '/placeholder.webp') data.image = staticMatch.image
+            if (!data.images || data.images.length === 0) data.images = staticMatch.images
+          }
+          return data
+        })
         setProjects(fetchedProjects)
       } else {
         setProjects(staticProjects)
@@ -191,7 +221,14 @@ export function DataProvider({ children }) {
       // 4. Blog Posts
       const blogSnap = await getDocs(collection(db, 'blogPosts'))
       if (!blogSnap.empty) {
-        const fetchedBlog = blogSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const fetchedBlog = blogSnap.docs.map(d => {
+          const data = { id: d.id, ...d.data() }
+          const staticMatch = staticBlogPosts.find(sb => String(sb.id) === String(d.id))
+          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
+            data.image = staticMatch.image
+          }
+          return data
+        })
         setBlogPosts(fetchedBlog)
       } else {
         setBlogPosts(staticBlogPosts)
@@ -202,20 +239,43 @@ export function DataProvider({ children }) {
       const homeDocSnap = await getDoc(homeDocRef)
       if (homeDocSnap.exists()) {
         const data = homeDocSnap.data()
-        if (data.hero) setHeroSettings({ ...defaultHeroSettings, ...data.hero })
-        if (data.studio) setStudioSettings({ ...defaultStudioSettings, ...data.studio })
+
+        if (data.hero) {
+          const mergedHero = { ...defaultHeroSettings, ...data.hero }
+          if (mergedHero.slides) {
+            mergedHero.slides = mergedHero.slides.map((s, i) => {
+              if (!s.imageUrl || s.imageUrl === '/placeholder.webp') {
+                return { ...s, imageUrl: defaultHeroSettings.slides[i]?.imageUrl || '' }
+              }
+              return s
+            })
+          }
+          setHeroSettings(mergedHero)
+        }
+
+        if (data.studio) {
+          const mergedStudio = { ...defaultStudioSettings, ...data.studio }
+          if (mergedStudio.images) {
+            mergedStudio.images = mergedStudio.images.map((img, i) => {
+              if (!img.imageUrl || img.imageUrl === '/placeholder.webp') {
+                return { ...img, imageUrl: defaultStudioSettings.images[i]?.imageUrl || '' }
+              }
+              return img
+            })
+          }
+          setStudioSettings(mergedStudio)
+        }
+
         if (data.workTypes) {
           const formatted = data.workTypes.map((item, i) => {
             if (typeof item === 'string') {
-              return {
-                title: item,
-                imageUrl: defaultWorkTypes[i]?.imageUrl || '',
-                publicId: ''
-              }
+              return { title: item, imageUrl: defaultWorkTypes[i]?.imageUrl || '', publicId: '' }
             }
             return {
               title: item.title || '',
-              imageUrl: item.imageUrl || defaultWorkTypes[i]?.imageUrl || '',
+              imageUrl: (!item.imageUrl || item.imageUrl === '/placeholder.webp')
+                ? (defaultWorkTypes[i]?.imageUrl || '')
+                : item.imageUrl,
               publicId: item.publicId || ''
             }
           })
@@ -223,8 +283,18 @@ export function DataProvider({ children }) {
         } else {
           setWorkTypes(defaultWorkTypes)
         }
+
         if (data.youtube) setYoutubeVideos(data.youtube)
-        if (data.instagram) setInstagramPosts(data.instagram)
+
+        if (data.instagram) {
+          const mergedInsta = data.instagram.map((post, i) => {
+            if (!post.imageUrl || post.imageUrl === '/placeholder.webp') {
+              return { ...post, imageUrl: defaultInstagramPosts[i]?.imageUrl || '' }
+            }
+            return post
+          })
+          setInstagramPosts(mergedInsta)
+        }
       } else {
         setHeroSettings(defaultHeroSettings)
         setStudioSettings(defaultStudioSettings)
@@ -240,6 +310,72 @@ export function DataProvider({ children }) {
         setLandingSettings({ ...defaultLandingSettings, ...landingDocSnap.data() })
       } else {
         setLandingSettings(defaultLandingSettings)
+      }
+
+      // 6. Services
+      const servSnap = await getDocs(collection(db, 'services'))
+      if (!servSnap.empty) {
+        const fetched = servSnap.docs.map(d => {
+          const data = { id: d.id, ...d.data() }
+          const staticMatch = staticServices.find(s => s.id === d.id)
+          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
+            data.image = staticMatch.image
+          }
+          return data
+        })
+        fetched.sort((a, b) => (a.order || 0) - (b.order || 0))
+        setServices(fetched)
+      }
+
+      // 7. Rooms
+      const roomSnap = await getDocs(collection(db, 'rooms'))
+      if (!roomSnap.empty) {
+        const fetched = roomSnap.docs.map(d => {
+          const data = { id: d.id, ...d.data() }
+          const staticMatch = staticRooms.find(r => r.slug === d.id)
+          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
+            data.image = staticMatch.image
+          }
+          return data
+        })
+        fetched.sort((a, b) => (a.order || 0) - (b.order || 0))
+        setRooms(fetched)
+      }
+
+      // 8. Team
+      const teamSnap = await getDocs(collection(db, 'team'))
+      if (!teamSnap.empty) {
+        const fetched = teamSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        fetched.sort((a, b) => (a.order || 0) - (b.order || 0))
+        setTeamMembers(fetched)
+      }
+
+      // 9. Partners
+      const partSnap = await getDocs(collection(db, 'partners'))
+      if (!partSnap.empty) {
+        const fetched = partSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        fetched.sort((a, b) => (a.order || 0) - (b.order || 0))
+        setBrandPartners(fetched)
+      }
+
+      // 10. Upcoming Projects
+      const upSnap = await getDocs(collection(db, 'upcomingProjects'))
+      if (!upSnap.empty) {
+        const fetched = upSnap.docs.map(d => {
+          const data = { id: d.id, ...d.data() }
+          const staticMatch = staticUpcomingProjects.find(u => String(u.id) === String(d.id))
+          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
+            data.image = staticMatch.image
+          }
+          return data
+        })
+        setUpcomingProjects(fetched)
+      }
+
+      // 11. About page content
+      const aboutDocSnap = await getDoc(doc(db, 'settings', 'about'))
+      if (aboutDocSnap.exists()) {
+        setAboutContent(prev => ({ ...prev, ...aboutDocSnap.data() }))
       }
     } catch (err) {
       console.error('Error fetching dynamic website data:', err)
@@ -386,6 +522,40 @@ export function DataProvider({ children }) {
       // 6. Landing Page Settings
       await setDoc(doc(db, 'settings', 'landingpage'), defaultLandingSettings)
 
+      // 7. Services
+      for (const s of staticServices) {
+        await setDoc(doc(db, 'services', s.id), { ...s, order: staticServices.indexOf(s) + 1 })
+      }
+
+      // 8. Rooms
+      for (const [i, r] of staticRooms.entries()) {
+        await setDoc(doc(db, 'rooms', r.slug), { ...r, id: r.slug, order: i + 1 })
+      }
+
+      // 9. Team
+      for (const [i, m] of staticTeam.entries()) {
+        await setDoc(doc(db, 'team', m.slug), { ...m, id: m.slug, avatar: '', order: i + 1 })
+      }
+
+      // 10. Partners
+      for (const [i, p] of staticPartners.entries()) {
+        await setDoc(doc(db, 'partners', p.slug), { ...p, id: p.slug, logo: '', order: i + 1 })
+      }
+
+      // 11. Upcoming Projects
+      for (const up of staticUpcomingProjects) {
+        await setDoc(doc(db, 'upcomingProjects', String(up.id)), { ...up, id: String(up.id) })
+      }
+
+      // 12. About page content
+      await setDoc(doc(db, 'settings', 'about'), {
+        visionStatement: staticVisionStatement,
+        principles: staticPrinciples,
+        approachPoints: staticApproachPoints,
+        valueProps: staticValueProps,
+        processSteps: staticProcessSteps,
+      })
+
       await fetchData()
       return { success: true }
     } catch (err) {
@@ -405,6 +575,12 @@ export function DataProvider({ children }) {
       categories,
       testimonials,
       blogPosts,
+      services,
+      rooms,
+      teamMembers,
+      brandPartners,
+      upcomingProjects,
+      aboutContent,
       heroSettings,
       studioSettings,
       workTypes,

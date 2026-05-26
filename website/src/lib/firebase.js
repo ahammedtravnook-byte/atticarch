@@ -19,6 +19,8 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -51,6 +53,8 @@ export {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 }
 
 export const COL = {
