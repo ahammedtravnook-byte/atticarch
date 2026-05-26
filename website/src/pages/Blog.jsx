@@ -209,51 +209,40 @@ function EditorialCard({ post, index, variant = 'default' }) {
 function BlogPost({ post, allPosts }) {
   const { scrollYProgress } = useScroll()
   const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.15])
-  const heroTextY = useTransform(scrollYProgress, [0, 0.2], [0, 80])
-  const imageRef = useRef(null)
+  const heroImgScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.15])
+  const heroImgOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0.3])
   const [activeSection, setActiveSection] = useState('')
 
-  const relatedPosts = allPosts
-    .filter(p => p.id !== post.id)
-    .slice(0, 3)
-
+  const relatedPosts = allPosts.filter(p => p.id !== post.id).slice(0, 3)
   const nextPost = allPosts[(allPosts.findIndex(p => p.id === post.id) + 1) % allPosts.length]
 
-  const tocSections = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'philosophy', label: 'Design Philosophy' },
-    { id: 'approach', label: 'Our Approach' },
-    { id: 'details', label: 'Key Details' },
-    { id: 'gallery', label: 'Visual Inspiration' },
+  const tocItems = [
+    { id: 'sec-intro', label: 'Introduction' },
+    { id: 'sec-philosophy', label: 'Philosophy' },
+    { id: 'sec-approach', label: 'Approach' },
+    { id: 'sec-highlights', label: 'Highlights' },
   ]
 
   useGSAP(() => {
-    if (imageRef.current) {
-      gsap.from(imageRef.current, {
-        y: '-15%',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: imageRef.current?.parentElement,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-        }
-      })
-    }
-
-    tocSections.forEach(section => {
-      const el = document.getElementById(section.id)
+    tocItems.forEach(s => {
+      const el = document.getElementById(s.id)
       if (el) {
         ScrollTrigger.create({
           trigger: el,
           start: 'top center',
           end: 'bottom center',
-          onEnter: () => setActiveSection(section.id),
-          onEnterBack: () => setActiveSection(section.id),
+          onEnter: () => setActiveSection(s.id),
+          onEnterBack: () => setActiveSection(s.id),
         })
       }
+    })
+
+    gsap.utils.toArray('.bp-reveal').forEach(el => {
+      gsap.from(el, {
+        y: 40, opacity: 0, duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+      })
     })
   })
 
@@ -268,377 +257,221 @@ function BlogPost({ post, allPosts }) {
       <Helmet><title>{post.title} — ATTICARCH Blog</title></Helmet>
       <motion.div className="blog-progress" style={{ scaleX }} />
 
-      {/* ── CINEMATIC HERO ── */}
-      <section className="bp-hero">
-        <motion.div className="bp-hero__bg" style={{ opacity: heroOpacity, scale: heroScale }}>
-          <img src={post.image} alt="" />
-          <div className="bp-hero__bg-overlay" />
+      {/* ── SPLIT HERO — image left, text right ── */}
+      <section className="bp2-hero">
+        <motion.div className="bp2-hero__img-col" style={{ scale: heroImgScale, opacity: heroImgOpacity }}>
+          <img src={post.image} alt={post.title} />
+          <div className="bp2-hero__img-overlay" />
         </motion.div>
 
-        <div className="bp-hero__particles">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="bp-hero__particle"
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.2, 0.6, 0.2],
-              }}
-              transition={{
-                duration: 4 + i * 0.8,
-                repeat: Infinity,
-                delay: i * 0.5,
-                ease: 'easeInOut',
-              }}
-              style={{
-                left: `${15 + i * 14}%`,
-                bottom: `${10 + (i % 3) * 20}%`,
-              }}
-            />
-          ))}
-        </div>
-
-        <motion.div className="container bp-hero__inner" style={{ y: heroTextY }}>
+        <div className="bp2-hero__text-col">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.15 }}
           >
-            <Link to="/blog" className="bp-hero__back"><ArrowLeft size={16} /> Back to Journal</Link>
+            <Link to="/blog" className="bp2-hero__back"><ArrowLeft size={15} /> Journal</Link>
           </motion.div>
 
           <motion.div
-            className="bp-hero__cat-row"
-            initial={{ opacity: 0, y: 12 }}
+            className="bp2-hero__tags"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
+            transition={{ delay: 0.3 }}
           >
-            <span className="bp-hero__cat">{post.category}</span>
-            <span className="bp-hero__reading-time"><Clock size={13} /> 5 min read</span>
+            <span className="bp2-hero__cat">{post.category}</span>
+            <span className="bp2-hero__dot" />
+            <span className="bp2-hero__read"><Clock size={12} /> 5 min</span>
           </motion.div>
 
           <div style={{ overflow: 'hidden' }}>
             <motion.h1
-              className="bp-hero__title"
-              initial={{ y: '120%', rotate: 2 }}
-              animate={{ y: 0, rotate: 0 }}
-              transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="bp2-hero__title"
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              transition={{ delay: 0.35, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             >
               {post.title}
             </motion.h1>
           </div>
 
           <motion.p
-            className="bp-hero__excerpt"
-            initial={{ opacity: 0, y: 20 }}
+            className="bp2-hero__excerpt"
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.65 }}
           >
             {post.excerpt}
           </motion.p>
 
           <motion.div
-            className="bp-hero__meta"
+            className="bp2-hero__author"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
+            transition={{ delay: 0.85 }}
           >
-            <div className="bp-hero__author">
-              <div className="bp-hero__author-avatar">AA</div>
-              <div className="bp-hero__author-info">
-                <span className="bp-hero__author-name">ATTICARCH Team</span>
-                <span className="bp-hero__author-date">{post.date}</span>
-              </div>
+            <div className="bp2-hero__avatar">A</div>
+            <div>
+              <span className="bp2-hero__author-name">ATTICARCH Team</span>
+              <span className="bp2-hero__author-date">{post.date}</span>
             </div>
           </motion.div>
-        </motion.div>
-
-        <motion.div
-          className="bp-hero__scroll-hint"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.3 }}
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <ArrowRight size={16} style={{ transform: 'rotate(90deg)' }} />
-          </motion.div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* ── FEATURED IMAGE ── */}
-      <motion.div
-        className="bp-image"
-        initial={{ opacity: 0, y: 40, clipPath: 'inset(8% 4% 8% 4% round 24px)' }}
-        animate={{ opacity: 1, y: 0, clipPath: 'inset(0% 0% 0% 0% round 0px)' }}
-        transition={{ delay: 0.5, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <img ref={imageRef} src={post.image} alt={post.title} style={{ transform: 'translateY(0)' }} />
-        <div className="bp-image__vignette" />
-      </motion.div>
-
-      {/* ── BODY WITH SIDEBAR ── */}
-      <section className="bp-body-section">
+      {/* ── ARTICLE BODY ── */}
+      <section className="bp2-article">
         <div className="container">
-          <div className="bp-layout">
+          <div className="bp2-layout">
 
-            {/* Sticky TOC Sidebar */}
-            <aside className="bp-sidebar">
-              <motion.div
-                className="bp-toc"
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <span className="bp-toc__label">Contents</span>
-                <nav className="bp-toc__nav">
-                  {tocSections.map(s => (
-                    <a
-                      key={s.id}
-                      href={`#${s.id}`}
-                      className={`bp-toc__link ${activeSection === s.id ? 'bp-toc__link--active' : ''}`}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' })
-                      }}
-                    >
-                      <span className="bp-toc__dot" />
-                      {s.label}
-                    </a>
-                  ))}
-                </nav>
-              </motion.div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="bp-body">
-              <div id="overview">
-                <motion.p
-                  className="bp-lead"
-                  initial={{ opacity: 0, y: 25 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7 }}
-                >
-                  {post.excerpt}
-                </motion.p>
+            {/* Sticky sidebar */}
+            <aside className="bp2-side">
+              <div className="bp2-toc">
+                <span className="bp2-toc__heading">On this page</span>
+                {tocItems.map(t => (
+                  <a
+                    key={t.id}
+                    href={`#${t.id}`}
+                    className={`bp2-toc__item ${activeSection === t.id ? 'bp2-toc__item--on' : ''}`}
+                    onClick={e => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth' }) }}
+                  >
+                    <span className="bp2-toc__bar" />
+                    {t.label}
+                  </a>
+                ))}
               </div>
 
-              <motion.div
-                className="bp-ornament"
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <span className="bp-ornament__line" />
-                <span className="bp-ornament__diamond" />
-                <span className="bp-ornament__line" />
-              </motion.div>
+              {/* Share */}
+              <div className="bp2-side-share">
+                <span className="bp2-side-share__label">Share</span>
+                {['Tw', 'Li', 'Fb'].map(p => (
+                  <button key={p} className="bp2-side-share__btn">{p}</button>
+                ))}
+              </div>
+            </aside>
 
-              <div id="philosophy">
-                <motion.h2
-                  className="bp-section-title"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
-                  The Design Philosophy
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
+            {/* Content */}
+            <article className="bp2-content">
+              <div id="sec-intro" className="bp-reveal">
+                <p className="bp2-dropcap">
+                  {post.excerpt} The way we shape our interiors speaks volumes about who we are — our values,
+                  our aspirations, and the stories we want our homes to tell. At ATTICARCH, every project
+                  begins with listening. Before a single sketch is drawn, we sit down with you to truly
+                  understand the life you want to live in your space.
+                </p>
+              </div>
+
+              <div className="bp2-divider bp-reveal">
+                <span /><span className="bp2-divider__diamond" /><span />
+              </div>
+
+              <div id="sec-philosophy" className="bp-reveal">
+                <h2 className="bp2-h2">The Design Philosophy</h2>
+                <p>
                   Interior design is an art that requires a deep understanding of space, light, and human psychology.
                   At ATTICARCH, we approach every project with fresh eyes and creative energy. Our team of experienced
                   designers works tirelessly to create spaces that not only look stunning but also enhance the quality
                   of life for the people who inhabit them.
-                </motion.p>
+                </p>
+                <p>
+                  We draw inspiration from both the natural beauty of Bangalore and global design movements,
+                  weaving together local craftsmanship with contemporary sensibility. The result is a home that
+                  feels both timeless and intimately personal.
+                </p>
               </div>
 
-              <motion.div
-                className="bp-quote"
-                initial={{ opacity: 0, clipPath: 'inset(0 100% 0 0)' }}
-                whileInView={{ opacity: 1, clipPath: 'inset(0 0% 0 0)' }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <span className="bp-quote__mark">&ldquo;</span>
-                <p>Good design is not about trends. It's about creating timeless spaces that tell your story.</p>
+              <div className="bp2-pullquote bp-reveal">
+                <span className="bp2-pullquote__mark">&ldquo;</span>
+                <blockquote>Good design is not about trends. It's about creating timeless spaces that tell your story.</blockquote>
                 <cite>— ATTICARCH Design Team</cite>
-              </motion.div>
+              </div>
 
-              <div id="approach">
-                <motion.h2
-                  className="bp-section-title"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
-                  Our Approach
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
+              <div id="sec-approach" className="bp-reveal">
+                <h2 className="bp2-h2">Our Approach</h2>
+                <p>
                   Whether you're redesigning your living room or planning a complete home renovation, the key is to
                   start with a clear vision and work with professionals who understand your needs. Our consultation
                   process is designed to uncover your unique preferences and translate them into tangible design solutions.
-                </motion.p>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
+                </p>
+                <p>
                   We believe that great interior spaces are born from the intersection of form and function. Every material
                   we choose, every colour palette we curate, and every piece of furniture we place has a purpose — to make
                   your home feel uniquely yours while maintaining the highest standards of aesthetic integrity.
-                </motion.p>
+                </p>
               </div>
 
-              {/* Key Details Cards */}
-              <div id="details">
-                <motion.h2
-                  className="bp-section-title"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
-                  Key Details
-                </motion.h2>
-                <div className="bp-details-grid">
-                  {[
-                    { icon: '01', title: 'Personal Consultation', desc: 'One-on-one sessions to understand your vision, lifestyle, and spatial requirements.' },
-                    { icon: '02', title: 'Material Curation', desc: 'Hand-picked materials sourced for quality, sustainability, and aesthetic harmony.' },
-                    { icon: '03', title: 'Spatial Planning', desc: 'Optimising every square foot to create flow, balance, and functional beauty.' },
-                    { icon: '04', title: 'Expert Execution', desc: 'Our in-house team ensures every detail is realised to the highest standard.' },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      className="bp-detail-card"
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1, duration: 0.6 }}
-                    >
-                      <span className="bp-detail-card__icon">{item.icon}</span>
-                      <h4 className="bp-detail-card__title">{item.title}</h4>
-                      <p className="bp-detail-card__desc">{item.desc}</p>
-                    </motion.div>
-                  ))}
-                </div>
+              {/* Highlight strip */}
+              <div id="sec-highlights" className="bp2-highlights bp-reveal">
+                {[
+                  { num: '01', title: 'Personal Consultation', text: 'One-on-one sessions to understand your vision, lifestyle, and spatial requirements.' },
+                  { num: '02', title: 'Material Curation', text: 'Hand-picked materials sourced for quality, sustainability, and aesthetic harmony.' },
+                  { num: '03', title: 'Spatial Planning', text: 'Optimising every square foot to create flow, balance, and functional beauty.' },
+                  { num: '04', title: 'Expert Execution', text: 'Our in-house team ensures every detail is realised to the highest standard.' },
+                ].map((h, i) => (
+                  <motion.div
+                    key={i}
+                    className="bp2-hl-card"
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08, duration: 0.55 }}
+                  >
+                    <span className="bp2-hl-card__num">{h.num}</span>
+                    <div>
+                      <h4 className="bp2-hl-card__title">{h.title}</h4>
+                      <p className="bp2-hl-card__text">{h.text}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
-              {/* Gallery Section */}
-              <div id="gallery">
-                <motion.h2
-                  className="bp-section-title"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
-                  Visual Inspiration
-                </motion.h2>
-                <div className="bp-gallery">
-                  {relatedPosts.map((p, i) => (
-                    <motion.div
-                      key={p.id}
-                      className={`bp-gallery__item ${i === 0 ? 'bp-gallery__item--wide' : ''}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.12, duration: 0.7 }}
-                    >
-                      <img src={p.image} alt={p.title} loading="lazy" />
-                      <div className="bp-gallery__overlay" />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Author Card */}
-              <motion.div
-                className="bp-author-card"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7 }}
-              >
-                <div className="bp-author-card__avatar">AA</div>
-                <div className="bp-author-card__info">
-                  <span className="bp-author-card__label">Written by</span>
-                  <h4 className="bp-author-card__name">ATTICARCH Design Team</h4>
-                  <p className="bp-author-card__bio">
-                    Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002.
-                    We bring together art, architecture, and soul to create homes that inspire.
+              {/* Author sign-off */}
+              <div className="bp2-signoff bp-reveal">
+                <div className="bp2-signoff__avatar">A</div>
+                <div className="bp2-signoff__info">
+                  <span className="bp2-signoff__label">Written by</span>
+                  <h4 className="bp2-signoff__name">ATTICARCH Design Team</h4>
+                  <p className="bp2-signoff__bio">
+                    Bangalore's award-winning interior design studio — crafting breathtaking spaces since 2002.
                   </p>
                 </div>
-              </motion.div>
-
-              {/* Share Section */}
-              <motion.div
-                className="bp-share"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="bp-share__label">Share this article</span>
-                <div className="bp-share__buttons">
-                  {['Twitter', 'LinkedIn', 'Facebook'].map(platform => (
-                    <button key={platform} className="bp-share__btn">{platform}</button>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
+                <Link to="/contact-us" className="bp2-signoff__cta">
+                  Get in Touch <ArrowRight size={14} />
+                </Link>
+              </div>
+            </article>
           </div>
         </div>
       </section>
 
-      {/* ── RELATED POSTS ── */}
-      <section className="bp-related">
+      {/* ── RELATED ── */}
+      <section className="bp2-related">
         <div className="container">
-          <motion.div
-            className="bp-related__header"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+          <motion.h3
+            className="bp2-related__title"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <div className="bp-related__header-line" />
-            <span>More to Read</span>
-            <div className="bp-related__header-line" />
-          </motion.div>
-
-          <div className="bp-related__grid">
+            Continue Reading
+          </motion.h3>
+          <div className="bp2-related__grid">
             {relatedPosts.map((p, i) => (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
+                transition={{ delay: i * 0.1, duration: 0.55 }}
               >
-                <Link to={`/blog/${p.slug}`} className="bp-related__card">
-                  <div className="bp-related__card-img">
+                <Link to={`/blog/${p.slug}`} className="bp2-rcard">
+                  <div className="bp2-rcard__img">
                     <img src={p.image} alt={p.title} loading="lazy" />
-                    <div className="bp-related__card-overlay" />
                   </div>
-                  <div className="bp-related__card-body">
-                    <span className="bp-related__card-cat">{p.category}</span>
-                    <h4 className="bp-related__card-title">{p.title}</h4>
-                    <span className="bp-related__card-cta">Read Article <ArrowRight size={13} /></span>
+                  <div className="bp2-rcard__body">
+                    <span className="bp2-rcard__cat">{p.category}</span>
+                    <h4 className="bp2-rcard__title">{p.title}</h4>
+                    <span className="bp2-rcard__link">Read <ArrowRight size={12} /></span>
                   </div>
                 </Link>
               </motion.div>
@@ -647,30 +480,24 @@ function BlogPost({ post, allPosts }) {
         </div>
       </section>
 
-      {/* ── NEXT ARTICLE TEASER ── */}
+      {/* ── NEXT ── */}
       {nextPost && (
-        <Link to={`/blog/${nextPost.slug}`} className="bp-next">
-          <motion.section
-            className="bp-next__inner"
+        <Link to={`/blog/${nextPost.slug}`} className="bp2-next">
+          <motion.div
+            className="bp2-next__wrap"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7 }}
           >
-            <img src={nextPost.image} alt="" className="bp-next__bg" />
-            <div className="bp-next__overlay" />
-            <div className="container bp-next__content">
-              <span className="bp-next__label">Next Article</span>
-              <h3 className="bp-next__title">{nextPost.title}</h3>
-              <motion.div
-                className="bp-next__arrow"
-                whileHover={{ x: 10 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-              >
-                <ArrowRight size={28} />
-              </motion.div>
+            <img src={nextPost.image} alt="" className="bp2-next__bg" />
+            <div className="bp2-next__overlay" />
+            <div className="container bp2-next__content">
+              <span className="bp2-next__label">Next Article</span>
+              <h3 className="bp2-next__title">{nextPost.title}</h3>
+              <span className="bp2-next__btn"><ArrowRight size={22} /></span>
             </div>
-          </motion.section>
+          </motion.div>
         </Link>
       )}
     </motion.main>
