@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, ArrowUpRight } from 'lucide-react'
 import { FaInstagram, FaYoutube, FaFacebook, FaLinkedin, FaTwitter } from 'react-icons/fa'
+import logoSrc from '../../assets/logo.png'
 import './Footer.css'
 
 export default function Footer() {
@@ -48,7 +49,7 @@ export default function Footer() {
         <div className="container">
           <div className="footer__grid">
             <div className="footer__brand">
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)', marginBottom: 16, letterSpacing: '0.5px' }}>AtticArch</div>
+              <img src={logoSrc} alt="AtticArch" style={{ height: 44, marginBottom: 16, display: 'block' }} />
               <p className="footer__desc">
                 ATTICARCH is Bangalore's trusted interior design studio since 2002 — crafting homes,
                 workspaces and renovations through an in-house atelier built around considered detail

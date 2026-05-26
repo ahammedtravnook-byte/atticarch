@@ -309,6 +309,13 @@
   box-shadow: none;
 }
 
+.admin-spin {
+  animation: admin-spin-anim 0.7s linear infinite;
+}
+@keyframes admin-spin-anim {
+  to { transform: rotate(360deg); }
+}
+
 .btn-danger-outline {
   border: 1px solid rgba(231, 76, 60, 0.3);
   background: transparent;

@@ -63,13 +63,22 @@
   gap: 40px;
 }
 
-.header__logo img {
+.header__logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header__logo img,
+.header__logo-img {
   height: 44px;
   width: auto;
   transition: height 0.3s var(--ease-out);
+  display: block;
 }
 
-.header--scrolled .header__logo img { height: 36px; }
+.header--scrolled .header__logo img,
+.header--scrolled .header__logo-img { height: 36px; }
 
 .header__nav {
   display: flex;

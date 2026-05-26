@@ -18,12 +18,41 @@ import {
   Check,
   RotateCcw,
   Layers,
+  Loader2,
 } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from '../../lib/firebase'
 import { useData } from '../../context/DataContext'
 import { uploadToCloudinary, CLOUDINARY_FOLDERS } from '../../lib/cloudinary'
+import logoSrc from '../../assets/logo.png'
 import './AdminPanel.css'
+
+function Spinner({ size = 14 }) {
+  return <Loader2 size={size} className="admin-spin" />
+}
+
+function SaveBtn({ saving, children, ...props }) {
+  return (
+    <button disabled={saving} {...props}>
+      {saving ? <><Spinner /> Saving...</> : children}
+    </button>
+  )
+}
+
+function DeleteBtn({ onDelete, label = 'Delete' }) {
+  const [deleting, setDeleting] = useState(false)
+  const handleClick = async () => {
+    if (!window.confirm(`${label}? This cannot be undone.`)) return
+    setDeleting(true)
+    try { await onDelete() } catch (e) { alert('Delete failed: ' + e.message) }
+    finally { setDeleting(false) }
+  }
+  return (
+    <button onClick={handleClick} disabled={deleting} className="crud-btn crud-btn--danger" title={label}>
+      {deleting ? <Spinner size={14} /> : <Trash2 size={16} />}
+    </button>
+  )
+}
 
 export default function AdminPanel() {
   const [authReady, setAuthReady] = useState(false)
@@ -149,7 +178,8 @@ export default function AdminPanel() {
       {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar__logo">
-          <h2>AtticArch Admin</h2>
+          <img src={logoSrc} alt="AtticArch" style={{ height: 32 }} />
+          <span style={{ fontSize: 11, color: 'var(--ash)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4 }}>Admin</span>
         </div>
         <nav className="admin-sidebar__nav">
           {menuItems.map(item => {
@@ -332,6 +362,7 @@ function HeroManager({ showToast }) {
   const [slides, setSlides] = useState(heroSettings.slides || [])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setFormData(heroSettings)
@@ -345,15 +376,13 @@ function HeroManager({ showToast }) {
 
   const handleSaveText = async (e) => {
     e.preventDefault()
+    setSaving(true)
     try {
-      await saveHomepageSetting('hero', {
-        ...formData,
-        slides
-      })
+      await saveHomepageSetting('hero', { ...formData, slides })
       showToast('Hero settings saved successfully!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSaving(false) }
   }
 
   const handleImageUpload = async (e) => {
@@ -494,9 +523,9 @@ function HeroManager({ showToast }) {
           ))}
         </div>
 
-        <button type="submit" className="btn-gold" style={{ marginTop: 40 }}>
+        <SaveBtn saving={saving} type="submit" className="btn-gold" style={{ marginTop: 40 }}>
           Save Hero Settings
-        </button>
+        </SaveBtn>
       </form>
     </div>
   )
@@ -518,6 +547,8 @@ function PortfolioManager({ showToast }) {
   const [catForm, setCatForm] = useState({ id: '', title: '', short: '', slug: '', filter: '', order: 0 })
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [savingProject, setSavingProject] = useState(false)
+  const [savingCat, setSavingCat] = useState(false)
 
   // Project select
   const handleEditProject = (p) => {
@@ -549,13 +580,14 @@ function PortfolioManager({ showToast }) {
       image: projectForm.image || projectForm.images[0] || ''
     }
 
+    setSavingProject(true)
     try {
       await saveProject(itemToSave)
       setEditingProject(null)
       showToast('Project saved!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingProject(false) }
   }
 
   const handleProjImagesUpload = async (e) => {
@@ -618,13 +650,14 @@ function PortfolioManager({ showToast }) {
       order: Number(catForm.order || 0)
     }
 
+    setSavingCat(true)
     try {
       await saveCategory(itemToSave)
       setEditingCat(null)
       showToast('Category saved!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingCat(false) }
   }
 
   return (
@@ -685,9 +718,7 @@ function PortfolioManager({ showToast }) {
                       <button onClick={() => handleEditProject(p)} className="crud-btn" title="Edit">
                         <Edit size={16} />
                       </button>
-                      <button onClick={() => window.confirm('Delete project?') && deleteProject(p.id)} className="crud-btn crud-btn--danger" title="Delete">
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteBtn onDelete={() => deleteProject(p.id)} label="Delete project" />
                     </div>
                   </td>
                 </tr>
@@ -730,9 +761,7 @@ function PortfolioManager({ showToast }) {
                       <button onClick={() => handleEditCat(c)} className="crud-btn" title="Edit">
                         <Edit size={16} />
                       </button>
-                      <button onClick={() => window.confirm('Delete category?') && deleteCategory(c.id)} className="crud-btn crud-btn--danger" title="Delete">
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteBtn onDelete={() => deleteCategory(c.id)} label="Delete category" />
                     </div>
                   </td>
                 </tr>
@@ -901,7 +930,7 @@ function PortfolioManager({ showToast }) {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40 }}>
                 <button type="button" onClick={() => setEditingProject(null)} className="btn-danger-outline">Cancel</button>
-                <button type="submit" className="btn-gold">Save Project</button>
+                <SaveBtn saving={savingProject} type="submit" className="btn-gold">Save Project</SaveBtn>
               </div>
             </form>
           </div>
@@ -976,7 +1005,7 @@ function PortfolioManager({ showToast }) {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40 }}>
                 <button type="button" onClick={() => setEditingCat(null)} className="btn-danger-outline">Cancel</button>
-                <button type="submit" className="btn-gold">Save Category</button>
+                <SaveBtn saving={savingCat} type="submit" className="btn-gold">Save Category</SaveBtn>
               </div>
             </form>
           </div>
@@ -996,6 +1025,8 @@ function AboutTeaserManager({ showToast }) {
   const [images, setImages] = useState(studioSettings.images || [])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [savingAbout, setSavingAbout] = useState(false)
+  const [savingChips, setSavingChips] = useState(false)
 
   useEffect(() => {
     setAboutForm(studioSettings)
@@ -1016,15 +1047,13 @@ function AboutTeaserManager({ showToast }) {
 
   const handleSaveAbout = async (e) => {
     e.preventDefault()
+    setSavingAbout(true)
     try {
-      await saveHomepageSetting('studio', {
-        ...aboutForm,
-        images
-      })
+      await saveHomepageSetting('studio', { ...aboutForm, images })
       showToast('About section saved successfully!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingAbout(false) }
   }
 
   const handleImageUpload = async (e) => {
@@ -1151,12 +1180,13 @@ function AboutTeaserManager({ showToast }) {
   }
 
   const handleSaveChips = async () => {
+    setSavingChips(true)
     try {
       await saveHomepageSetting('workTypes', chips)
       showToast('Building Blocks updated!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingChips(false) }
   }
 
   return (
@@ -1241,7 +1271,7 @@ function AboutTeaserManager({ showToast }) {
             )}
           </div>
 
-          <button type="submit" className="btn-gold" style={{ marginTop: 16 }}>Save About Teaser</button>
+          <SaveBtn saving={savingAbout} type="submit" className="btn-gold" style={{ marginTop: 16 }}>Save About Teaser</SaveBtn>
         </form>
 
         {/* What We Build Service Card Editor */}
@@ -1328,9 +1358,9 @@ function AboutTeaserManager({ showToast }) {
             ))}
           </div>
 
-          <button onClick={handleSaveChips} className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15 }}>
+          <SaveBtn saving={savingChips} onClick={handleSaveChips} type="button" className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15 }}>
             Save What We Build Cards
-          </button>
+          </SaveBtn>
         </div>
       </div>
     </div>
@@ -1346,6 +1376,7 @@ function TestimonialsManager({ showToast }) {
   const [form, setForm] = useState({ id: '', name: '', project: '', text: '', rating: 5, avatar: '' })
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [saving, setSaving] = useState(false)
 
   const handleEdit = (t) => {
     setEditing(t ? t.id : 'new')
@@ -1381,13 +1412,14 @@ function TestimonialsManager({ showToast }) {
     if (!form.name || !form.text) return
     const id = form.id ? String(form.id) : Date.now().toString()
 
+    setSaving(true)
     try {
       await saveTestimonial({ ...form, id })
       setEditing(null)
       showToast('Review saved!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSaving(false) }
   }
 
   return (
@@ -1431,9 +1463,7 @@ function TestimonialsManager({ showToast }) {
                   <button onClick={() => handleEdit(t)} className="crud-btn" title="Edit">
                     <Edit size={16} />
                   </button>
-                  <button onClick={() => window.confirm('Delete review?') && deleteTestimonial(t.id)} className="crud-btn crud-btn--danger" title="Delete">
-                    <Trash2 size={16} />
-                  </button>
+                  <DeleteBtn onDelete={() => deleteTestimonial(t.id)} label="Delete review" />
                 </div>
               </td>
             </tr>
@@ -1500,7 +1530,7 @@ function TestimonialsManager({ showToast }) {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40 }}>
                 <button type="button" onClick={() => setEditing(null)} className="btn-danger-outline">Cancel</button>
-                <button type="submit" className="btn-gold">Save Review</button>
+                <SaveBtn saving={saving} type="submit" className="btn-gold">Save Review</SaveBtn>
               </div>
             </form>
           </div>
@@ -1524,6 +1554,8 @@ function VideosSocialManager({ showToast }) {
   const [newVideo, setNewVideo] = useState({ videoId: '', title: '' })
   const [newInsta, setNewInsta] = useState({ imageUrl: '', link: '' })
   const [uploading, setUploading] = useState(false)
+  const [savingVideos, setSavingVideos] = useState(false)
+  const [savingInsta, setSavingInsta] = useState(false)
 
   useEffect(() => {
     setVideos(youtubeVideos || [])
@@ -1543,12 +1575,13 @@ function VideosSocialManager({ showToast }) {
   }
 
   const handleSaveVideos = async () => {
+    setSavingVideos(true)
     try {
       await saveHomepageSetting('youtube', videos)
       showToast('YouTube video list updated!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingVideos(false) }
   }
 
   // Instagram actions
@@ -1582,12 +1615,13 @@ function VideosSocialManager({ showToast }) {
   }
 
   const handleSaveInsta = async () => {
+    setSavingInsta(true)
     try {
       await saveHomepageSetting('instagram', instaPosts)
       showToast('Instagram Feed list updated!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSavingInsta(false) }
   }
 
   return (
@@ -1663,9 +1697,9 @@ function VideosSocialManager({ showToast }) {
             ))}
           </div>
 
-          <button onClick={handleSaveVideos} className="btn-gold" style={{ marginTop: 32 }}>
+          <SaveBtn saving={savingVideos} onClick={handleSaveVideos} type="button" className="btn-gold" style={{ marginTop: 32 }}>
             Save Video list
-          </button>
+          </SaveBtn>
         </div>
       )}
 
@@ -1727,9 +1761,9 @@ function VideosSocialManager({ showToast }) {
             ))}
           </div>
 
-          <button onClick={handleSaveInsta} className="btn-gold" style={{ marginTop: 32 }}>
+          <SaveBtn saving={savingInsta} onClick={handleSaveInsta} type="button" className="btn-gold" style={{ marginTop: 32 }}>
             Save Instagram feed
-          </button>
+          </SaveBtn>
         </div>
       )}
     </div>
@@ -1744,6 +1778,7 @@ function BlogManager({ showToast }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ id: '', slug: '', title: '', excerpt: '', date: '', category: '', image: '', content: '' })
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const handleEdit = (post) => {
     setEditing(post ? post.id : 'new')
@@ -1781,13 +1816,14 @@ function BlogManager({ showToast }) {
     const id = form.id ? String(form.id) : Date.now().toString()
     const slug = form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
+    setSaving(true)
     try {
       await saveBlogPost({ ...form, id, slug })
       setEditing(null)
       showToast('Blog article saved!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSaving(false) }
   }
 
   return (
@@ -1828,9 +1864,7 @@ function BlogManager({ showToast }) {
                   <button onClick={() => handleEdit(p)} className="crud-btn" title="Edit">
                     <Edit size={16} />
                   </button>
-                  <button onClick={() => window.confirm('Delete blog post?') && deleteBlogPost(p.id)} className="crud-btn crud-btn--danger" title="Delete">
-                    <Trash2 size={16} />
-                  </button>
+                  <DeleteBtn onDelete={() => deleteBlogPost(p.id)} label="Delete blog post" />
                 </div>
               </td>
             </tr>
@@ -1929,7 +1963,7 @@ function BlogManager({ showToast }) {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40 }}>
                 <button type="button" onClick={() => setEditing(null)} className="btn-danger-outline">Cancel</button>
-                <button type="submit" className="btn-gold">Save Article</button>
+                <SaveBtn saving={saving} type="submit" className="btn-gold">Save Article</SaveBtn>
               </div>
             </form>
           </div>
@@ -1945,6 +1979,7 @@ function BlogManager({ showToast }) {
 function LandingPageManager({ showToast }) {
   const { landingSettings, saveLandingSettings } = useData()
   const [form, setForm] = useState(landingSettings)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setForm(landingSettings)
@@ -2007,12 +2042,13 @@ function LandingPageManager({ showToast }) {
 
   const handleSave = async (e) => {
     e.preventDefault()
+    setSaving(true)
     try {
       await saveLandingSettings(form)
       showToast('Landing Page settings saved successfully!')
     } catch (err) {
       alert('Save failed: ' + err.message)
-    }
+    } finally { setSaving(false) }
   }
 
   if (!form) return <div style={{ color: 'white', padding: 20 }}>Loading landing settings...</div>
@@ -2231,9 +2267,9 @@ function LandingPageManager({ showToast }) {
         </div>
 
         {/* Global Save Button */}
-        <button type="submit" className="btn-gold" style={{ height: 48, fontSize: 15, justifyContent: 'center' }}>
+        <SaveBtn saving={saving} type="submit" className="btn-gold" style={{ height: 48, fontSize: 15, justifyContent: 'center' }}>
           Save Landing Page Settings
-        </button>
+        </SaveBtn>
 
       </form>
     </div>

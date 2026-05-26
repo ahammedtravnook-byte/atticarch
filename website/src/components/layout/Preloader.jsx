@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import logoSrc from '../../assets/logo.png'
 
 export default function Preloader() {
   const [loading, setLoading] = useState(true)
@@ -22,14 +23,14 @@ export default function Preloader() {
             alignItems: 'center', justifyContent: 'center', gap: 24
           }}
         >
-          <motion.div
-            style={{ fontFamily: 'var(--font-heading)', fontSize: '36px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)' }}
+          <motion.img
+            src={logoSrc}
+            alt="AtticArch"
+            style={{ height: 52 }}
             initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            AtticArch
-          </motion.div>
+          />
           <motion.div
             style={{ width: 120, height: 2, background: 'rgba(201,169,110,0.2)', borderRadius: 4, overflow: 'hidden' }}
           >

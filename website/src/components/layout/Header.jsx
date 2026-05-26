@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Phone, ChevronDown } from 'lucide-react'
 import { useData } from '../../context/DataContext'
+import logoSrc from '../../assets/logo.png'
 import './Header.css'
 
 export default function Header() {
@@ -48,10 +49,8 @@ export default function Header() {
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="header__inner container">
-          <Link to="/" className="header__logo" style={{ textDecoration: 'none' }}>
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)', letterSpacing: '0.5px' }}>
-              AtticArch
-            </span>
+          <Link to="/" className="header__logo">
+            <img src={logoSrc} alt="AtticArch" className="header__logo-img" />
           </Link>
 
           <nav className="header__nav hide-mobile">
@@ -113,7 +112,7 @@ export default function Header() {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mobile-menu__header">
-              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)' }}>AtticArch</span>
+              <img src={logoSrc} alt="AtticArch" style={{ height: 36 }} />
               <button onClick={() => setMobileOpen(false)}><X size={28} /></button>
             </div>
             <nav className="mobile-menu__nav">
