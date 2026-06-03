@@ -456,6 +456,28 @@
   color: var(--charcoal, #1a1612);
 }
 
+/* Button-variant pills (subcategory chips) inherit the same look */
+button.pc-pill {
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--font-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Second filter row for subcategories */
+.pc-filter--sub {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.pc-filter--sub .pc-pill {
+  padding: 7px 15px;
+  font-size: 11px;
+}
+
 /* ─── GRID SECTION ─── */
 .pc-grid-section {
   padding: 72px 0 120px;

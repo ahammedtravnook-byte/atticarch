@@ -201,8 +201,8 @@ export default function LandingPage() {
     '10-year workmanship warranty',
     'Turnkey execution — starts ₹4 Lacs'
   ]
-  const phone = landingSettings?.phone || '+919916666222'
-  const whatsapp = landingSettings?.whatsapp || '919916666222'
+  const phone = landingSettings?.phone || '+919845013138'
+  const whatsapp = landingSettings?.whatsapp || '919845013138'
   const whatsappPrefill = landingSettings?.whatsappPrefill || "Hi ATTICARCH, I'd like a free interior design consultation."
 
   const displayBenefits = landingSettings?.benefits || BENEFITS

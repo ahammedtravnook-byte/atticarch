@@ -24,11 +24,13 @@
   .header__cta { padding: 8px 16px; font-size: 10px; letter-spacing: 0.06em; }
 }
 
+/* Below 1024px the full nav + phone + CTA can't fit the floating pill, so
+   switch to the burger menu early (prevents the CTA from being clipped). */
 @media (max-width: 1024px) {
-  .header__inner { gap: 12px; }
-  .header__actions { gap: 10px; }
-  .header__nav-link { padding: 6px 8px; font-size: 10px; }
-  .header__cta { padding: 7px 14px; font-size: 9.5px; }
+  .header__nav.hide-mobile,
+  .header__phone.hide-mobile,
+  .header__cta.hide-mobile { display: none !important; }
+  .header__burger.hide-desktop { display: inline-flex !important; }
 }
 
 @media (max-width: 768px) {
@@ -131,6 +133,63 @@
 .header__dropdown-link:hover {
   background: rgba(201, 169, 110, 0.1);
   color: var(--gold);
+}
+
+/* Category row inside the Portfolio dropdown, with a cascading flyout */
+.header__dropdown-cat {
+  position: relative;
+}
+
+.header__dropdown-catlink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header__dropdown-caret {
+  transform: rotate(-90deg); /* points right toward the flyout */
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.header__dropdown-cat:hover .header__dropdown-caret {
+  opacity: 1;
+  color: var(--gold);
+}
+
+/* Sub-subcategory flyout — opens to the right on hover */
+.header__flyout {
+  position: absolute;
+  top: -9px;
+  left: calc(100% + 6px);
+  min-width: 180px;
+  background: var(--charcoal);
+  border: 1px solid rgba(201, 169, 110, 0.15);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  box-shadow: var(--shadow-xl);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 10;
+}
+
+/* Invisible bridge so the cursor can cross the gap into the flyout */
+.header__flyout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -10px;
+  width: 10px;
+  height: 100%;
+}
+
+.header__dropdown-cat:hover > .header__flyout {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
 }
 
 .header__actions {

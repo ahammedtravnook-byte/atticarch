@@ -19,11 +19,17 @@ import {
   RotateCcw,
   Layers,
   Loader2,
+  Users,
+  UserPlus,
+  ShieldCheck,
+  Navigation,
 } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
-import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from '../../lib/firebase'
+import { auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createAuthUser } from '../../lib/firebase'
+import { fetchAdminEmails, isAllowedAdmin, addAdminEmail, removeAdminEmail, BOOTSTRAP_ADMINS } from '../../lib/admins'
 import { useData } from '../../context/DataContext'
 import { uploadToCloudinary, CLOUDINARY_FOLDERS } from '../../lib/cloudinary'
+import { parseYouTubeId, youTubeThumb } from '../../lib/youtube'
 import logoSrc from '../../assets/logo.png'
 import './AdminPanel.css'
 
@@ -57,6 +63,8 @@ function DeleteBtn({ onDelete, label = 'Delete' }) {
 export default function AdminPanel() {
   const [authReady, setAuthReady] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [currentEmail, setCurrentEmail] = useState('')
+  const [allowedEmails, setAllowedEmails] = useState([])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -71,14 +79,39 @@ export default function AdminPanel() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  const refreshAdmins = async () => {
+    const list = await fetchAdminEmails()
+    setAllowedEmails(list)
+    return list
+  }
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user)
-      setAuthReady(true)
-      if (!user && location.pathname !== '/admin') {
-        navigate('/admin')
-      } else if (user && (location.pathname === '/admin' || location.pathname === '/admin/')) {
-        navigate('/admin/dashboard')
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Authenticated — but only allowlisted emails get in.
+        const list = await fetchAdminEmails()
+        if (isAllowedAdmin(user.email, list)) {
+          setAllowedEmails(list)
+          setCurrentEmail(user.email)
+          setIsAuthenticated(true)
+          setAuthReady(true)
+          if (location.pathname === '/admin' || location.pathname === '/admin/') {
+            navigate('/admin/dashboard')
+          }
+        } else {
+          // Logged in with a non-admin account — reject and sign out.
+          setIsAuthenticated(false)
+          setCurrentEmail('')
+          setAuthReady(true)
+          setError('This account is not authorized for admin access.')
+          try { await signOut(auth) } catch { /* ignore */ }
+          if (location.pathname !== '/admin') navigate('/admin')
+        }
+      } else {
+        setIsAuthenticated(false)
+        setCurrentEmail('')
+        setAuthReady(true)
+        if (location.pathname !== '/admin') navigate('/admin')
       }
     })
     return () => unsub()
@@ -90,7 +123,7 @@ export default function AdminPanel() {
     setSubmitting(true)
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password)
-      navigate('/admin/dashboard')
+      // Navigation + allowlist enforcement is handled by the auth listener above.
     } catch (err) {
       const code = err?.code || ''
       const msg =
@@ -169,6 +202,8 @@ export default function AdminPanel() {
     { label: 'Videos & Social', path: '/admin/videos', icon: Video },
     { label: 'Blog Posts', path: '/admin/blog', icon: FileText },
     { label: 'Landing Page', path: '/admin/landing', icon: Layers },
+    { label: 'Navigation', path: '/admin/nav', icon: Navigation },
+    { label: 'Admin Users', path: '/admin/users', icon: Users },
   ]
 
   return (
@@ -221,6 +256,15 @@ export default function AdminPanel() {
           <Route path="videos" element={<VideosSocialManager showToast={showToast} />} />
           <Route path="blog" element={<BlogManager showToast={showToast} />} />
           <Route path="landing" element={<LandingPageManager showToast={showToast} />} />
+          <Route path="nav" element={<NavigationManager showToast={showToast} />} />
+          <Route path="users" element={
+            <UserManager
+              showToast={showToast}
+              currentEmail={currentEmail}
+              allowedEmails={allowedEmails}
+              refreshAdmins={refreshAdmins}
+            />
+          } />
         </Routes>
       </main>
     </div>
@@ -360,6 +404,7 @@ function HeroManager({ showToast }) {
   const { heroSettings, saveHomepageSetting } = useData()
   const [formData, setFormData] = useState(heroSettings)
   const [slides, setSlides] = useState(heroSettings.slides || [])
+  const [videos, setVideos] = useState(heroSettings.videos || [])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -367,6 +412,7 @@ function HeroManager({ showToast }) {
   useEffect(() => {
     setFormData(heroSettings)
     setSlides(heroSettings.slides || [])
+    setVideos(heroSettings.videos || [])
   }, [heroSettings])
 
   const handleInputChange = (e) => {
@@ -374,11 +420,25 @@ function HeroManager({ showToast }) {
     setFormData({ ...formData, [name]: value })
   }
 
+  // ── Popup video tour handlers ──
+  const addVideo = () => setVideos((v) => [...v, { url: '', title: '' }])
+  const removeVideo = (i) => setVideos((v) => v.filter((_, idx) => idx !== i))
+  const changeVideo = (i, field, val) => setVideos((v) => v.map((it, idx) => (idx === i ? { ...it, [field]: val } : it)))
+  const moveVideo = (i, dir) => setVideos((v) => {
+    const j = i + dir
+    if (j < 0 || j >= v.length) return v
+    const next = [...v]; [next[i], next[j]] = [next[j], next[i]]; return next
+  })
+
   const handleSaveText = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
-      await saveHomepageSetting('hero', { ...formData, slides })
+      // keep only videos with a resolvable YouTube id
+      const cleanVideos = videos
+        .filter((v) => parseYouTubeId(v.url || v.videoId))
+        .map((v) => ({ url: (v.url || v.videoId || '').trim(), title: (v.title || '').trim() }))
+      await saveHomepageSetting('hero', { ...formData, slides, videos: cleanVideos })
       showToast('Hero settings saved successfully!')
     } catch (err) {
       alert('Save failed: ' + err.message)
@@ -486,10 +546,39 @@ function HeroManager({ showToast }) {
             <input type="text" name="ytText" className="admin-input" value={formData.ytText || ''} onChange={handleInputChange} />
           </div>
           <div className="admin-form-group">
-            <label>YouTube Link URL</label>
+            <label>YouTube Channel URL (Subscribe button)</label>
             <input type="text" name="ytUrl" className="admin-input" value={formData.ytUrl || ''} onChange={handleInputChange} />
           </div>
         </div>
+
+        {/* Popup video tours — multiple links */}
+        <h3 className="admin-card__title" style={{ marginTop: 32 }}>Popup Video Tours ({videos.length})</h3>
+        <p style={{ color: 'var(--ash)', fontSize: 13, margin: '0 0 14px' }}>
+          These appear in the “{formData.ytText || 'Watch Our Transformations'}” popup. Paste any YouTube link
+          (watch, youtu.be, shorts or embed) — the video ID is detected automatically.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {videos.map((v, i) => {
+            const id = parseYouTubeId(v.url || v.videoId)
+            return (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', border: '1px solid var(--pearl)', padding: 10, borderRadius: 10, background: 'rgba(0,0,0,0.01)' }}>
+                <div style={{ width: 72, height: 48, borderRadius: 6, overflow: 'hidden', flexShrink: 0, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {id ? <img src={youTubeThumb(id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Video size={16} color="var(--ash)" />}
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <input type="text" className="admin-input" placeholder="YouTube link or ID" value={v.url || v.videoId || ''} onChange={(e) => changeVideo(i, 'url', e.target.value)} style={{ fontSize: 13 }} />
+                  <input type="text" className="admin-input" placeholder="Title (e.g. 3BHK Tour — Prestige)" value={v.title || ''} onChange={(e) => changeVideo(i, 'title', e.target.value)} style={{ fontSize: 13 }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <button type="button" onClick={() => moveVideo(i, -1)} disabled={i === 0} className="admin-gallery-btn" style={{ width: 26, height: 22 }}><ArrowUp size={11} /></button>
+                  <button type="button" onClick={() => moveVideo(i, 1)} disabled={i === videos.length - 1} className="admin-gallery-btn" style={{ width: 26, height: 22 }}><ArrowDown size={11} /></button>
+                </div>
+                <button type="button" onClick={() => removeVideo(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 30, height: 30, flexShrink: 0 }}><Trash2 size={13} /></button>
+              </div>
+            )
+          })}
+        </div>
+        <button type="button" onClick={addVideo} className="admin-gallery-btn" style={{ marginTop: 10 }}><Plus size={14} /> Add Video</button>
 
         <h3 className="admin-card__title" style={{ marginTop: 32 }}>Slideshow Images ({slides.length})</h3>
         
@@ -540,11 +629,13 @@ function PortfolioManager({ showToast }) {
   
   // Projects form state
   const [editingProject, setEditingProject] = useState(null)
-  const [projectForm, setProjectForm] = useState({ id: '', title: '', category: '', location: '', year: '', size: '', description: '', image: '', images: [] })
-  
+  const [projectForm, setProjectForm] = useState({ id: '', title: '', category: '', subcategory: '', location: '', year: '', size: '', description: '', image: '', images: [] })
+
   // Category form state
   const [editingCat, setEditingCat] = useState(null)
-  const [catForm, setCatForm] = useState({ id: '', title: '', short: '', slug: '', filter: '', order: 0 })
+  const [catForm, setCatForm] = useState({ id: '', title: '', short: '', slug: '', filter: '', order: 0, subcategories: [] })
+
+  const slugify = (s) => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [savingProject, setSavingProject] = useState(false)
@@ -555,11 +646,13 @@ function PortfolioManager({ showToast }) {
     setEditingProject(p ? p.id : 'new')
     setProjectForm(p ? {
       ...p,
+      subcategory: p.subcategory || '',
       images: p.images || []
     } : {
       id: '',
       title: '',
       category: categories[0]?.id || '',
+      subcategory: '',
       location: '',
       year: new Date().getFullYear().toString(),
       size: '',
@@ -567,6 +660,23 @@ function PortfolioManager({ showToast }) {
       image: '',
       images: []
     })
+  }
+
+  // Subcategories belong to the category currently selected in the project form.
+  // A category's subcats live on its own doc; a category may aggregate several
+  // ids via filter[], so gather subcats from every matching category.
+  const subcatsForSelectedCategory = () => {
+    const sel = projectForm.category
+    const out = []
+    categories.forEach((c) => {
+      const ids = c.filter && c.filter.length ? c.filter : [c.id]
+      if (c.id === sel || ids.includes(sel)) {
+        (c.subcategories || []).forEach((s) => {
+          if (!out.find((o) => o.slug === s.slug)) out.push(s)
+        })
+      }
+    })
+    return out
   }
 
   const handleProjectSubmit = async (e) => {
@@ -624,16 +734,35 @@ function PortfolioManager({ showToast }) {
     setEditingCat(c ? c.id : 'new')
     setCatForm(c ? {
       ...c,
-      filter: c.filter ? c.filter.join(', ') : c.id
+      filter: c.filter ? c.filter.join(', ') : c.id,
+      subcategories: c.subcategories || []
     } : {
       id: '',
       title: '',
       short: '',
       slug: '',
       filter: '',
-      order: categories.length + 1
+      order: categories.length + 1,
+      subcategories: []
     })
   }
+
+  // ── Subcategory handlers (within the category editor) ──
+  const addSubcat = () => setCatForm((f) => ({ ...f, subcategories: [...(f.subcategories || []), { title: '', slug: '' }] }))
+  const removeSubcat = (i) => setCatForm((f) => ({ ...f, subcategories: (f.subcategories || []).filter((_, idx) => idx !== i) }))
+  const changeSubcatTitle = (i, title) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    // auto-fill slug from title unless the user hand-edited it
+    const prevAuto = slugify(next[i].title)
+    const slug = (!next[i].slug || next[i].slug === prevAuto) ? slugify(title) : next[i].slug
+    next[i] = { ...next[i], title, slug }
+    return { ...f, subcategories: next }
+  })
+  const changeSubcatSlug = (i, slug) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    next[i] = { ...next[i], slug: slugify(slug) }
+    return { ...f, subcategories: next }
+  })
 
   const handleCatSubmit = async (e) => {
     e.preventDefault()
@@ -642,12 +771,18 @@ function PortfolioManager({ showToast }) {
     const slug = catForm.slug || `projects-${id}`
     const filterArray = catForm.filter ? catForm.filter.split(',').map(s => s.trim()) : [id]
 
+    // Clean subcategories: drop blanks, ensure each has a slug + short label
+    const subcategories = (catForm.subcategories || [])
+      .map((s) => ({ title: (s.title || '').trim(), short: (s.short || s.title || '').trim(), slug: slugify(s.slug || s.title) }))
+      .filter((s) => s.title && s.slug)
+
     const itemToSave = {
       ...catForm,
       id,
       slug,
       filter: filterArray,
-      order: Number(catForm.order || 0)
+      order: Number(catForm.order || 0),
+      subcategories
     }
 
     setSavingCat(true)
@@ -799,7 +934,7 @@ function PortfolioManager({ showToast }) {
                   <select
                     className="admin-select"
                     value={projectForm.category}
-                    onChange={e => setProjectForm({...projectForm, category: e.target.value})}
+                    onChange={e => setProjectForm({...projectForm, category: e.target.value, subcategory: ''})}
                   >
                     {categories.filter(c => c.id !== 'residential').map(c => (
                       <option key={c.id} value={c.id}>{c.short}</option>
@@ -807,14 +942,29 @@ function PortfolioManager({ showToast }) {
                   </select>
                 </div>
                 <div className="admin-form-group">
-                  <label>Year Built</label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    value={projectForm.year}
-                    onChange={e => setProjectForm({...projectForm, year: e.target.value})}
-                  />
+                  <label>Subcategory {subcatsForSelectedCategory().length === 0 && <span style={{ textTransform: 'none', color: 'var(--mist)' }}>(none defined)</span>}</label>
+                  <select
+                    className="admin-select"
+                    value={projectForm.subcategory || ''}
+                    onChange={e => setProjectForm({...projectForm, subcategory: e.target.value})}
+                    disabled={subcatsForSelectedCategory().length === 0}
+                  >
+                    <option value="">— None —</option>
+                    {subcatsForSelectedCategory().map(s => (
+                      <option key={s.slug} value={s.slug}>{s.short || s.title}</option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+
+              <div className="admin-form-group">
+                <label>Year Built</label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={projectForm.year}
+                  onChange={e => setProjectForm({...projectForm, year: e.target.value})}
+                />
               </div>
 
               <div className="admin-form-row">
@@ -1003,6 +1153,39 @@ function PortfolioManager({ showToast }) {
                 />
               </div>
 
+              {/* Subcategories */}
+              <div className="admin-form-group">
+                <label>Subcategories <span style={{ textTransform: 'none', color: 'var(--mist)' }}>(shown as filter chips on the category page)</span></label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(catForm.subcategories || []).map((s, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Name (e.g. 2 BHK)"
+                        value={s.title}
+                        onChange={e => changeSubcatTitle(i, e.target.value)}
+                        style={{ flex: 2 }}
+                      />
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="slug"
+                        value={s.slug}
+                        onChange={e => changeSubcatSlug(i, e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      <button type="button" onClick={() => removeSubcat(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 32, height: 32, flexShrink: 0 }}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={addSubcat} className="admin-gallery-btn" style={{ marginTop: 8 }}>
+                  <Plus size={14} /> Add Subcategory
+                </button>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40 }}>
                 <button type="button" onClick={() => setEditingCat(null)} className="btn-danger-outline">Cancel</button>
                 <SaveBtn saving={savingCat} type="submit" className="btn-gold">Save Category</SaveBtn>
@@ -1019,7 +1202,7 @@ function PortfolioManager({ showToast }) {
    ABOUT TEASER & WHAT WE BUILD
    ────────────────────────────────────────────────────────── */
 function AboutTeaserManager({ showToast }) {
-  const { studioSettings, workTypes, saveHomepageSetting } = useData()
+  const { studioSettings, workTypes, saveHomepageSetting, aboutContent, saveAboutContent } = useData()
   const [aboutForm, setAboutForm] = useState(studioSettings)
   const [chips, setChips] = useState(workTypes)
   const [images, setImages] = useState(studioSettings.images || [])
@@ -1028,11 +1211,49 @@ function AboutTeaserManager({ showToast }) {
   const [savingAbout, setSavingAbout] = useState(false)
   const [savingChips, setSavingChips] = useState(false)
 
+  // About-PAGE content (settings/about) — shown on the /about-us page
+  const [pageContent, setPageContent] = useState(aboutContent)
+  const [savingPage, setSavingPage] = useState(false)
+
   useEffect(() => {
     setAboutForm(studioSettings)
     setChips(workTypes)
     setImages(studioSettings.images || [])
   }, [studioSettings, workTypes])
+
+  useEffect(() => { setPageContent(aboutContent) }, [aboutContent])
+
+  // ── About-page content handlers ──
+  const pcArr = (key) => Array.isArray(pageContent?.[key]) ? pageContent[key] : []
+  const setVision = (val) => setPageContent(p => ({ ...p, visionStatement: val }))
+  const setPrinciple = (i, field, val) => setPageContent(p => {
+    const next = [...pcArr('principles')]; next[i] = { ...next[i], [field]: val }; return { ...p, principles: next }
+  })
+  const addPrinciple = () => setPageContent(p => ({ ...p, principles: [...pcArr('principles'), { num: String(pcArr('principles').length + 1).padStart(2, '0'), title: '', desc: '' }] }))
+  const removePrinciple = (i) => setPageContent(p => ({ ...p, principles: pcArr('principles').filter((_, idx) => idx !== i) }))
+  const setApproach = (i, val) => setPageContent(p => { const next = [...pcArr('approachPoints')]; next[i] = val; return { ...p, approachPoints: next } })
+  const addApproach = () => setPageContent(p => ({ ...p, approachPoints: [...pcArr('approachPoints'), ''] }))
+  const removeApproach = (i) => setPageContent(p => ({ ...p, approachPoints: pcArr('approachPoints').filter((_, idx) => idx !== i) }))
+  const setValueProp = (i, field, val) => setPageContent(p => {
+    const next = [...pcArr('valueProps')]; next[i] = { ...next[i], [field]: val }; return { ...p, valueProps: next }
+  })
+  const addValueProp = () => setPageContent(p => ({ ...p, valueProps: [...pcArr('valueProps'), { value: '', label: '' }] }))
+  const removeValueProp = (i) => setPageContent(p => ({ ...p, valueProps: pcArr('valueProps').filter((_, idx) => idx !== i) }))
+
+  const handleSavePage = async () => {
+    setSavingPage(true)
+    try {
+      await saveAboutContent({
+        visionStatement: pageContent?.visionStatement || '',
+        principles: pcArr('principles'),
+        approachPoints: pcArr('approachPoints'),
+        valueProps: pcArr('valueProps'),
+      })
+      showToast('About page content saved successfully!')
+    } catch (err) {
+      alert('Save failed: ' + err.message)
+    } finally { setSavingPage(false) }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -1360,6 +1581,86 @@ function AboutTeaserManager({ showToast }) {
 
           <SaveBtn saving={savingChips} onClick={handleSaveChips} type="button" className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15 }}>
             Save What We Build Cards
+          </SaveBtn>
+        </div>
+
+        {/* ── ABOUT PAGE CONTENT (shown on /about-us) ── */}
+        <div className="admin-card">
+          <h3 className="admin-card__title">About Page Content</h3>
+          <p style={{ color: 'var(--ash)', fontSize: 13, margin: '0 0 20px' }}>
+            Edits here appear on the public <strong>About Us</strong> page — Vision, Principles, Approach points and the value-prop stats.
+          </p>
+
+          {/* Vision */}
+          <div className="admin-form-group">
+            <label>Vision Statement</label>
+            <textarea rows={3} className="admin-textarea" value={pageContent?.visionStatement || ''} onChange={e => setVision(e.target.value)} />
+          </div>
+
+          {/* Principles */}
+          <h4 style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Principles</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
+            {pcArr('principles').map((p, i) => (
+              <div key={i} style={{ border: '1px solid var(--pearl)', padding: 14, borderRadius: 8, background: 'rgba(0,0,0,0.01)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span className="text-mono" style={{ fontSize: 11, color: 'var(--gold-dark)', fontWeight: 600 }}>Principle {String(i + 1).padStart(2, '0')}</span>
+                  <button type="button" onClick={() => removePrinciple(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 26, height: 26 }}><Trash2 size={12} /></button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: 10 }}>
+                  <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                    <label>No.</label>
+                    <input type="text" className="admin-input" value={p.num || ''} onChange={e => setPrinciple(i, 'num', e.target.value)} />
+                  </div>
+                  <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                    <label>Title</label>
+                    <input type="text" className="admin-input" value={p.title || ''} onChange={e => setPrinciple(i, 'title', e.target.value)} />
+                  </div>
+                </div>
+                <div className="admin-form-group" style={{ marginTop: 10, marginBottom: 0 }}>
+                  <label>Description</label>
+                  <textarea rows={2} className="admin-textarea" value={p.desc || ''} onChange={e => setPrinciple(i, 'desc', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addPrinciple} className="admin-gallery-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Principle</button>
+
+          {/* Approach points */}
+          <h4 style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Approach Points</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            {pcArr('approachPoints').map((pt, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="text" className="admin-input" value={pt} onChange={e => setApproach(i, e.target.value)} style={{ flex: 1 }} />
+                <button type="button" onClick={() => removeApproach(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 30, height: 30, flexShrink: 0 }}><Trash2 size={12} /></button>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addApproach} className="admin-gallery-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Point</button>
+
+          {/* Value props */}
+          <h4 style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Value Prop Stats</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            {pcArr('valueProps').map((v, i) => (
+              <div key={i} style={{ border: '1px solid var(--pearl)', padding: 14, borderRadius: 8, background: 'rgba(0,0,0,0.01)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span className="text-mono" style={{ fontSize: 11, color: 'var(--gold-dark)', fontWeight: 600 }}>Stat {String(i + 1).padStart(2, '0')}</span>
+                  <button type="button" onClick={() => removeValueProp(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 26, height: 26 }}><Trash2 size={12} /></button>
+                </div>
+                <div className="admin-form-group" style={{ marginBottom: 8 }}>
+                  <label>Value (e.g. 10-Year)</label>
+                  <input type="text" className="admin-input" value={v.value || ''} onChange={e => setValueProp(i, 'value', e.target.value)} />
+                </div>
+                <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                  <label>Label</label>
+                  <input type="text" className="admin-input" value={v.label || ''} onChange={e => setValueProp(i, 'label', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addValueProp} className="admin-gallery-btn" style={{ marginBottom: 20 }}><Plus size={14} /> Add Stat</button>
+
+          <SaveBtn saving={savingPage} onClick={handleSavePage} type="button" className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15 }}>
+            Save About Page Content
           </SaveBtn>
         </div>
       </div>
@@ -2080,11 +2381,11 @@ function LandingPageManager({ showToast }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             <div className="admin-form-group">
-              <label>Phone Number (e.g. +919916666222)</label>
+              <label>Phone Number (e.g. +919845013138)</label>
               <input type="text" name="phone" className="admin-input" value={form.phone || ''} onChange={handleChange} />
             </div>
             <div className="admin-form-group">
-              <label>WhatsApp Number (Only digits: 919916666222)</label>
+              <label>WhatsApp Number (Only digits: 919845013138)</label>
               <input type="text" name="whatsapp" className="admin-input" value={form.whatsapp || ''} onChange={handleChange} />
             </div>
             <div className="admin-form-group">
@@ -2119,10 +2420,14 @@ function LandingPageManager({ showToast }) {
                   <label>Suffix (e.g. + or ★)</label>
                   <input type="text" className="admin-input" value={stat.suffix} onChange={e => handleStatChange(idx, 'suffix', e.target.value)} />
                 </div>
-                <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                <div className="admin-form-group" style={{ marginBottom: 8 }}>
                   <label>Label (e.g. Google Rating)</label>
                   <input type="text" className="admin-input" value={stat.label} onChange={e => handleStatChange(idx, 'label', e.target.value)} />
                 </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ash)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={!!stat.decimal} onChange={e => handleStatChange(idx, 'decimal', e.target.checked)} />
+                  Show one decimal (e.g. 4.8)
+                </label>
               </div>
             ))}
           </div>
@@ -2272,6 +2577,265 @@ function LandingPageManager({ showToast }) {
         </SaveBtn>
 
       </form>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────
+   NAVIGATION MANAGER — editable top-nav labels / order / visibility
+   ────────────────────────────────────────────────────────── */
+function NavigationManager({ showToast }) {
+  const { navSettings, saveNavSettings } = useData()
+  const [items, setItems] = useState(navSettings?.items || [])
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => { setItems(navSettings?.items || []) }, [navSettings])
+
+  const sorted = [...items].sort((a, b) => (a.order || 0) - (b.order || 0))
+
+  const updateField = (key, field, val) =>
+    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, [field]: val } : i)))
+
+  const move = (key, dir) => {
+    const arr = [...items].sort((a, b) => (a.order || 0) - (b.order || 0))
+    const idx = arr.findIndex((i) => i.key === key)
+    const j = idx + dir
+    if (j < 0 || j >= arr.length) return
+    ;[arr[idx], arr[j]] = [arr[j], arr[idx]]
+    setItems(arr.map((i, n) => ({ ...i, order: n + 1 })))
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const clean = [...items]
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .map((i, n) => ({ ...i, label: (i.label || '').trim() || i.key, order: n + 1, visible: i.visible !== false }))
+      await saveNavSettings(clean)
+      showToast('Navigation saved!')
+    } catch (err) {
+      alert('Save failed: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="text-display" style={{ fontSize: '32px', marginBottom: 8 }}>Navigation</h2>
+      <p style={{ color: 'var(--ash)', marginBottom: 32 }}>
+        Rename, reorder and show/hide the main menu items. The <strong>Portfolio</strong> menu automatically
+        lists your categories &amp; subcategories; <strong>About</strong> keeps its sub-links.
+      </p>
+
+      <div className="admin-card">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sorted.map((item, idx) => (
+            <div
+              key={item.key}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 14px', border: '1px solid var(--pearl)',
+                borderRadius: 10, background: item.visible !== false ? '#fff' : 'rgba(0,0,0,0.03)',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button type="button" onClick={() => move(item.key, -1)} disabled={idx === 0} className="admin-gallery-btn" style={{ width: 24, height: 22 }}><ArrowUp size={11} /></button>
+                <button type="button" onClick={() => move(item.key, 1)} disabled={idx === sorted.length - 1} className="admin-gallery-btn" style={{ width: 24, height: 22 }}><ArrowDown size={11} /></button>
+              </div>
+              <div className="admin-form-group" style={{ flex: 1, marginBottom: 0 }}>
+                <input type="text" className="admin-input" value={item.label} onChange={(e) => updateField(item.key, 'label', e.target.value)} />
+              </div>
+              <span className="text-mono" style={{ fontSize: 11, color: 'var(--mist)', minWidth: 120 }}>{item.path || '(dynamic)'}</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ash)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <input type="checkbox" checked={item.visible !== false} onChange={(e) => updateField(item.key, 'visible', e.target.checked)} />
+                Visible
+              </label>
+            </div>
+          ))}
+        </div>
+
+        <SaveBtn saving={saving} onClick={handleSave} type="button" className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15, marginTop: 20 }}>
+          Save Navigation
+        </SaveBtn>
+      </div>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────
+   ADMIN USER MANAGER
+   ────────────────────────────────────────────────────────── */
+function UserManager({ showToast, currentEmail, allowedEmails, refreshAdmins }) {
+  const [form, setForm] = useState({ email: '', password: '', confirm: '' })
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState('')
+  const [removing, setRemoving] = useState('')
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    const email = form.email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (allowedEmails.includes(email)) {
+      setError('That email is already an admin.')
+      return
+    }
+
+    setCreating(true)
+    try {
+      // 1. Create the Firebase Auth account (without disturbing this session).
+      await createAuthUser(email, form.password)
+      // 2. Add the email to the Firestore allowlist.
+      await addAdminEmail(email)
+      await refreshAdmins()
+      setForm({ email: '', password: '', confirm: '' })
+      showToast('Admin user created successfully!')
+    } catch (err) {
+      const code = err?.code || ''
+      setError(
+        code === 'auth/email-already-in-use'
+          ? 'An account with this email already exists. (If they should be an admin, add them to the allowlist via Firebase console.)'
+          : code === 'auth/weak-password'
+          ? 'Password is too weak — use at least 6 characters.'
+          : code === 'auth/invalid-email'
+          ? 'Please enter a valid email address.'
+          : err?.message || 'Failed to create user.'
+      )
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleRemove = async (email) => {
+    if (email === currentEmail) {
+      alert('You cannot remove your own admin access.')
+      return
+    }
+    if (BOOTSTRAP_ADMINS.includes(email)) {
+      alert('This is a bootstrap admin (set via environment) and cannot be removed here.')
+      return
+    }
+    if (!window.confirm(`Revoke admin access for ${email}?\n\nNote: this removes their access to the panel. It does NOT delete their Firebase Auth login — delete that from the Firebase console if needed.`)) return
+
+    setRemoving(email)
+    try {
+      await removeAdminEmail(email)
+      await refreshAdmins()
+      showToast('Admin access revoked.')
+    } catch (err) {
+      alert('Failed to revoke: ' + (err?.message || err))
+    } finally {
+      setRemoving('')
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="text-display" style={{ fontSize: '32px', marginBottom: 8 }}>Admin Users</h2>
+      <p style={{ color: 'var(--ash)', marginBottom: 32 }}>
+        Create new admin logins and manage who can access this panel.
+      </p>
+
+      {/* Create user */}
+      <div className="admin-card" style={{ marginBottom: 32 }}>
+        <h3 className="admin-card__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <UserPlus size={18} /> Add New Admin
+        </h3>
+        <form onSubmit={handleCreate} style={{ marginTop: 16 }}>
+          <div className="admin-form-group">
+            <label>Email</label>
+            <input
+              type="email" name="email" className="admin-input"
+              placeholder="newadmin@atticarch.com"
+              value={form.email} onChange={handleChange} autoComplete="off" required
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="admin-form-group">
+              <label>Password</label>
+              <input
+                type="password" name="password" className="admin-input"
+                placeholder="Min. 6 characters"
+                value={form.password} onChange={handleChange} autoComplete="new-password" required
+              />
+            </div>
+            <div className="admin-form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password" name="confirm" className="admin-input"
+                placeholder="Re-enter password"
+                value={form.confirm} onChange={handleChange} autoComplete="new-password" required
+              />
+            </div>
+          </div>
+          {error && <p style={{ color: '#c0392b', fontSize: 13, margin: '4px 0 12px' }}>{error}</p>}
+          <SaveBtn saving={creating} type="submit" className="btn-gold" style={{ justifyContent: 'center' }}>
+            <UserPlus size={16} /> Create Admin User
+          </SaveBtn>
+        </form>
+      </div>
+
+      {/* Existing admins */}
+      <div className="admin-card">
+        <h3 className="admin-card__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ShieldCheck size={18} /> Current Admins ({allowedEmails.length})
+        </h3>
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {allowedEmails.length === 0 && (
+            <p style={{ color: 'var(--ash)', fontSize: 14 }}>No admins found.</p>
+          )}
+          {allowedEmails.map((em) => {
+            const isBootstrap = BOOTSTRAP_ADMINS.includes(em)
+            const isSelf = em === currentEmail
+            return (
+              <div
+                key={em}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 16px', background: 'var(--cream)', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--mist-light, #eee)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ShieldCheck size={16} color="var(--gold)" />
+                  <span style={{ fontSize: 14, color: 'var(--charcoal)' }}>{em}</span>
+                  {isSelf && <span style={{ fontSize: 11, color: 'var(--gold-dark)', fontWeight: 600 }}>(you)</span>}
+                  {isBootstrap && <span style={{ fontSize: 11, color: 'var(--ash)' }}>(env)</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(em)}
+                  disabled={isSelf || isBootstrap || removing === em}
+                  className="admin-gallery-btn admin-gallery-btn--danger"
+                  style={{ width: 30, height: 30, opacity: (isSelf || isBootstrap) ? 0.35 : 1 }}
+                  title={isSelf ? 'You cannot remove yourself' : isBootstrap ? 'Bootstrap admin (set via env)' : 'Revoke access'}
+                >
+                  {removing === em ? <Spinner size={12} /> : <Trash2 size={13} />}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+        <p style={{ color: 'var(--ash)', fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
+          Removing an admin revokes their panel access via the Firestore allowlist. It does not delete their
+          Firebase Auth login — do that from the Firebase console if you want to fully disable the account.
+        </p>
+      </div>
     </div>
   )
 }

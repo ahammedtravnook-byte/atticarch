@@ -218,6 +218,94 @@
 .hww-step__img .smart-img { width: 100%; height: 100%; }
 .hww-step__img .smart-img img { transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
 .hww-step__img:hover .smart-img img { transform: scale(1.05); }
+
+/* Illustration variant — blueprint canvas behind animated SVG art */
+.hww-step__img--illus {
+  background:
+    radial-gradient(120% 120% at 75% 8%, rgba(201, 169, 110, 0.16), transparent 55%),
+    linear-gradient(180deg, var(--cream, #faf6f0) 0%, var(--linen, #f3ece1) 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(201, 169, 110, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* faint blueprint grid */
+.hww-step__img--illus::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(201, 169, 110, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 169, 110, 0.10) 1px, transparent 1px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(120% 120% at 50% 50%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(120% 120% at 50% 50%, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+/* giant ghost step numeral */
+.hww-illus__ghost {
+  position: absolute;
+  right: 16px;
+  bottom: -18px;
+  z-index: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 150px;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(201, 169, 110, 0.20);
+  pointer-events: none;
+  user-select: none;
+}
+.hww-illus {
+  position: relative;
+  z-index: 1;
+  width: 92%;
+  height: 92%;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hww-step__img--illus:hover .hww-illus { transform: scale(1.03); }
+
+/* ── Illustration animations ── */
+.hww-illus .il-float   { animation: ilFloat 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-float-b { animation: ilFloatB 5.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-breathe { animation: ilBreathe 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-spin    { animation: ilSpin 16s linear infinite; }
+.hww-illus .il-pulse   { animation: ilPulse 2.8s ease-in-out infinite; }
+.hww-illus .il-key     { animation: ilKey 4s ease-in-out infinite; }
+.hww-illus .il-roll    { animation: ilRoll 4s ease-in-out infinite; transform-box: fill-box; }
+.hww-illus .il-paint   { animation: ilPaint 4s ease-in-out infinite; transform-box: fill-box; transform-origin: left center; }
+.hww-illus .il-pencil  { animation: ilPencil 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-twinkle { animation: ilTwinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-dot     { animation: ilDot 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-dot2    { animation-delay: 0.18s; }
+.hww-illus .il-dot3    { animation-delay: 0.36s; }
+.hww-illus .il-pop     { animation: ilPop 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hww-illus .il-pop2    { animation-delay: 0.25s; }
+.hww-illus .il-pop3    { animation-delay: 0.5s; }
+.hww-illus .il-draw    { stroke-dasharray: 260; stroke-dashoffset: 260; animation: ilDraw 4s ease-in-out infinite; }
+.hww-illus .il-trace   { stroke-dasharray: 420; stroke-dashoffset: 420; animation: ilDraw 6s ease-in-out infinite; opacity: 0.5; }
+
+@keyframes ilFloat   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-9px) } }
+@keyframes ilFloatB  { 0%,100% { transform: translateY(0) } 50% { transform: translateY(9px) } }
+@keyframes ilBreathe { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.05); opacity: 0.8 } }
+@keyframes ilSpin    { to { transform: rotate(360deg) } }
+@keyframes ilPulse   { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
+@keyframes ilKey     { 0%,70%,100% { transform: rotate(0) } 82% { transform: rotate(-22deg) } }
+@keyframes ilRoll    { 0%,100% { transform: translateX(0) } 50% { transform: translateX(118px) } }
+@keyframes ilPaint   { 0%,100% { transform: scaleX(1) } 50% { transform: scaleX(2.05) } }
+@keyframes ilPencil  { 0%,100% { transform: translate(0,0) rotate(0) } 50% { transform: translate(-6px,-6px) rotate(-4deg) } }
+@keyframes ilTwinkle { 0%,100% { transform: scale(0.6); opacity: 0.3 } 50% { transform: scale(1.1); opacity: 1 } }
+@keyframes ilDot     { 0%,60%,100% { transform: translateY(0); opacity: 0.3 } 30% { transform: translateY(-7px); opacity: 1 } }
+@keyframes ilPop     { 0%,100% { transform: scale(0.7); opacity: 0.5 } 50% { transform: scale(1); opacity: 1 } }
+@keyframes ilDraw    { 0% { stroke-dashoffset: 260 } 55%,100% { stroke-dashoffset: 0 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hww-illus * { animation: none !important; }
+  .hww-illus .il-draw, .hww-illus .il-trace { stroke-dashoffset: 0 !important; }
+}
 .hww-step__img-tag {
   position: absolute;
   top: 14px;

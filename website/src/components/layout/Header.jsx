@@ -11,26 +11,34 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState(null)
   const location = useLocation()
-  const { categories } = useData()
+  const { categories, navSettings } = useData()
 
-  const dynamicNavItems = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about-us', children: [
-      { label: 'About Us', path: '/about-us' },
-      { label: 'Our Services', path: '/services' },
-      { label: 'How We Work', path: '/how-we-work' },
-    ]},
-    {
-      label: 'Portfolio',
-      path: categories.length ? `/project-category/${categories[0].slug}` : '/project-category/projects-apartments',
-      children: categories.map(cat => ({
-        label: cat.short,
-        path: `/project-category/${cat.slug}`
-      }))
-    },
-    { label: 'Blog', path: '/blog' },
-    { label: 'Contact', path: '/contact-us' },
+  const aboutChildren = [
+    { label: 'About Us', path: '/about-us' },
+    { label: 'Our Services', path: '/services' },
+    { label: 'How We Work', path: '/how-we-work' },
   ]
+
+  const portfolioBase = categories.length ? `/project-category/${categories[0].slug}` : '/project-category/projects-apartments'
+  // Each category becomes a group; its subcategories nest beneath it
+  const portfolioGroups = categories.map((cat) => ({
+    label: cat.short,
+    path: `/project-category/${cat.slug}`,
+    subItems: (cat.subcategories || []).map((sc) => ({
+      label: sc.short || sc.title,
+      path: `/project-category/${cat.slug}?sub=${sc.slug}`,
+    })),
+  }))
+
+  const dynamicNavItems = (navSettings?.items || [])
+    .filter((i) => i.visible !== false)
+    .slice()
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map((i) => {
+      if (i.key === 'about') return { ...i, children: aboutChildren }
+      if (i.key === 'portfolio') return { ...i, path: portfolioBase, groups: portfolioGroups }
+      return i
+    })
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50)
@@ -54,36 +62,55 @@ export default function Header() {
           </Link>
 
           <nav className="header__nav hide-mobile">
-            {dynamicNavItems.map((item) => (
-              <div
-                key={item.label}
-                className="header__nav-item"
-                onMouseEnter={() => item.children && setActiveDropdown(item.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link to={item.path} className={`header__nav-link ${location.pathname === item.path ? 'active' : ''}`}>
-                  {item.label}
-                  {item.children && <ChevronDown size={14} />}
-                </Link>
-                <AnimatePresence>
-                  {item.children && activeDropdown === item.label && (
-                    <motion.div
-                      className="header__dropdown"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {item.children.map((child) => (
-                        <Link key={child.path} to={child.path} className="header__dropdown-link">
-                          {child.label}
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+            {dynamicNavItems.map((item) => {
+              const hasMenu = item.children || (item.groups && item.groups.length)
+              return (
+                <div
+                  key={item.key || item.label}
+                  className="header__nav-item"
+                  onMouseEnter={() => hasMenu && setActiveDropdown(item.label)}
+                  onMouseLeave={() => setActiveDropdown(null)}
+                >
+                  <Link to={item.path} className={`header__nav-link ${location.pathname === item.path ? 'active' : ''}`}>
+                    {item.label}
+                    {hasMenu && <ChevronDown size={14} />}
+                  </Link>
+                  <AnimatePresence>
+                    {hasMenu && activeDropdown === item.label && (
+                      <motion.div
+                        className="header__dropdown"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {item.groups
+                          ? item.groups.map((g) => (
+                              <div key={g.path} className="header__dropdown-cat">
+                                <Link to={g.path} className="header__dropdown-link header__dropdown-catlink">
+                                  <span>{g.label}</span>
+                                  {g.subItems.length > 0 && <ChevronDown size={13} className="header__dropdown-caret" />}
+                                </Link>
+                                {g.subItems.length > 0 && (
+                                  <div className="header__flyout">
+                                    {g.subItems.map((s) => (
+                                      <Link key={s.path} to={s.path} className="header__dropdown-link">{s.label}</Link>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          : item.children.map((child) => (
+                              <Link key={child.path} to={child.path} className="header__dropdown-link">
+                                {child.label}
+                              </Link>
+                            ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
           </nav>
 
           <div className="header__actions">
@@ -117,10 +144,18 @@ export default function Header() {
             </div>
             <nav className="mobile-menu__nav">
               {dynamicNavItems.map((item) => (
-                <div key={item.label} className="mobile-menu__group">
+                <div key={item.key || item.label} className="mobile-menu__group">
                   <Link to={item.path} className="mobile-menu__link">{item.label}</Link>
                   {item.children && item.children.map((child) => (
                     <Link key={child.path} to={child.path} className="mobile-menu__sublink">{child.label}</Link>
+                  ))}
+                  {item.groups && item.groups.map((g) => (
+                    <div key={g.path}>
+                      <Link to={g.path} className="mobile-menu__sublink" style={{ fontWeight: 700 }}>{g.label}</Link>
+                      {g.subItems.map((s) => (
+                        <Link key={s.path} to={s.path} className="mobile-menu__sublink" style={{ paddingLeft: 28, opacity: 0.8 }}>{s.label}</Link>
+                      ))}
+                    </div>
                   ))}
                 </div>
               ))}

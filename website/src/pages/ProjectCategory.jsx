@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { ArrowUpRight, ArrowRight, MapPin, Maximize2, Calendar, Layers } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import SmartImage from '../components/ui/SmartImage'
@@ -23,7 +23,7 @@ function Reveal({ children, delay = 0, className = '' }) {
 }
 
 /* Tilt-on-hover card that follows the cursor */
-function ProjectCard({ project, index }) {
+const ProjectCard = forwardRef(function ProjectCard({ project, index }, forwardedRef) {
   const ref = useRef(null)
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 })
 
@@ -41,6 +41,7 @@ function ProjectCard({ project, index }) {
 
   return (
     <motion.div
+      ref={forwardedRef}
       layout
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
@@ -69,7 +70,7 @@ function ProjectCard({ project, index }) {
 
           {/* Photo count badge */}
           <span className="pc-card__photos">
-            <Layers size={11} /> {project.images.length} photos
+            <Layers size={11} /> {project.images?.length || 0} photos
           </span>
 
           {/* Hover-reveal overlay */}
@@ -101,23 +102,39 @@ function ProjectCard({ project, index }) {
       </Link>
     </motion.div>
   )
-}
+})
 
 export default function ProjectCategory() {
   const { projects, categories } = useData()
   const { category } = useParams()
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sub = searchParams.get('sub') || ''
+
   const categoryMap = categories.reduce((map, catItem) => {
     map[catItem.slug] = {
       title: catItem.title,
       short: catItem.short,
-      filter: catItem.filter || [catItem.id]
+      slug: catItem.slug,
+      filter: catItem.filter || [catItem.id],
+      subcategories: catItem.subcategories || []
     }
     return map
   }, {})
 
-  const cat = categoryMap[category] || (categories.length ? categoryMap[categories[0].slug] : { title: 'All Projects', short: 'All', filter: [] })
-  const filtered = cat.filter && cat.filter.length ? projects.filter((p) => cat.filter.includes(p.category)) : projects
+  const cat = categoryMap[category] || (categories.length ? categoryMap[categories[0].slug] : { title: 'All Projects', short: 'All', slug: '', filter: [], subcategories: [] })
+  const baseFiltered = cat.filter && cat.filter.length ? projects.filter((p) => cat.filter.includes(p.category)) : projects
+
+  // Subcategory chips + ?sub= filtering
+  const subcats = cat.subcategories || []
+  const filtered = sub ? baseFiltered.filter((p) => p.subcategory === sub) : baseFiltered
+
+  const selectSub = (slug) => {
+    const next = new URLSearchParams(searchParams)
+    if (slug) next.set('sub', slug)
+    else next.delete('sub')
+    setSearchParams(next, { replace: false })
+  }
 
   /* Stats */
   const uniqueLocations = new Set(filtered.map((p) => p.location.split(',')[0].trim())).size || filtered.length
@@ -275,6 +292,33 @@ export default function ProjectCategory() {
               })}
             </div>
           </div>
+
+          {/* Subcategory chips (filter in place + sync to ?sub=) */}
+          {subcats.length > 0 && (
+            <div className="pc-filter pc-filter--sub">
+              <span className="pc-filter__label">Type:</span>
+              <div className="pc-filter__pills">
+                <button type="button" className={`pc-pill ${!sub ? 'is-active' : ''}`} onClick={() => selectSub('')}>
+                  <span>All</span>
+                  <span className="pc-pill__count">{baseFiltered.length}</span>
+                </button>
+                {subcats.map((sc) => {
+                  const count = baseFiltered.filter((p) => p.subcategory === sc.slug).length
+                  return (
+                    <button
+                      type="button"
+                      key={sc.slug}
+                      className={`pc-pill ${sub === sc.slug ? 'is-active' : ''}`}
+                      onClick={() => selectSub(sc.slug)}
+                    >
+                      <span>{sc.short || sc.title}</span>
+                      <span className="pc-pill__count">{count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

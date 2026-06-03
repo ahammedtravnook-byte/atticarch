@@ -152,14 +152,14 @@ export default function NotFound() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}>
-            <a href="tel:+919916666222" className="nf-contact-btn">
+            <a href="tel:+919845013138" className="nf-contact-btn">
               <Phone size={18} />
               <div>
                 <small>Call us</small>
-                <strong>+91 99166 66222</strong>
+                <strong>+91 98450 13138</strong>
               </div>
             </a>
-            <a href="https://wa.me/919916666222" target="_blank" rel="noopener noreferrer" className="nf-contact-btn nf-contact-btn--wa">
+            <a href="https://wa.me/919845013138" target="_blank" rel="noopener noreferrer" className="nf-contact-btn nf-contact-btn--wa">
               <MessageCircle size={18} />
               <div>
                 <small>WhatsApp</small>

@@ -78,12 +78,48 @@ export function cldSrcSet(publicId, widths = [400, 800, 1200, 1600, 2000]) {
 }
 
 /**
+ * Compress + resize an image in the browser before upload — mirrors what
+ * scripts/optimize-images.js does on the server (max 1920px wide, WebP ~0.82),
+ * so admin uploads never push huge originals to Cloudinary.
+ *
+ * Falls back to the original File for non-images, GIF/SVG (animation/vector),
+ * any decode error, or if compression wouldn't actually shrink the file.
+ */
+export async function compressImage(file, { maxWidth = 1920, quality = 0.82 } = {}) {
+  if (!file || !file.type?.startsWith('image/')) return file
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file
+
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, maxWidth / bitmap.width)
+    const w = Math.max(1, Math.round(bitmap.width * scale))
+    const h = Math.max(1, Math.round(bitmap.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(bitmap, 0, 0, w, h)
+    bitmap.close?.()
+
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', quality))
+    if (!blob || blob.size >= file.size) return file // no gain — keep original
+
+    const name = file.name.replace(/\.[^.]+$/, '') + '.webp'
+    return new File([blob], name, { type: 'image/webp', lastModified: Date.now() })
+  } catch {
+    return file
+  }
+}
+
+/**
  * Upload a File to Cloudinary using the unsigned preset.
- * Used by admin UI image upload zones.
+ * Used by admin UI image upload zones. The image is auto-compressed first.
  *
  *   const { secure_url, public_id } = await uploadToCloudinary(file, 'atticarch/projects')
  */
 export async function uploadToCloudinary(file, folder = 'atticarch/misc', onProgress) {
+  file = await compressImage(file)
   const form = new FormData()
   form.append('file', file)
   form.append('upload_preset', UPLOAD_PRESET)

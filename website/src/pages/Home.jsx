@@ -21,6 +21,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { services, rooms, processSteps, partners, partnerLogo, allImages, pickImages } from '../data/siteData'
 import { useData } from '../context/DataContext'
+import { parseYouTubeId } from '../lib/youtube'
 import ProjectLightbox from '../components/ui/ProjectLightbox'
 import SmartImage from '../components/ui/SmartImage'
 import './Home.css'
@@ -114,7 +115,14 @@ function HeroParallax() {
   const heroRef = useRef(null)
   const bgRef = useRef(null)
 
-  const playlist = youtubeVideos && youtubeVideos.length
+  // Hero popup videos are managed in Admin → Hero Section (multiple links).
+  // Fall back to the Videos & Social list, then a final default.
+  const heroVideos = (heroSettings.videos || [])
+    .map((v) => ({ videoId: parseYouTubeId(v.url || v.videoId || v.id), title: v.title || 'Video Tour' }))
+    .filter((v) => v.videoId)
+  const playlist = heroVideos.length
+    ? heroVideos
+    : youtubeVideos && youtubeVideos.length
     ? youtubeVideos
     : [{ videoId: 'vcUMkExgiCw', title: 'ATTICARCH — Luxury Interior Design' }]
 
@@ -1189,7 +1197,7 @@ export default function Home() {
                   onClick={() => setLightbox(proj)}
                 >
                   <ImageCycler
-                    images={proj.images.length ? proj.images : [FALLBACK_IMG]}
+                    images={proj.images?.length ? proj.images : [FALLBACK_IMG]}
                     interval={3200}
                     style={{ width: '100%', height: '100%' }}
                   />
@@ -1197,7 +1205,7 @@ export default function Home() {
                     <span className="proj-item__cat">{proj.category}</span>
                     <div>
                       <h3 className="proj-item__title">{proj.title}</h3>
-                      <p className="proj-item__meta">{proj.location} · {proj.images.length} photos</p>
+                      <p className="proj-item__meta">{proj.location} · {proj.images?.length || 0} photos</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1252,8 +1260,8 @@ export default function Home() {
           <Reveal>
             <div className="section-header-row" style={{ marginBottom: 48 }}>
               <div>
-                <span className="section-label">Client Videos & Project Tours</span>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>See the Before & After</h2>
+                <span className="section-label">Video Tours & Reels</span>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>Step Inside Our Interiors</h2>
               </div>
               <a href="https://www.youtube.com/channel/UCYGM6iXNjQVNfW8Klw_oRWA" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
                 <IconYoutube size={15} /> Subscribe

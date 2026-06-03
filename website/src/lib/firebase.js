@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, deleteApp } from 'firebase/app'
 import {
   getFirestore,
   collection,
@@ -13,11 +13,14 @@ import {
   orderBy,
   where,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore'
 import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   RecaptchaVerifier,
   signInWithPhoneNumber,
@@ -50,6 +53,8 @@ export {
   orderBy,
   where,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
@@ -61,4 +66,25 @@ export const COL = {
   projects: 'projects',
   heroSlides: 'heroSlides',
   heroSettings: 'heroSettings',
+}
+
+/**
+ * Create a new Firebase Auth user WITHOUT signing out the current admin.
+ *
+ * The client SDK's createUserWithEmailAndPassword() auto-signs-in as the new
+ * user on the default app instance — which would log the admin out. To avoid
+ * that, we spin up a throwaway secondary app, create the user there, then sign
+ * out and tear it down. The current admin session on the default app is left
+ * completely untouched.
+ */
+export async function createAuthUser(emailAddr, password) {
+  const secondary = initializeApp(firebaseConfig, `user-creator-${emailAddr}`)
+  const secondaryAuth = getAuth(secondary)
+  try {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, emailAddr, password)
+    return cred.user
+  } finally {
+    try { await signOut(secondaryAuth) } catch { /* ignore */ }
+    try { await deleteApp(secondary) } catch { /* ignore */ }
+  }
 }

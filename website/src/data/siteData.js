@@ -206,13 +206,8 @@ export const team = [
     name: 'Guna Sekhar',
     role: 'Manager — Operations',
     bio: 'With ATTICARCH from the day we entered residential interiors, Guna handles site operations, vendor coordination and project execution end-to-end. A core team asset, his dedication has been pivotal to smooth completions and on-time handovers.',
-    featured: true,
   },
-  { slug: 'sruthi-raguraj',  name: 'Sruthi Raguraj',  role: 'Architect' },
-  { slug: 'muhammed-ramshad', name: 'Muhammed Ramshad', role: 'Designer' },
-  { slug: 'sumodh-johnson',  name: 'Sumodh Johnson',  role: 'Senior 3D Designer' },
-  { slug: 'reddy-sekhar',    name: 'Reddy Sekhar',    role: 'Senior Site Supervisor' },
-  { slug: 'samson',          name: 'Samson',          role: 'Site Supervisor' },
+  { slug: 'sumodh-johnson',  name: 'Samson Johnson',  role: 'Senior 3D Designer' },
 ]
 
 export const visionStatement =

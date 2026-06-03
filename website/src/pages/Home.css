@@ -3142,6 +3142,33 @@
   transform: scale(1);
 }
 
+/* ── Mobile: compact 2-up tile grid (instead of 16 tall stacked cards) ── */
+@media (max-width: 600px) {
+  .work-types-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .work-type-card {
+    padding: 14px 14px 16px;
+    min-height: 96px;
+    border-radius: 16px;
+  }
+  .work-type-card__num {
+    font-size: 20px;
+    opacity: 0.5;
+  }
+  .work-type-card__title {
+    font-size: 13.5px;
+    margin-top: 8px;
+    line-height: 1.25;
+  }
+  .work-type-card__line { height: 2px; }
+}
+
+@media (max-width: 360px) {
+  .work-type-card__title { font-size: 12.5px; }
+}
+
 /* ── TRUSTED PARTNERS ── */
 .partners-section { overflow: hidden; }
 

@@ -28,6 +28,16 @@ import {
 
 const DataContext = createContext()
 
+/* Images seeded into Firestore from a dev session were frozen as Vite dev URLs
+   (e.g. "/src/assets/projects/.../1.webp"). Those paths don't exist in a
+   production build, where the bundler emits hashed "/assets/xxxx.webp" URLs.
+   Treat any stored "/src/..." path (and empty/placeholder values) as unusable
+   and fall back to the freshly-globbed static default, which always resolves
+   to the correct URL for the current build. */
+const isDevAssetPath = (u) => typeof u === 'string' && u.startsWith('/src/')
+const usableImg = (stored, fallback) =>
+  (!stored || stored === '/placeholder.webp' || isDevAssetPath(stored)) ? fallback : stored
+
 // Predefined categories mapping matching site data
 const defaultCategories = [
   { id: 'residential', title: 'Residential Projects', short: 'Residential', slug: 'projects-residential', filter: ['apartments', 'villas'], order: 1 },
@@ -94,8 +104,8 @@ const defaultLandingSettings = {
     '10-year workmanship warranty',
     'Turnkey execution — starts ₹4 Lacs'
   ],
-  phone: '+919916666222',
-  whatsapp: '919916666222',
+  phone: '+919845013138',
+  whatsapp: '919845013138',
   whatsappPrefill: "Hi ATTICARCH, I'd like a free interior design consultation.",
   benefits: [
     { iconName: 'Box', title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
@@ -145,6 +155,16 @@ const defaultLandingSettings = {
   ]
 }
 
+const defaultNavSettings = {
+  items: [
+    { key: 'home', label: 'Home', path: '/', visible: true, order: 1 },
+    { key: 'about', label: 'About', path: '/about-us', visible: true, order: 2 },
+    { key: 'portfolio', label: 'Portfolio', path: '', visible: true, order: 3 },
+    { key: 'blog', label: 'Blog', path: '/blog', visible: true, order: 4 },
+    { key: 'contact', label: 'Contact', path: '/contact-us', visible: true, order: 5 },
+  ],
+}
+
 export function DataProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [dbError, setDbError] = useState(null)
@@ -173,6 +193,7 @@ export function DataProvider({ children }) {
   const [youtubeVideos, setYoutubeVideos] = useState(defaultYoutubeVideos)
   const [instagramPosts, setInstagramPosts] = useState(defaultInstagramPosts)
   const [landingSettings, setLandingSettings] = useState(defaultLandingSettings)
+  const [navSettings, setNavSettings] = useState(defaultNavSettings)
 
   const fetchData = async () => {
     setLoading(true)
@@ -191,8 +212,10 @@ export function DataProvider({ children }) {
           const data = { id: d.id, ...d.data() }
           const staticMatch = staticProjects.find(sp => String(sp.id) === String(d.id))
           if (staticMatch) {
-            if (!data.image || data.image === '/placeholder.webp') data.image = staticMatch.image
-            if (!data.images || data.images.length === 0) data.images = staticMatch.images
+            data.image = usableImg(data.image, staticMatch.image)
+            if (!data.images || data.images.length === 0 || data.images.some(isDevAssetPath)) {
+              data.images = staticMatch.images
+            }
           }
           return data
         })
@@ -224,8 +247,8 @@ export function DataProvider({ children }) {
         const fetchedBlog = blogSnap.docs.map(d => {
           const data = { id: d.id, ...d.data() }
           const staticMatch = staticBlogPosts.find(sb => String(sb.id) === String(d.id))
-          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
-            data.image = staticMatch.image
+          if (staticMatch) {
+            data.image = usableImg(data.image, staticMatch.image)
           }
           return data
         })
@@ -243,12 +266,10 @@ export function DataProvider({ children }) {
         if (data.hero) {
           const mergedHero = { ...defaultHeroSettings, ...data.hero }
           if (mergedHero.slides) {
-            mergedHero.slides = mergedHero.slides.map((s, i) => {
-              if (!s.imageUrl || s.imageUrl === '/placeholder.webp') {
-                return { ...s, imageUrl: defaultHeroSettings.slides[i]?.imageUrl || '' }
-              }
-              return s
-            })
+            mergedHero.slides = mergedHero.slides.map((s, i) => ({
+              ...s,
+              imageUrl: usableImg(s.imageUrl, defaultHeroSettings.slides[i]?.imageUrl || ''),
+            }))
           }
           setHeroSettings(mergedHero)
         }
@@ -256,12 +277,10 @@ export function DataProvider({ children }) {
         if (data.studio) {
           const mergedStudio = { ...defaultStudioSettings, ...data.studio }
           if (mergedStudio.images) {
-            mergedStudio.images = mergedStudio.images.map((img, i) => {
-              if (!img.imageUrl || img.imageUrl === '/placeholder.webp') {
-                return { ...img, imageUrl: defaultStudioSettings.images[i]?.imageUrl || '' }
-              }
-              return img
-            })
+            mergedStudio.images = mergedStudio.images.map((img, i) => ({
+              ...img,
+              imageUrl: usableImg(img.imageUrl, defaultStudioSettings.images[i]?.imageUrl || ''),
+            }))
           }
           setStudioSettings(mergedStudio)
         }
@@ -273,9 +292,7 @@ export function DataProvider({ children }) {
             }
             return {
               title: item.title || '',
-              imageUrl: (!item.imageUrl || item.imageUrl === '/placeholder.webp')
-                ? (defaultWorkTypes[i]?.imageUrl || '')
-                : item.imageUrl,
+              imageUrl: usableImg(item.imageUrl, defaultWorkTypes[i]?.imageUrl || ''),
               publicId: item.publicId || ''
             }
           })
@@ -287,12 +304,10 @@ export function DataProvider({ children }) {
         if (data.youtube) setYoutubeVideos(data.youtube)
 
         if (data.instagram) {
-          const mergedInsta = data.instagram.map((post, i) => {
-            if (!post.imageUrl || post.imageUrl === '/placeholder.webp') {
-              return { ...post, imageUrl: defaultInstagramPosts[i]?.imageUrl || '' }
-            }
-            return post
-          })
+          const mergedInsta = data.instagram.map((post, i) => ({
+            ...post,
+            imageUrl: usableImg(post.imageUrl, defaultInstagramPosts[i]?.imageUrl || ''),
+          }))
           setInstagramPosts(mergedInsta)
         }
       } else {
@@ -312,14 +327,22 @@ export function DataProvider({ children }) {
         setLandingSettings(defaultLandingSettings)
       }
 
+      // Navigation settings (editable top-nav labels / order / visibility)
+      const navDocSnap = await getDoc(doc(db, 'settings', 'navigation'))
+      if (navDocSnap.exists() && Array.isArray(navDocSnap.data().items)) {
+        setNavSettings({ items: navDocSnap.data().items })
+      } else {
+        setNavSettings(defaultNavSettings)
+      }
+
       // 6. Services
       const servSnap = await getDocs(collection(db, 'services'))
       if (!servSnap.empty) {
         const fetched = servSnap.docs.map(d => {
           const data = { id: d.id, ...d.data() }
           const staticMatch = staticServices.find(s => s.id === d.id)
-          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
-            data.image = staticMatch.image
+          if (staticMatch) {
+            data.image = usableImg(data.image, staticMatch.image)
           }
           return data
         })
@@ -333,8 +356,8 @@ export function DataProvider({ children }) {
         const fetched = roomSnap.docs.map(d => {
           const data = { id: d.id, ...d.data() }
           const staticMatch = staticRooms.find(r => r.slug === d.id)
-          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
-            data.image = staticMatch.image
+          if (staticMatch) {
+            data.image = usableImg(data.image, staticMatch.image)
           }
           return data
         })
@@ -364,8 +387,8 @@ export function DataProvider({ children }) {
         const fetched = upSnap.docs.map(d => {
           const data = { id: d.id, ...d.data() }
           const staticMatch = staticUpcomingProjects.find(u => String(u.id) === String(d.id))
-          if (staticMatch && (!data.image || data.image === '/placeholder.webp')) {
-            data.image = staticMatch.image
+          if (staticMatch) {
+            data.image = usableImg(data.image, staticMatch.image)
           }
           return data
         })
@@ -383,7 +406,7 @@ export function DataProvider({ children }) {
       setIsDatabaseEmpty(false)
       // Fallback in case of absolute network/permission error
       setProjects(staticProjects)
-      setCategories(defaultCategories)
+      setCategories(defaultCategories.filter(c => c.id !== 'residential'))
       setTestimonials(staticTestimonials)
       setBlogPosts(staticBlogPosts)
       setHeroSettings(defaultHeroSettings)
@@ -472,6 +495,19 @@ export function DataProvider({ children }) {
   const saveLandingSettings = async (data) => {
     const docRef = doc(db, 'settings', 'landingpage')
     await setDoc(docRef, data)
+    await fetchData()
+  }
+
+  const saveAboutContent = async (data) => {
+    const docRef = doc(db, 'settings', 'about')
+    const currentSnap = await getDoc(docRef)
+    const currentData = currentSnap.exists() ? currentSnap.data() : {}
+    await setDoc(docRef, { ...currentData, ...data })
+    await fetchData()
+  }
+
+  const saveNavSettings = async (items) => {
+    await setDoc(doc(db, 'settings', 'navigation'), { items })
     await fetchData()
   }
 
@@ -587,6 +623,7 @@ export function DataProvider({ children }) {
       youtubeVideos,
       instagramPosts,
       landingSettings,
+      navSettings,
       saveProject,
       deleteProject,
       saveCategory,
@@ -597,6 +634,8 @@ export function DataProvider({ children }) {
       deleteBlogPost,
       saveHomepageSetting,
       saveLandingSettings,
+      saveAboutContent,
+      saveNavSettings,
       bootstrapDatabase,
       refresh: fetchData
     }}>

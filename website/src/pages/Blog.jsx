@@ -8,11 +8,34 @@ import { Link, useParams } from 'react-router-dom'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ArrowRight, ArrowLeft, Clock, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Clock, ArrowUpRight, Sparkles } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import './Blog.css'
 
 gsap.registerPlugin(ScrollTrigger)
+
+/* ═════════════════════════════════════════
+   MARQUEE RIBBON — kinetic editorial ticker
+   ═════════════════════════════════════════ */
+function MarqueeRibbon({ words, reverse = false }) {
+  const row = (
+    <div className="blg-marquee__row" aria-hidden="true">
+      {words.map((w, i) => (
+        <span className="blg-marquee__item" key={i}>
+          {w}
+          <span className="blg-marquee__star">✦</span>
+        </span>
+      ))}
+    </div>
+  )
+  return (
+    <div className={`blg-marquee ${reverse ? 'blg-marquee--rev' : ''}`}>
+      <div className="blg-marquee__track">
+        {row}{row}
+      </div>
+    </div>
+  )
+}
 
 /* ═════════════════════════════════════════
    3D TILT CARD — perspective mouse-follow
@@ -111,6 +134,8 @@ function CoverStory({ post }) {
             style={{ y: imgY }}
           />
           <div className="cover-story__gradient" />
+          <span className="cover-story__ghost">01</span>
+          <span className="cover-story__kicker">Featured Dispatch</span>
           <Spotlight className="cover-story__spotlight-area" />
         </div>
 
@@ -223,6 +248,10 @@ function BlogPost({ post, allPosts }) {
     { id: 'sec-highlights', label: 'Highlights' },
   ]
 
+  // When the post has CMS-authored body content, render it; otherwise fall back
+  // to the editorial boilerplate so legacy posts still look complete.
+  const hasContent = !!(post.content && String(post.content).trim())
+
   useGSAP(() => {
     tocItems.forEach(s => {
       const el = document.getElementById(s.id)
@@ -326,20 +355,22 @@ function BlogPost({ post, allPosts }) {
 
             {/* Sticky sidebar */}
             <aside className="bp2-side">
-              <div className="bp2-toc">
-                <span className="bp2-toc__heading">On this page</span>
-                {tocItems.map(t => (
-                  <a
-                    key={t.id}
-                    href={`#${t.id}`}
-                    className={`bp2-toc__item ${activeSection === t.id ? 'bp2-toc__item--on' : ''}`}
-                    onClick={e => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth' }) }}
-                  >
-                    <span className="bp2-toc__bar" />
-                    {t.label}
-                  </a>
-                ))}
-              </div>
+              {!hasContent && (
+                <div className="bp2-toc">
+                  <span className="bp2-toc__heading">On this page</span>
+                  {tocItems.map(t => (
+                    <a
+                      key={t.id}
+                      href={`#${t.id}`}
+                      className={`bp2-toc__item ${activeSection === t.id ? 'bp2-toc__item--on' : ''}`}
+                      onClick={e => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth' }) }}
+                    >
+                      <span className="bp2-toc__bar" />
+                      {t.label}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {/* Share */}
               <div className="bp2-side-share">
@@ -361,6 +392,15 @@ function BlogPost({ post, allPosts }) {
                 </p>
               </div>
 
+              {/* CMS-authored body (HTML from the admin editor) */}
+              {hasContent && (
+                <div
+                  className="bp2-richtext bp-reveal"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+              )}
+
+              {!hasContent && (<>
               <div className="bp2-divider bp-reveal">
                 <span /><span className="bp2-divider__diamond" /><span />
               </div>
@@ -424,6 +464,7 @@ function BlogPost({ post, allPosts }) {
                   </motion.div>
                 ))}
               </div>
+              </>)}
 
               {/* Author sign-off */}
               <div className="bp2-signoff bp-reveal">
@@ -560,11 +601,18 @@ export default function Blog() {
       {/* ── HERO ── */}
       <section className="blg-hero">
         <div className="blg-hero__bg" ref={heroRef}>
+          <div className="blg-hero__mesh" />
           <div className="blg-hero__orb blg-hero__orb--1" />
           <div className="blg-hero__orb blg-hero__orb--2" />
           <div className="blg-hero__orb blg-hero__orb--3" />
         </div>
         <div className="blg-hero__grain" />
+
+        {/* Vertical issue rail */}
+        <div className="blg-hero__rail">
+          <span className="blg-hero__rail-line" />
+          <span className="blg-hero__rail-text">Est. 2002 — Bengaluru</span>
+        </div>
 
         <div className="container blg-hero__content">
           <div className="blg-hero__left">
@@ -670,6 +718,9 @@ export default function Blog() {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
         </motion.div>
+
+        {/* Kinetic marquee ribbon */}
+        <MarqueeRibbon words={['Design', 'Interiors', 'Architecture', 'Craft', 'Living', 'Materials', 'Light', 'Detail']} />
       </section>
 
       {/* ── FILTER + COVER STORY + EDITORIAL GRID ── */}
@@ -748,6 +799,33 @@ export default function Blog() {
               )}
             </motion.div>
           </AnimatePresence>
+        </div>
+      </section>
+
+      {/* ── CLOSING CTA BAND ── */}
+      <section className="blg-cta">
+        <div className="blg-cta__grain" />
+        <MarqueeRibbon words={['The Journal', 'Design Stories', 'ATTICARCH']} reverse />
+        <div className="container blg-cta__inner">
+          <motion.div
+            className="blg-cta__content"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <span className="blg-cta__eyebrow"><Sparkles size={13} /> From page to space</span>
+            <h2 className="blg-cta__title">
+              Loved the ideas? <em>Let's build them.</em>
+            </h2>
+            <p className="blg-cta__sub">
+              Turn inspiration into a home that's unmistakably yours. Book a free design
+              consultation with Bangalore's award-winning studio.
+            </p>
+            <Link to="/contact-us" className="blg-cta__btn">
+              Book a Consultation <ArrowUpRight size={18} />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </motion.main>

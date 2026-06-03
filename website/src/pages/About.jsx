@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight, ArrowUpRight, Target, Eye, Award, Check, Sparkles } from 'lucide-react'
 import { FaLinkedin } from 'react-icons/fa'
 import { valueProps, principles, approachPoints, team, visionStatement, partners, partnerLogo, pickImages } from '../data/siteData'
+import { useData } from '../context/DataContext'
 import './About.css'
 
 /* Eagerly import every team headshot from /assets/People so we can map by filename slug */
@@ -24,23 +25,19 @@ const approachImg = pickImages(1, 33)[0]
 gsap.registerPlugin(ScrollTrigger)
 
 export default function About() {
+  const { aboutContent } = useData()
+  // Prefer CMS-managed content (settings/about), fall back to static defaults
+  const vision = aboutContent?.visionStatement || visionStatement
+  const principlesList = aboutContent?.principles?.length ? aboutContent.principles : principles
+  const approachList = aboutContent?.approachPoints?.length ? aboutContent.approachPoints : approachPoints
+  const valuePropsList = aboutContent?.valueProps?.length ? aboutContent.valueProps : valueProps
+
   const heroRef = useRef(null)
   const heroBgRef = useRef(null)
   const heroTitleRef = useRef(null)
   const heroLineRef = useRef(null)
   const statsRef = useRef(null)
-  const timelineSectionRef = useRef(null)
-  const timelineTrackRef = useRef(null)
-  const timelineProgressRef = useRef(null)
   const missionImageRef = useRef(null)
-
-  const milestones = [
-    { year: '2002', title: 'Founded', desc: 'ATTICARCH established as a multi-disciplinary studio in Bangalore.' },
-    { year: '2008', title: 'Growth & Expansion', desc: 'Expanded our portfolio across residential and commercial interior projects.' },
-    { year: '2014', title: 'Luxury Division', desc: 'Launched dedicated luxury interior design vertical for high-end villas and penthouses.' },
-    { year: '2019', title: 'Studio Recognition', desc: 'Established as a trusted interior design studio across Bangalore.' },
-    { year: '2024', title: 'Two Decades Strong', desc: 'Continuing to deliver turnkey interiors with a 10-Year Workmanship Warranty.' },
-  ]
 
   const featuredTeam = team.filter((t) => t.featured)
   const supportTeam = team.filter((t) => !t.featured)
@@ -74,31 +71,6 @@ export default function About() {
       },
     })
 
-    const mm = gsap.matchMedia()
-    mm.add('(min-width: 769px)', () => {
-      const track = timelineTrackRef.current
-      const section = timelineSectionRef.current
-      if (!track || !section) return
-      const getTotalScroll = () => track.scrollWidth - window.innerWidth + 200
-      const tl = gsap.to(track, {
-        x: () => -getTotalScroll(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: section,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true,
-          end: () => `+=${getTotalScroll()}`,
-          onUpdate: (self) => {
-            if (timelineProgressRef.current) {
-              timelineProgressRef.current.style.width = `${self.progress * 100}%`
-            }
-          },
-        },
-      })
-      return () => tl.scrollTrigger?.kill()
-    })
-
     const refresh = () => ScrollTrigger.refresh()
     window.addEventListener('load', refresh)
     const refreshTimeout = setTimeout(refresh, 500)
@@ -107,7 +79,6 @@ export default function About() {
     return () => {
       window.removeEventListener('load', refresh)
       clearTimeout(refreshTimeout)
-      mm.revert()
     }
   }, { scope: heroRef })
 
@@ -204,7 +175,7 @@ export default function About() {
                   </motion.div>
                   <h3>Our Vision</h3>
                 </div>
-                <p>{visionStatement}</p>
+                <p>{vision}</p>
               </motion.div>
             </div>
 
@@ -244,7 +215,7 @@ export default function About() {
           </motion.div>
 
           <div className="about-principles__grid">
-            {principles.map((p, i) => (
+            {principlesList.map((p, i) => (
               <motion.div
                 key={p.num}
                 className="about-principle"
@@ -300,7 +271,7 @@ export default function About() {
                 pleasant and functionally reliable spaces.
               </p>
               <ul className="about-approach__list">
-                {approachPoints.map((point, i) => (
+                {approachList.map((point, i) => (
                   <motion.li
                     key={i}
                     initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }}
@@ -321,7 +292,7 @@ export default function About() {
       <section className="about-stats" ref={statsRef}>
         <div className="container">
           <div className="about-stats__grid">
-            {valueProps.map((s, i) => (
+            {valuePropsList.map((s, i) => (
               <motion.div
                 className="about-stats__item" key={i}
                 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
@@ -331,52 +302,6 @@ export default function About() {
                 <span className="about-stats__number">{s.value}</span>
                 <span className="about-stats__label">{s.label}</span>
                 <div className="about-stats__underline" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TIMELINE ── */}
-      <section className="about-timeline" ref={timelineSectionRef}>
-        <div className="container">
-          <motion.div
-            className="about-timeline__header"
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.7 }}
-          >
-            <span className="section-label" style={{ justifyContent: 'center' }}>Our Journey</span>
-            <h2 className="section-title">Milestones That Define Us</h2>
-          </motion.div>
-        </div>
-        <div className="about-timeline__track-wrapper">
-          <div className="container">
-            <div className="about-timeline__progress">
-              <div className="about-timeline__progress-bar" ref={timelineProgressRef} />
-            </div>
-          </div>
-          <div className="about-timeline__track" ref={timelineTrackRef} style={{ paddingLeft: 'calc((100vw - 1200px) / 2 + 20px)' }}>
-            {milestones.map((m, i) => (
-              <div className="about-timeline__card" key={i}>
-                <span className="about-timeline__year">{m.year}</span>
-                <h3>{m.title}</h3>
-                <p>{m.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="container">
-          <div className="about-timeline__vertical">
-            {milestones.map((m, i) => (
-              <motion.div
-                className="about-timeline__vertical-item" key={i}
-                initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-              >
-                <span className="about-timeline__vertical-year">{m.year}</span>
-                <h3>{m.title}</h3>
-                <p>{m.desc}</p>
               </motion.div>
             ))}
           </div>

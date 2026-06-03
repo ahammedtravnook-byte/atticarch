@@ -993,12 +993,16 @@
   z-index: 1;
 }
 
-/* Leadership grid */
+/* Leadership grid — content-aware & centered (auto-fit collapses empty tracks
+   so 2 cards stay balanced in the middle instead of clinging to the left) */
 .about-team__leadership {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-  margin-bottom: 96px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 368px));
+  gap: 32px;
+  justify-content: center;
+  align-items: stretch;
+  max-width: 860px;
+  margin: 0 auto 96px;
 }
 
 .leader-card {
@@ -1122,9 +1126,8 @@
   color: var(--charcoal);
   width: fit-content;
   max-width: calc(100% - 36px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.45;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 .leader-card__role-dot {
@@ -1133,6 +1136,8 @@
   border-radius: 50%;
   background: var(--gold);
   flex-shrink: 0;
+  margin-top: 3px;
+  align-self: flex-start;
   animation: about-pulse 1.8s ease-in-out infinite;
 }
 
@@ -1248,11 +1253,15 @@
   color: var(--gold);
 }
 
-/* Studio team grid — editorial portraits with hover-reveal role */
+/* Studio team grid — content-aware & centered (matches the leadership row
+   so a small team reads as a deliberate set, not a left-stranded fragment) */
 .about-team__grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 255px));
+  gap: 22px;
+  justify-content: center;
+  max-width: 555px;
+  margin: 0 auto;
 }
 
 .team-card {
@@ -1644,9 +1653,8 @@
   .about-approach__grid { grid-template-columns: 1fr; gap: 56px; }
   .about-approach__img { aspect-ratio: 16 / 11; max-width: 560px; margin: 0 auto; }
   .about-team { padding: 100px 0; }
-  .about-team__leadership { grid-template-columns: 1fr; gap: 24px; margin-bottom: 60px; }
-  .leader-card__media { aspect-ratio: 16 / 11; }
-  .about-team__grid { grid-template-columns: repeat(3, 1fr); }
+  .about-team__leadership { grid-template-columns: repeat(auto-fit, minmax(260px, 340px)); gap: 24px; margin-bottom: 60px; max-width: 720px; }
+  .about-team__grid { grid-template-columns: repeat(auto-fit, minmax(190px, 230px)); max-width: 500px; }
 
   .logo-wall { grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .about-partners__strip-item { font-size: clamp(1.3rem, 4vw, 2.2rem); }
@@ -1702,8 +1710,8 @@
   .about-approach__sticker-label { font-size: 12.5px; }
   .about-approach__sticker-sub { font-size: 9px; }
   .about-team { padding: 80px 0; }
-  .about-team__grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .about-team__leadership { gap: 20px; }
+  .about-team__grid { grid-template-columns: repeat(2, minmax(0, 230px)); gap: 16px; max-width: 480px; }
+  .about-team__leadership { grid-template-columns: minmax(0, 400px); gap: 20px; max-width: 400px; }
   .leader-card__body { padding: 22px 22px 24px; }
   .leader-card__name { font-size: 19px; }
   .about-partners { padding: 80px 0; }
@@ -1757,7 +1765,7 @@
   .about-intro__title { font-size: clamp(1.4rem, 6vw, 1.9rem); }
   .about-intro__body { font-size: 14px; }
   .about-principle { padding: 30px 22px; }
-  .about-team__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .about-team__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 360px; }
   .team-card__name { font-size: 13.5px; }
   .team-card__role { font-size: 9px; }
 

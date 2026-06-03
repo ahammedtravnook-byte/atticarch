@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════════
+//  ATTICARCH Firestore security rules
+//
+//  Model:
+//   • Public website content (projects, blog, settings…) is READ-ONLY to
+//     the world and writable only by admins.
+//   • Leads (contact-form submissions) can be CREATED by anyone but are
+//     READABLE only by admins — they contain customer PII.
+//   • Admins are identified by email via the `settings/admins` doc, with a
+//     hard-coded bootstrap list below so the first admin can sign in before
+//     that doc exists.
+//
+//  ⚠️  BEFORE DEPLOYING: replace the bootstrap email(s) in bootstrapAdmins()
+//      with your real admin email(s). Keep this list in sync with the
+//      VITE_ADMIN_EMAILS value in your .env file.
+// ════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ⚠️ REPLACE with your real admin email(s). Lowercase only.
+    function bootstrapAdmins() {
+      return ['owner@atticarch.com'];
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function emailLower() {
+      return isSignedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    function adminDocExists() {
+      return exists(/databases/$(database)/documents/settings/admins);
+    }
+
+    function adminEmails() {
+      return get(/databases/$(database)/documents/settings/admins).data.emails;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        emailLower() in bootstrapAdmins() ||
+        (adminDocExists() && emailLower() in adminEmails())
+      );
+    }
+
+    // ── Public, admin-writable content collections ──
+    match /projects/{id}         { allow read: if true; allow write: if isAdmin(); }
+    match /categories/{id}       { allow read: if true; allow write: if isAdmin(); }
+    match /testimonials/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /blogPosts/{id}        { allow read: if true; allow write: if isAdmin(); }
+    match /services/{id}         { allow read: if true; allow write: if isAdmin(); }
+    match /rooms/{id}            { allow read: if true; allow write: if isAdmin(); }
+    match /team/{id}             { allow read: if true; allow write: if isAdmin(); }
+    match /partners/{id}         { allow read: if true; allow write: if isAdmin(); }
+    match /upcomingProjects/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    // ── Settings ──
+    // homepage / landingpage / about are read by the public site.
+    // `admins` (the allowlist) is readable by admins only — it holds emails.
+    match /settings/{id} {
+      allow read:  if id != 'admins' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── Leads (contact form) ──
+    // Anyone may submit a lead; only admins may read/modify them (PII).
+    match /leads/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Default deny everything else ──
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

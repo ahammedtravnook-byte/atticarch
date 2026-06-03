@@ -19,9 +19,53 @@ export default function ProjectDetail() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)' }}>
-        <p style={{ color: 'var(--ash)', fontSize: 14 }}>Loading Project Details…</p>
-      </div>
+      <main className="pd pd--loading" aria-busy="true" aria-label="Loading project details">
+        <section className="pd-hero">
+          <div className="pd-hero__glow" />
+          <div className="container pd-hero__inner">
+            <div className="pd-hero__top">
+              <span className="sk sk--back" />
+              <span className="sk sk--index" />
+            </div>
+
+            <div className="pd-hero__grid">
+              {/* LEFT — text column skeleton */}
+              <div className="pd-hero__text">
+                <span className="sk sk--cat" />
+                <span className="sk sk--title" />
+                <span className="sk sk--title sk--title-2" />
+                <div className="sk-desc">
+                  <span className="sk sk--line" />
+                  <span className="sk sk--line" />
+                  <span className="sk sk--line sk--line-short" />
+                </div>
+                <div className="pd-hero__meta sk-meta">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div className="sk-meta__cell" key={i}>
+                      <span className="sk sk--meta-icon" />
+                      <div className="sk-meta__lines">
+                        <span className="sk sk--meta-k" />
+                        <span className="sk sk--meta-v" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <span className="sk sk--btn" />
+              </div>
+
+              {/* RIGHT — media skeleton */}
+              <div className="pd-hero__media">
+                <span className="sk sk--cover" />
+                <div className="pd-hero__thumbs">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span className="sk sk--thumb" key={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     )
   }
 

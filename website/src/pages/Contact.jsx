@@ -7,7 +7,7 @@ import {
   Shield, Star, Home, Loader2
 } from 'lucide-react'
 import {
-  auth, db, doc, setDoc, getDocs, collection, query, where,
+  auth, db, doc, setDoc,
   RecaptchaVerifier, signInWithPhoneNumber, signOut as fbSignOut
 } from '../lib/firebase'
 import './Contact.css'
@@ -46,6 +46,9 @@ export default function Contact() {
   const [otpError, setOtpError] = useState('')
   const [timer, setTimer] = useState(60)
   const [verifying, setVerifying] = useState(false)
+  // True when SMS OTP can't be sent (e.g. Firebase billing not enabled) — we
+  // then let the user submit without SMS verification so no lead is lost.
+  const [otpUnavailable, setOtpUnavailable] = useState(false)
 
   // Firebase phone auth
   const confirmationRef = useRef(null)
@@ -56,14 +59,17 @@ export default function Contact() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
-  // OTP countdown
+  // OTP countdown — one interval per "OTP sent" cycle (not recreated every tick)
   useEffect(() => {
-    let interval = null
-    if (otpSent && timer > 0 && !otpVerified) {
-      interval = setInterval(() => setTimer(p => p - 1), 1000)
-    }
+    if (!otpSent || otpVerified) return
+    const interval = setInterval(() => {
+      setTimer(p => {
+        if (p <= 1) { clearInterval(interval); return 0 }
+        return p - 1
+      })
+    }, 1000)
     return () => clearInterval(interval)
-  }, [otpSent, timer, otpVerified])
+  }, [otpSent, otpVerified])
 
   // Init invisible reCAPTCHA once
   const setupRecaptcha = useCallback(() => {
@@ -75,16 +81,32 @@ export default function Contact() {
     })
   }, [])
 
-  // ── Rate limit check: max 3 submissions per phone per 24h ──
-  const checkRateLimit = async (phone) => {
-    const cutoff = new Date(Date.now() - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000).toISOString()
-    const q = query(
-      collection(db, 'leads'),
-      where('phone', '==', phone),
-      where('createdAt', '>=', cutoff)
-    )
-    const snap = await getDocs(q)
-    return snap.size < RATE_LIMIT_MAX
+  // ── Rate limit check: max 3 OTP requests per phone per 24h ──
+  // Done client-side via localStorage (NOT a Firestore read) — the leads
+  // collection holds customer PII and must stay admin-read-only. Firebase
+  // Phone Auth enforces its own server-side abuse limits on top of this.
+  const RL_KEY = 'atticarch_otp_attempts'
+
+  const recordOtpAttempt = (phone) => {
+    try {
+      const now = Date.now()
+      const cutoff = now - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000
+      const list = JSON.parse(localStorage.getItem(RL_KEY) || '[]')
+        .filter(a => a.ts >= cutoff)
+      list.push({ phone, ts: now })
+      localStorage.setItem(RL_KEY, JSON.stringify(list))
+    } catch { /* localStorage unavailable — skip */ }
+  }
+
+  const checkRateLimit = (phone) => {
+    try {
+      const cutoff = Date.now() - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000
+      const count = JSON.parse(localStorage.getItem(RL_KEY) || '[]')
+        .filter(a => a.ts >= cutoff && a.phone === phone).length
+      return count < RATE_LIMIT_MAX
+    } catch {
+      return true // localStorage unavailable — don't block the user
+    }
   }
 
   // ── Send real OTP via Firebase Phone Auth ──
@@ -100,8 +122,7 @@ export default function Contact() {
 
     try {
       // Rate limit check before sending OTP
-      const allowed = await checkRateLimit(cleanPhone)
-      if (!allowed) {
+      if (!checkRateLimit(cleanPhone)) {
         setOtpError(`Too many submissions from this number. Please try after ${RATE_LIMIT_WINDOW_HRS} hours.`)
         setOtpSending(false)
         return
@@ -111,19 +132,28 @@ export default function Contact() {
       const phoneNumber = `+91${cleanPhone}`
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaRef.current)
       confirmationRef.current = confirmation
+      recordOtpAttempt(cleanPhone)
       setOtpSent(true)
       setTimer(60)
       setOtpCode('')
     } catch (err) {
       console.error('OTP send error:', err)
-      if (err.code === 'auth/too-many-requests') {
+      const code = err?.code || ''
+      // SMS verification not available on this Firebase project (needs the
+      // Blaze plan). Don't block the user — let them submit without OTP.
+      if (['auth/billing-not-enabled', 'auth/operation-not-allowed', 'auth/admin-restricted-operation', 'auth/quota-exceeded'].includes(code)) {
+        setOtpUnavailable(true)
+        setOtpError('')
+      } else if (code === 'auth/too-many-requests') {
         setOtpError('Too many OTP requests. Please wait a few minutes and try again.')
-      } else if (err.code === 'auth/invalid-phone-number') {
+      } else if (code === 'auth/invalid-phone-number') {
         setOtpError('Invalid phone number. Please check and try again.')
       } else {
         setOtpError('Failed to send OTP. Please try again.')
       }
-      // Reset recaptcha on failure
+      // Tear down the reCAPTCHA widget so a retry can render a fresh one
+      // (otherwise Firebase throws "reCAPTCHA has already been rendered").
+      try { recaptchaRef.current?.clear() } catch { /* ignore */ }
       recaptchaRef.current = null
     } finally {
       setOtpSending(false)
@@ -142,7 +172,6 @@ export default function Contact() {
     try {
       await confirmationRef.current.confirm(otpCode)
       setOtpVerified(true)
-      setTimeout(() => setStep(3), 800)
     } catch (err) {
       console.error('OTP verify error:', err)
       if (err.code === 'auth/invalid-verification-code') {
@@ -163,6 +192,10 @@ export default function Contact() {
     if (!form.name.trim()) errs.name = 'Full name is required'
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Valid email is required'
     if (!form.projectType) errs.projectType = 'Please select a project type'
+    if (!form.size.trim()) errs.size = 'Approximate size is required'
+    if (!form.budget) errs.budget = 'Please select a budget range'
+    if (!form.timeline) errs.timeline = 'Please select a timeline'
+    if (!form.message.trim()) errs.message = 'Please add a short message'
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setErrors({})
     setStep(2)
@@ -171,7 +204,10 @@ export default function Contact() {
   // ── Final submit → Firestore ──
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!otpVerified) { setStep(2); setOtpError('Please verify your mobile number first.'); return }
+    if (!otpVerified && !otpUnavailable) { setStep(2); setOtpError('Please verify your mobile number first.'); return }
+    if (otpUnavailable && form.phone.replace(/\D/g, '').length !== 10) {
+      setStep(2); setOtpError('Please enter a valid 10-digit mobile number.'); return
+    }
 
     setSubmitting(true)
     setSubmitError('')
@@ -188,7 +224,7 @@ export default function Contact() {
         budget: form.budget || '',
         timeline: form.timeline || '',
         message: form.message || '',
-        verified: true,
+        verified: otpVerified,
         source: 'contact-page',
         createdAt: new Date().toISOString(),
       })
@@ -325,9 +361,9 @@ export default function Contact() {
                   {/* Progress */}
                   <div className="ct-progress">
                     <div className="ct-progress__track">
-                      <div className="ct-progress__fill" style={{ width: `${((step - 1) / 2) * 100}%` }} />
+                      <div className="ct-progress__fill" style={{ width: `${(step - 1) * 100}%` }} />
                     </div>
-                    {[1, 2, 3].map(s => (
+                    {[1, 2].map(s => (
                       <button
                         key={s}
                         className={`ct-progress__dot ${s === step ? 'ct-progress__dot--active' : ''} ${s < step || submitted ? 'ct-progress__dot--done' : ''}`}
@@ -339,9 +375,8 @@ export default function Contact() {
                     ))}
                   </div>
                   <div className="ct-progress__labels">
-                    <span className={step >= 1 ? 'active' : ''}>Basic Info</span>
-                    <span className={step >= 2 ? 'active' : ''}>Verify Phone</span>
-                    <span className={step >= 3 ? 'active' : ''}>Project Details</span>
+                    <span className={step >= 1 ? 'active' : ''}>Project Details</span>
+                    <span className={step >= 2 ? 'active' : ''}>Verify &amp; Book</span>
                   </div>
 
                   <AnimatePresence mode="wait">
@@ -403,8 +438,36 @@ export default function Contact() {
                                 {errors.projectType && <span className="ct-err">{errors.projectType}</span>}
                               </div>
                               <div className="ct-field">
-                                <label>Approximate Size <span className="opt">(optional)</span></label>
+                                <label>Approximate Size <span>*</span></label>
                                 <input type="text" placeholder="e.g. 1800 sq.ft" value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} />
+                                {errors.size && <span className="ct-err">{errors.size}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Budget Range <span>*</span></label>
+                                <select value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })}>
+                                  <option value="">Select range...</option>
+                                  <option value="Under ₹4 Lacs">Under ₹4 Lacs</option>
+                                  <option value="₹4-6 Lacs">₹4–6 Lacs</option>
+                                  <option value="₹6-10 Lacs">₹6–10 Lacs</option>
+                                  <option value="₹10-18 Lacs">₹10–18 Lacs</option>
+                                  <option value="₹18 Lacs+">₹18 Lacs+</option>
+                                </select>
+                                {errors.budget && <span className="ct-err">{errors.budget}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Timeline <span>*</span></label>
+                                <select value={form.timeline} onChange={e => setForm({ ...form, timeline: e.target.value })}>
+                                  <option value="">Select timeline...</option>
+                                  <option value="Immediate (30 days)">Immediate (30 days)</option>
+                                  <option value="1-3 Months">1–3 Months</option>
+                                  <option value="3+ Months">3+ Months</option>
+                                </select>
+                                {errors.timeline && <span className="ct-err">{errors.timeline}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Message / Special Requirements <span>*</span></label>
+                                <textarea rows={3} placeholder="Tell us about your project, styling preferences..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+                                {errors.message && <span className="ct-err">{errors.message}</span>}
                               </div>
                             </div>
 
@@ -431,7 +494,7 @@ export default function Contact() {
                                     onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                                     disabled={otpVerified || otpSent}
                                   />
-                                  {!otpVerified && (
+                                  {!otpVerified && !otpUnavailable && (
                                     <button
                                       type="button" className="ct-otp-send"
                                       onClick={sendOtp}
@@ -481,59 +544,24 @@ export default function Contact() {
                                   <Check size={15} /> Mobile Verified Successfully
                                 </motion.div>
                               )}
+
+                              {otpUnavailable && !otpVerified && (
+                                <motion.div className="ct-otp-box" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--ash)', lineHeight: 1.5 }}>
+                                    <Shield size={15} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: 1 }} />
+                                    <span>SMS verification is momentarily unavailable. No problem — just make sure your number is correct and tap <strong>Book Consultation</strong>; our team will call you back to confirm.</span>
+                                  </div>
+                                </motion.div>
+                              )}
                             </div>
+
+                            {submitError && <div className="ct-otp-err" style={{ marginTop: 16 }}><AlertCircle size={13} /> {submitError}</div>}
 
                             <div className="ct-nav-row">
                               <button type="button" className="ct-back" onClick={() => setStep(1)}>
                                 <ChevronLeft size={14} /> Back
                               </button>
-                              <button type="button" className="ct-btn ct-btn--primary" onClick={() => setStep(3)} disabled={!otpVerified}>
-                                Next <ChevronRight size={15} />
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-
-                        {/* STEP 3 */}
-                        {step === 3 && (
-                          <motion.div key="s3" className="ct-step-content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                            <h4 className="ct-step-heading">Budget & Timeline</h4>
-                            <p className="ct-step-sub">Help us prepare options ahead of your consultation.</p>
-
-                            <div className="ct-fields">
-                              <div className="ct-field">
-                                <label>Budget Range</label>
-                                <select value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })}>
-                                  <option value="">Select range...</option>
-                                  <option value="Under ₹4 Lacs">Under ₹4 Lacs</option>
-                                  <option value="₹4-6 Lacs">₹4–6 Lacs</option>
-                                  <option value="₹6-10 Lacs">₹6–10 Lacs</option>
-                                  <option value="₹10-18 Lacs">₹10–18 Lacs</option>
-                                  <option value="₹18 Lacs+">₹18 Lacs+</option>
-                                </select>
-                              </div>
-                              <div className="ct-field">
-                                <label>Timeline</label>
-                                <select value={form.timeline} onChange={e => setForm({ ...form, timeline: e.target.value })}>
-                                  <option value="">Select timeline...</option>
-                                  <option value="Immediate (30 days)">Immediate (30 days)</option>
-                                  <option value="1-3 Months">1–3 Months</option>
-                                  <option value="3+ Months">3+ Months</option>
-                                </select>
-                              </div>
-                              <div className="ct-field">
-                                <label>Message / Special Requirements</label>
-                                <textarea rows={4} placeholder="Tell us about your project, styling preferences..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
-                              </div>
-                            </div>
-
-                            {submitError && <div className="ct-otp-err" style={{ marginBottom: 16 }}><AlertCircle size={13} /> {submitError}</div>}
-
-                            <div className="ct-nav-row">
-                              <button type="button" className="ct-back" onClick={() => setStep(2)}>
-                                <ChevronLeft size={14} /> Back
-                              </button>
-                              <button type="submit" className="ct-btn ct-btn--primary" disabled={!otpVerified || submitting}>
+                              <button type="submit" className="ct-btn ct-btn--primary" disabled={(!otpVerified && !otpUnavailable) || submitting}>
                                 {submitting ? <><Loader2 size={14} className="ct-spin" /> Submitting...</> : <>Book Consultation <Send size={14} /></>}
                               </button>
                             </div>
