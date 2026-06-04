@@ -16,8 +16,14 @@ const fade = {
 export default function ProjectDetail() {
   const { projects, loading } = useData()
   const { slug } = useParams()
+  const [lightbox, setLightbox] = useState(null) // start index or null — hook must run unconditionally
 
-  if (loading) {
+  // `projects` is seeded with static data on first render, so a matching project
+  // is usually available immediately. Only show the skeleton on a genuine cold
+  // load where the project isn't known yet.
+  const project = projects.find((p) => String(p.id) === slug) || projects[0]
+
+  if (loading && !project) {
     return (
       <main className="pd pd--loading" aria-busy="true" aria-label="Loading project details">
         <section className="pd-hero">
@@ -69,7 +75,6 @@ export default function ProjectDetail() {
     )
   }
 
-  const project = projects.find((p) => String(p.id) === slug) || projects[0]
   if (!project) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)' }}>
@@ -82,7 +87,6 @@ export default function ProjectDetail() {
   const nextProject = projects[(idx + 1) % projects.length]
 
   const gallery = project.images?.length ? project.images : [project.image]
-  const [lightbox, setLightbox] = useState(null) // start index or null
 
   return (
     <motion.main
