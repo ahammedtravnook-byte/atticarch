@@ -20,10 +20,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ⚠️ REPLACE with your real admin email(s). Lowercase only.
-    // The account must exist in Firebase Auth AND have its email verified.
+    // Bootstrap admins — these Firebase Auth accounts already exist and are
+    // controlled by the owners, so no email_verified requirement here (an
+    // attacker cannot register a duplicate of an already-claimed email).
     function bootstrapAdmins() {
-      return ['travnookmarketing@gmail.com'];
+      return ['owner@atticarch.com', 'ahammed.travnook@gmail.com'];
     }
 
     function isSignedIn() {
@@ -44,16 +45,19 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/settings/admins).data.emails;
     }
 
-    // email_verified is required: Firebase email/password signup lets anyone
-    // register ANY email address without proving they own the mailbox, so an
-    // unverified email claim must never grant admin access.
+    // Bootstrap admins are trusted by account ownership (their accounts are
+    // already registered, and Firebase enforces unique emails). Emails added
+    // later via settings/admins MUST be verified: email/password signup lets
+    // anyone register a not-yet-claimed address without proving they own the
+    // mailbox, so an unverified claim must never grant admin access.
     function isAdmin() {
-      return isSignedIn()
-        && request.auth.token.email_verified == true
-        && (
-          emailLower() in bootstrapAdmins() ||
-          (adminDocExists() && emailLower() in adminEmails())
-        );
+      return isSignedIn() && (
+        emailLower() in bootstrapAdmins() ||
+        (
+          request.auth.token.email_verified == true
+          && adminDocExists() && emailLower() in adminEmails()
+        )
+      );
     }
 
     // ── Public, admin-writable content collections ──
