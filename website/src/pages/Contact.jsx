@@ -34,7 +34,7 @@ export default function Contact() {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
     name: '', email: '', phone: '',
-    projectType: '', size: '', budget: '', timeline: '', message: ''
+    projectType: '', size: '', possession: '', location: '', budget: '', message: ''
   })
   const [errors, setErrors] = useState({})
 
@@ -189,12 +189,13 @@ export default function Contact() {
   // ── Step 1 validation ──
   const handleNextStep = () => {
     const errs = {}
-    if (!form.name.trim()) errs.name = 'Full name is required'
+    if (!form.projectType) errs.projectType = 'Please select an option'
+    if (!form.size.trim()) errs.size = 'Please enter the size'
+    if (!form.possession) errs.possession = 'Please select an option'
+    if (!form.location.trim()) errs.location = 'Please enter the location'
+    if (!form.budget) errs.budget = 'Please select an option'
+    if (!form.name.trim()) errs.name = 'Please enter your name'
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Valid email is required'
-    if (!form.projectType) errs.projectType = 'Please select a project type'
-    if (!form.size.trim()) errs.size = 'Approximate size is required'
-    if (!form.budget) errs.budget = 'Please select a budget range'
-    if (!form.timeline) errs.timeline = 'Please select a timeline'
     if (!form.message.trim()) errs.message = 'Please add a short message'
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setErrors({})
@@ -221,8 +222,9 @@ export default function Contact() {
         phone: form.phone.replace(/\D/g, ''),
         projectType: form.projectType,
         size: form.size || '',
+        possession: form.possession || '',
+        location: form.location || '',
         budget: form.budget || '',
-        timeline: form.timeline || '',
         message: form.message || '',
         verified: otpVerified,
         source: 'contact-page',
@@ -241,10 +243,7 @@ export default function Contact() {
     }
   }
 
-  const projectTypes = [
-    'Apartment Interior', 'Villa Interior', 'Commercial Interior',
-    'Renovation & Refurbishment', 'Modular Kitchen / Wardrobes', 'Other'
-  ]
+  const projectTypes = ['Apartment', 'Villa', 'Commercial', 'Others']
 
   return (
     <motion.main className="ct" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
@@ -420,53 +419,56 @@ export default function Contact() {
 
                             <div className="ct-fields">
                               <div className="ct-field">
-                                <label>Full Name <span>*</span></label>
-                                <input type="text" placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-                                {errors.name && <span className="ct-err">{errors.name}</span>}
-                              </div>
-                              <div className="ct-field">
-                                <label>Email <span>*</span></label>
-                                <input type="email" placeholder="name@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-                                {errors.email && <span className="ct-err">{errors.email}</span>}
-                              </div>
-                              <div className="ct-field">
-                                <label>Project Type <span>*</span></label>
+                                <label>Type of Property <span>*</span></label>
                                 <select value={form.projectType} onChange={e => setForm({ ...form, projectType: e.target.value })}>
-                                  <option value="">Select type...</option>
+                                  <option value="">Please select an option</option>
                                   {projectTypes.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                                 {errors.projectType && <span className="ct-err">{errors.projectType}</span>}
                               </div>
                               <div className="ct-field">
-                                <label>Approximate Size <span>*</span></label>
-                                <input type="text" placeholder="e.g. 1800 sq.ft" value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} />
+                                <label>Size of Property in Sq.Ft <span>*</span></label>
+                                <input type="text" placeholder="Please enter" value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} />
                                 {errors.size && <span className="ct-err">{errors.size}</span>}
                               </div>
                               <div className="ct-field">
-                                <label>Budget Range <span>*</span></label>
+                                <label>Expected Possession <span>*</span></label>
+                                <select value={form.possession} onChange={e => setForm({ ...form, possession: e.target.value })}>
+                                  <option value="">Please select an option</option>
+                                  <option value="Already in possession">Already in possession</option>
+                                  <option value="Within a Month">Within a Month</option>
+                                  <option value="Two months or more">Two months or more</option>
+                                </select>
+                                {errors.possession && <span className="ct-err">{errors.possession}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Location of Property <span>*</span></label>
+                                <input type="text" placeholder="Locality in Bangalore" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+                                {errors.location && <span className="ct-err">{errors.location}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Budget <span>*</span></label>
                                 <select value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })}>
-                                  <option value="">Select range...</option>
-                                  <option value="Under ₹4 Lacs">Under ₹4 Lacs</option>
-                                  <option value="₹4-6 Lacs">₹4–6 Lacs</option>
-                                  <option value="₹6-10 Lacs">₹6–10 Lacs</option>
-                                  <option value="₹10-18 Lacs">₹10–18 Lacs</option>
-                                  <option value="₹18 Lacs+">₹18 Lacs+</option>
+                                  <option value="">Please select an option</option>
+                                  <option value="10 - 15 Lakhs">10 - 15 Lakhs</option>
+                                  <option value="15 - 20 Lakhs">15 - 20 Lakhs</option>
+                                  <option value="Over 20 Lakhs">Over 20 Lakhs</option>
                                 </select>
                                 {errors.budget && <span className="ct-err">{errors.budget}</span>}
                               </div>
                               <div className="ct-field">
-                                <label>Timeline <span>*</span></label>
-                                <select value={form.timeline} onChange={e => setForm({ ...form, timeline: e.target.value })}>
-                                  <option value="">Select timeline...</option>
-                                  <option value="Immediate (30 days)">Immediate (30 days)</option>
-                                  <option value="1-3 Months">1–3 Months</option>
-                                  <option value="3+ Months">3+ Months</option>
-                                </select>
-                                {errors.timeline && <span className="ct-err">{errors.timeline}</span>}
+                                <label>Name <span>*</span></label>
+                                <input type="text" placeholder="Please enter your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                                {errors.name && <span className="ct-err">{errors.name}</span>}
                               </div>
                               <div className="ct-field">
-                                <label>Message / Special Requirements <span>*</span></label>
-                                <textarea rows={3} placeholder="Tell us about your project, styling preferences..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+                                <label>Email <span>*</span></label>
+                                <input type="email" placeholder="Enter your email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                                {errors.email && <span className="ct-err">{errors.email}</span>}
+                              </div>
+                              <div className="ct-field">
+                                <label>Message <span>*</span></label>
+                                <textarea rows={3} placeholder="Please add any details you think it would be useful for us to make a correct estimation." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
                                 {errors.message && <span className="ct-err">{errors.message}</span>}
                               </div>
                             </div>
@@ -489,7 +491,7 @@ export default function Contact() {
                                 <div className="ct-phone-row">
                                   <div className="ct-phone-prefix">+91</div>
                                   <input
-                                    type="tel" placeholder="10-digit number"
+                                    type="tel" placeholder="Please Enter your contact number"
                                     value={form.phone}
                                     onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                                     disabled={otpVerified || otpSent}
