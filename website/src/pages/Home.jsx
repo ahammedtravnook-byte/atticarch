@@ -110,6 +110,7 @@ function HeroParallax() {
   const { heroSettings, projects, youtubeVideos } = useData()
   const [slideIdx, setSlideIdx] = useState(0)
   const [progress, setProgress] = useState(0)
+  const [titleIdx, setTitleIdx] = useState(0)
   const [showYtModal, setShowYtModal] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState(null)
   const heroRef = useRef(null)
@@ -138,6 +139,14 @@ function HeroParallax() {
     : projects.length
     ? projects.slice(0, 5).map((p) => p.image || FALLBACK_IMG)
     : [FALLBACK_IMG]
+
+  /* Loop the rotating headline sentences */
+  useEffect(() => {
+    const count = (heroSettings.rotatingTitles || '').split('\n').filter(s => s.trim()).length || 3
+    if (count < 2) return
+    const t = setInterval(() => setTitleIdx(i => (i + 1) % count), 5000)
+    return () => clearInterval(t)
+  }, [heroSettings.rotatingTitles])
 
   /* Cycle hero images */
   useEffect(() => {
@@ -169,9 +178,21 @@ function HeroParallax() {
     return () => ctx.revert()
   }, [])
 
-  const eyebrow = heroSettings.eyebrow || 'Award-Winning Bangalore Studio'
-  const titleLine1 = heroSettings.titleLine1 || 'Designing Homes'
+  const eyebrow = heroSettings.eyebrow || 'An Award-Winning Design Studio in Bangalore'
+  const titleLine1 = heroSettings.titleLine1 || 'We Design Homes'
   const titleLine2 = heroSettings.titleLine2 || 'That Tell Your Story'
+
+  // Rotating hero sentences — full sentences looping in the headline.
+  // Admin-editable (Hero Section Manager): one sentence per line, "|" splits
+  // it across the two display lines. Falls back to titleLine1/2 + defaults.
+  const sentences = (heroSettings.rotatingTitles || '')
+    .split('\n').map(s => s.trim()).filter(Boolean)
+  const titleLoop = sentences.length ? sentences : [
+    `${titleLine1}|${titleLine2}`,
+    'Homes Designed by|Expert Architects',
+    'Award-Winning Interiors|Built In-House Since 2002',
+  ]
+  const [heroLineA, heroLineB = ''] = (titleLoop[titleIdx % titleLoop.length] || '').split('|').map(s => s.trim())
   const subtitle = heroSettings.subtitle || "Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002."
   const primaryCtaText = heroSettings.primaryCtaText || 'Free Consultation'
   const primaryCtaPath = heroSettings.primaryCtaPath || '/contact-us'
@@ -232,24 +253,30 @@ function HeroParallax() {
           </motion.div>
 
           <h1 className="hero__title hero__title--center">
-            <div style={{ overflow: 'hidden' }}>
-              <motion.span className="hero__title-line"
-                initial={{ y: 130 }} animate={{ y: 0 }}
-                transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}>
-                {titleLine1}
-              </motion.span>
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <motion.span className="hero__title-line hero__title-line--accent"
-                initial={{ y: 130 }} animate={{ y: 0 }}
-                transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-                {titleLine2.includes('<em>') ? (
-                  <span dangerouslySetInnerHTML={{ __html: titleLine2 }} />
-                ) : (
-                  titleLine2
+            <AnimatePresence mode="wait">
+              <motion.div key={titleIdx} exit={{ opacity: 0, y: -36 }} transition={{ duration: 0.45, ease: 'easeIn' }}>
+                <div style={{ overflow: 'hidden' }}>
+                  <motion.span className="hero__title-line"
+                    initial={{ y: 130 }} animate={{ y: 0 }}
+                    transition={{ duration: 1.1, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}>
+                    {heroLineA}
+                  </motion.span>
+                </div>
+                {heroLineB && (
+                  <div style={{ overflow: 'hidden' }}>
+                    <motion.span className="hero__title-line hero__title-line--accent"
+                      initial={{ y: 130 }} animate={{ y: 0 }}
+                      transition={{ duration: 1.1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+                      {heroLineB.includes('<em>') ? (
+                        <span dangerouslySetInnerHTML={{ __html: heroLineB }} />
+                      ) : (
+                        heroLineB
+                      )}
+                    </motion.span>
+                  </div>
                 )}
-              </motion.span>
-            </div>
+              </motion.div>
+            </AnimatePresence>
           </h1>
 
           <motion.p className="hero__subtitle hero__subtitle--center"
@@ -837,7 +864,22 @@ function TestimonialsStage() {
                   </motion.span>
                 ))}
               </div>
-              <blockquote className="testimonials-quote">"{t.text}"</blockquote>
+              {t.videoId ? (
+                <>
+                  <a
+                    className="testimonials-video"
+                    href={`https://www.youtube.com/watch?v=${t.videoId}`}
+                    target="_blank" rel="noopener noreferrer"
+                    aria-label={`Watch video testimonial: ${t.project || t.name}`}
+                  >
+                    <img src={`https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`} alt={t.project || t.name} loading="lazy" />
+                    <span className="testimonials-video__play"><Play size={20} fill="currentColor" /></span>
+                  </a>
+                  {t.text && <p className="testimonials-video-caption">{t.text}</p>}
+                </>
+              ) : (
+                <blockquote className="testimonials-quote">"{t.text}"</blockquote>
+              )}
               <div className="testimonials-author">
                 <div className="testimonials-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {t.avatar ? (
@@ -1037,12 +1079,12 @@ export default function Home() {
                 })()}
               </h2>
               <p className="about-teaser__desc">
-                {studioSettings?.desc || 'Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of designers and on-site experts work side-by-side under one roof — drawing, picking materials and finishing each room with care, so the work lasts long after we hand over the keys.'}
+                {studioSettings?.desc || 'Every ATTICARCH home starts with a conversation, not a catalogue. We have our own in-house production unit — our designers, carpenters and finishing experts work under one roof, so every wardrobe, kitchen and panel is built by us, not outsourced. That is how we control quality, cost and timelines from drawing board to handover.'}
               </p>
               <div className="about-teaser__highlights">
                 {(studioSettings?.highlights || [
                   { value: '200+', label: 'Homes Finished' },
-                  { value: 'In-House', label: 'Design & Build Team' },
+                  { value: 'In-House', label: 'Production Unit' },
                   { value: '100%', label: 'On-Site Supervision' },
                   { value: '48 Hrs', label: 'Quick Quote' },
                 ]).map((h, i) => (
@@ -1118,8 +1160,8 @@ export default function Home() {
               <h2 className="section-title">What We Build</h2>
             </div>
           </Reveal>
-          <motion.div 
-            className="work-types-grid"
+          <motion.div
+            className="work-types-list"
             variants={workTypeContainerVariants}
             initial="hidden"
             whileInView="show"
@@ -1128,19 +1170,12 @@ export default function Home() {
             {workTypes.map((w, i) => (
               <motion.div
                 key={i}
-                className="work-type-card"
+                className="work-type-item"
                 variants={workTypeCardVariants}
-                whileHover={{ y: -6 }}
               >
-                {w.imageUrl && (
-                  <div className="work-type-card__img-bg">
-                    <img src={w.imageUrl} alt={w.title} loading="lazy" />
-                  </div>
-                )}
-                <div className="work-type-card__bg" />
-                <div className="work-type-card__line" />
-                <span className="work-type-card__num text-mono">{String(i + 1).padStart(2, '0')}</span>
-                <h3 className="work-type-card__title">{w.title || w}</h3>
+                <span className="work-type-item__num text-mono">{String(i + 1).padStart(2, '0')}</span>
+                <span className="work-type-item__title">{w.title || w}</span>
+                <span className="work-type-item__star" aria-hidden="true">✦</span>
               </motion.div>
             ))}
           </motion.div>

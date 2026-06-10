@@ -224,11 +224,17 @@ export const rooms = [
   { slug: 'balcony', title: 'Balcony', subtitle: 'Outdoor Living', image: pickImages(1, 55)[0], description: 'Transform your balcony into a serene retreat with custom landscaping, comfortable seating, and ambient lighting.' },
 ]
 
+/* Real client video testimonials taken from the previous atticarch.com
+   "What our clients say" carousel. `videoId` makes the testimonial stage
+   render a playable video card instead of a text quote. */
 export const testimonials = [
-  { id: 1, name: 'Rajesh Kumar', project: 'SNN Clermont', text: 'ATTICARCH transformed our apartment into a dream home. The attention to detail and quality of execution was exceptional. Every corner tells a story of luxury and comfort.', rating: 5 },
-  { id: 2, name: 'Priya Sharma', project: 'Sobha Royal Pavilion', text: 'Working with ATTICARCH was a delightful experience. They understood our vision perfectly and delivered beyond our expectations. The design is both beautiful and functional.', rating: 5 },
-  { id: 3, name: 'Arun Menon', project: 'Greenfield Villa', text: 'From concept to completion, the team was professional and creative. Our villa looks like it belongs in an architectural magazine. Highly recommend their services!', rating: 5 },
-  { id: 4, name: 'Sneha Patel', project: 'Post & Toast', text: 'ATTICARCH designed our commercial space and the result has elevated the entire guest experience. The design perfectly balances aesthetics with functionality.', rating: 5 },
+  { id: 1, name: 'Our Clients at SNN Clermont', project: '4BHK Complete Home Interiors', text: 'Watch the family take us through their finished 4BHK at SNN Clermont.', rating: 5, videoId: 'J5x3HquAop0' },
+  { id: 2, name: 'Our Clients at Prestige Lakeside Habitat', project: 'Luxury 3BHK Interiors', text: 'A walkthrough of the completed luxury 3BHK at Prestige Lakeside Habitat.', rating: 5, videoId: 'MeX1zJkH3u0' },
+  { id: 3, name: 'Our Clients at Rohan Upvan', project: '3BHK Apartment Interiors', text: 'Recently completed 3BHK apartment interiors at Rohan Upvan.', rating: 5, videoId: 'rzoFHrfdrc0' },
+  { id: 4, name: 'Our Clients at Copper Pod', project: '3BHK Home Interiors', text: 'A tour of the completed 3BHK interiors at Copper Pod, Bangalore.', rating: 5, videoId: 'Q1cbRekh5Uw' },
+  { id: 5, name: 'Our Villa Clients', project: 'Lavish Villa Interiors', text: 'Lavish villa interiors completed end-to-end by Team ATTICARCH.', rating: 5, videoId: 'qeH0zeMjS6Q' },
+  { id: 6, name: 'Our Clients at Prestige Lakeside Habitat', project: 'Customised 3BHK Interiors', text: 'Fully customised 3BHK apartment interiors at Prestige Lakeside Habitat.', rating: 5, videoId: '4xhqfUHf0u0' },
+  { id: 7, name: 'Our Clients at JRK Gardens', project: '3BHK Renovation', text: 'A complete 3BHK renovation at JRK Gardens, Bangalore.', rating: 5, videoId: 'DuqOE3XRjmY' },
 ]
 
 /* Blog images use offsets 77-79 — outside every Home page section's image range

@@ -59,17 +59,13 @@ export default function Contact() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
-  // OTP countdown — one interval per "OTP sent" cycle (not recreated every tick)
+  // OTP countdown — keyed off `timer` itself so it re-arms on every resend
+  // (a [otpSent]-keyed interval never restarts when sendOtp() resets the timer)
   useEffect(() => {
-    if (!otpSent || otpVerified) return
-    const interval = setInterval(() => {
-      setTimer(p => {
-        if (p <= 1) { clearInterval(interval); return 0 }
-        return p - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [otpSent, otpVerified])
+    if (!otpSent || otpVerified || timer <= 0) return
+    const t = setTimeout(() => setTimer(p => p - 1), 1000)
+    return () => clearTimeout(t)
+  }, [otpSent, otpVerified, timer])
 
   // Init invisible reCAPTCHA once
   const setupRecaptcha = useCallback(() => {
@@ -493,8 +489,13 @@ export default function Contact() {
                                   <input
                                     type="tel" placeholder="Please Enter your contact number"
                                     value={form.phone}
-                                    onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                                    disabled={otpVerified || otpSent}
+                                    onChange={e => {
+                                      const phone = e.target.value.replace(/\D/g, '').slice(0, 10)
+                                      setForm(f => ({ ...f, phone }))
+                                      // Editing the number invalidates any in-flight OTP
+                                      if (otpSent) { setOtpSent(false); setOtpCode(''); setOtpError(''); confirmationRef.current = null }
+                                    }}
+                                    disabled={otpVerified}
                                   />
                                   {!otpVerified && !otpUnavailable && (
                                     <button

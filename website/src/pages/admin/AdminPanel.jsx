@@ -321,36 +321,21 @@ function DashboardView({ showToast }) {
       
       {dbError && (
         <div className="error-banner">
-          <h4>Firestore Rules Permission Blocked</h4>
+          <h4>Firestore Permission Error</h4>
           <p>
-            The website encountered a Firestore rules error: <strong>{dbError}</strong>. 
-            By default, Firestore security rules block read/write operations. To enable your database, please update your security rules.
+            A Firestore operation was blocked by security rules: <strong>{dbError}</strong>.
           </p>
-          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--charcoal)', marginBottom: 6 }}>Steps to resolve this:</div>
+          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--charcoal)', marginBottom: 6 }}>How to resolve:</div>
           <ol className="error-banner__steps">
-            <li>Open the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#c0392b', fontWeight: 'bold' }}>Firebase Console</a>.</li>
-            <li>Go to <strong>Firestore Database</strong> under Build, then click the <strong>Rules</strong> tab at the top.</li>
-            <li>Copy the security rules below and paste them into the editor:</li>
+            <li>Make sure the project's official security rules (the <strong>firestore.rules</strong> file in the website repo) are deployed — run <code>firebase deploy --only firestore:rules</code> from the project folder, or paste that file's contents into the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#c0392b', fontWeight: 'bold' }}>Firebase Console</a> → Firestore Database → Rules.</li>
+            <li>Confirm your login email is in the admin allowlist (the bootstrap list inside firestore.rules, or Settings → Admin Users here) and that your email address is <strong>verified</strong> in Firebase Authentication.</li>
+            <li>Never use open rules like <code>allow read, write: if true</code> — that would expose customer leads (names, phones, emails) to the entire internet.</li>
           </ol>
-          <div className="error-banner__code-container">
-            <pre className="error-banner__code">{`rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}`}</pre>
-            <span className="error-banner__copy-hint">Double-click code to select all</span>
-          </div>
-          <p style={{ fontSize: 13, marginTop: 12 }}>
-            After publishing the rules in your Firebase Console, click the button below to test the connection again:
-          </p>
-          <button 
-            type="button" 
-            onClick={handleReload} 
-            disabled={reloading} 
-            className="btn-gold" 
+          <button
+            type="button"
+            onClick={handleReload}
+            disabled={reloading}
+            className="btn-gold"
             style={{ background: '#e74c3c', color: 'white', marginTop: 8 }}
           >
             {reloading ? 'Testing Connection...' : 'Reload & Verify Connection'}
@@ -509,6 +494,18 @@ function HeroManager({ showToast }) {
             <label>Title Line 2 (supports HTML e.g. &lt;em&gt;Your&lt;/em&gt;)</label>
             <input type="text" name="titleLine2" className="admin-input" value={formData.titleLine2 || ''} onChange={handleInputChange} />
           </div>
+        </div>
+
+        <div className="admin-form-group">
+          <label>Rotating Headline Sentences — one full sentence per line; use "|" to break a sentence across the two display lines (the part after "|" gets the gold accent style). The hero loops through these every 5 seconds.</label>
+          <textarea
+            rows={4}
+            name="rotatingTitles"
+            className="admin-textarea"
+            value={formData.rotatingTitles || ''}
+            onChange={handleInputChange}
+            placeholder={'We Design Homes|That Tell Your Story\nHomes Designed by|Expert Architects\nAward-Winning Interiors|Built In-House Since 2002'}
+          />
         </div>
 
         <div className="admin-form-group">
@@ -1674,20 +1671,21 @@ function AboutTeaserManager({ showToast }) {
 function TestimonialsManager({ showToast }) {
   const { testimonials, saveTestimonial, deleteTestimonial } = useData()
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ id: '', name: '', project: '', text: '', rating: 5, avatar: '' })
+  const [form, setForm] = useState({ id: '', name: '', project: '', text: '', rating: 5, avatar: '', videoId: '' })
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [saving, setSaving] = useState(false)
 
   const handleEdit = (t) => {
     setEditing(t ? t.id : 'new')
-    setForm(t ? t : {
+    setForm(t ? { videoId: '', ...t } : {
       id: '',
       name: '',
       project: '',
       text: '',
       rating: 5,
-      avatar: ''
+      avatar: '',
+      videoId: ''
     })
   }
 
@@ -1807,6 +1805,20 @@ function TestimonialsManager({ showToast }) {
               <div className="admin-form-group">
                 <label>Client Review Description</label>
                 <textarea rows={4} className="admin-textarea" value={form.text} onChange={e => setForm({...form, text: e.target.value})} required />
+              </div>
+
+              <div className="admin-form-group">
+                <label>YouTube Video Testimonial (optional — paste link or video ID; shows a playable video card instead of a text quote)</label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  placeholder="e.g. https://youtu.be/J5x3HquAop0"
+                  value={form.videoId || ''}
+                  onChange={e => setForm({ ...form, videoId: parseYouTubeId(e.target.value) || e.target.value })}
+                />
+                {form.videoId && parseYouTubeId(form.videoId) && (
+                  <img src={`https://i.ytimg.com/vi/${parseYouTubeId(form.videoId)}/mqdefault.jpg`} alt="Video preview" style={{ width: 160, borderRadius: 8, marginTop: 8 }} />
+                )}
               </div>
 
               <div className="admin-form-group" style={{ marginTop: 20 }}>

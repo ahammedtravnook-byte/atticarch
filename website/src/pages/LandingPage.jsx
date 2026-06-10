@@ -8,13 +8,12 @@ import {
 } from 'lucide-react'
 import { projects as staticProjects, pickImages, partners, partnerLogo } from '../data/siteData'
 import { useData } from '../context/DataContext'
+import { db, doc, setDoc } from '../lib/firebase'
 import './LandingPage.css'
 
 /* ─────────────────────────────────────────
    CONFIG / FALLBACKS
 ───────────────────────────────────────── */
-
-const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY_HERE'
 
 function fireConversion() {
   if (typeof window !== 'undefined' && window.gtag) {
@@ -248,34 +247,26 @@ export default function LandingPage() {
     if (!validate()) return
     setStatus('sending')
 
-    /* Save to localStorage (admin panel fallback) */
+    /* Write the lead to Firestore — same `leads` collection the admin panel
+       reads. Failures are surfaced honestly so no lead is silently lost. */
     try {
-      const saved = JSON.parse(localStorage.getItem('atticarch_leads') || '[]')
-      saved.push({ ...form, at: new Date().toISOString(), source: 'landing-page' })
-      localStorage.setItem('atticarch_leads', JSON.stringify(saved))
-    } catch {}
-
-    /* Send via Web3Forms */
-    try {
-      const payload = {
-        access_key: WEB3FORMS_KEY,
-        subject: `New ATTICARCH Lead — ${form.name} (${form.type})`,
-        from_name: 'ATTICARCH Landing Page',
-        ...form,
-      }
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
+      const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      await setDoc(doc(db, 'leads', leadId), {
+        id: leadId,
+        name: form.name.trim(),
+        email: (form.email || '').trim(),
+        phone: form.phone.replace(/\D/g, ''),
+        projectType: form.type || '',
+        budget: form.budget || '',
+        verified: false,
+        source: 'landing-page',
+        createdAt: new Date().toISOString(),
       })
-      if (res.ok) {
-        setStatus('success')
-        fireConversion()
-      } else {
-        setStatus('success') // still treat as success — localStorage has it
-      }
-    } catch {
-      setStatus('success') // network failed but localStorage saved it
+      setStatus('success')
+      fireConversion()
+    } catch (err) {
+      console.error('Lead submit error:', err)
+      setStatus('error')
     }
   }
 
@@ -473,6 +464,11 @@ export default function LandingPage() {
                     <button type="submit" disabled={status === 'sending'} className="lp-form__submit">
                       {status === 'sending' ? 'Sending…' : <>Get My Free 3D Design <ArrowRight size={16} /></>}
                     </button>
+                    {status === 'error' && (
+                      <p style={{ color: '#e05252', fontSize: 13, marginTop: 10, textAlign: 'center' }}>
+                        Couldn't submit right now. Please retry, or call us at {phone}.
+                      </p>
+                    )}
                     <p className="lp-form__privacy">
                       <ShieldCheck size={12} /> Your details are 100% secure. We never spam.
                     </p>

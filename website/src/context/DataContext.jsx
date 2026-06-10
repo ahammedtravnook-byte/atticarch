@@ -48,9 +48,13 @@ const defaultCategories = [
 ]
 
 const defaultHeroSettings = {
-  eyebrow: 'Award-Winning Bangalore Studio',
-  titleLine1: 'Designing Homes',
+  eyebrow: 'An Award-Winning Design Studio in Bangalore',
+  titleLine1: 'We Design Homes',
   titleLine2: 'That Tell Your Story',
+  // Rotating hero sentences — one per line, "|" splits a sentence into two
+  // display lines (second line gets the accent style). Editable in Admin →
+  // Hero Section Manager.
+  rotatingTitles: 'We Design Homes|That Tell Your Story\nHomes Designed by|Expert Architects\nAward-Winning Interiors|Built In-House Since 2002',
   subtitle: "Bangalore's award-winning interior design studio, crafting breathtaking spaces since 2002.",
   primaryCtaText: 'Free Consultation',
   primaryCtaPath: '/contact-us',
@@ -64,10 +68,10 @@ const defaultHeroSettings = {
 const defaultStudioSettings = {
   eyebrow: 'Inside the Studio',
   title: 'Built Around You. Made by Hand.',
-  desc: 'Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of designers and on-site experts work side-by-side under one roof — drawing, picking materials and finishing each room with care, so the work lasts long after we hand over the keys.',
+  desc: 'Every ATTICARCH home starts with a conversation, not a catalogue. We have our own in-house production unit — our designers, carpenters and finishing experts work under one roof, so every wardrobe, kitchen and panel is built by us, not outsourced. That is how we control quality, cost and timelines from drawing board to handover.',
   highlights: [
     { value: '200+', label: 'Homes Finished' },
-    { value: 'In-House', label: 'Design & Build Team' },
+    { value: 'In-House', label: 'Production Unit' },
     { value: '100%', label: 'On-Site Supervision' },
     { value: '48 Hrs', label: 'Quick Quote' }
   ],
