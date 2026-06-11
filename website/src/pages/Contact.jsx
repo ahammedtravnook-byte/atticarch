@@ -280,8 +280,8 @@ export default function Contact() {
             <div className="ct-hero__stats">
               {[
                 { icon: <Shield size={16} />, text: '10-Year Warranty' },
-                { icon: <Star size={16} />, text: '4.8★ Google Rating' },
-                { icon: <Home size={16} />, text: '200+ Homes Delivered' },
+                { icon: <Star size={16} />, text: '4.5★ Google Rating' },
+                { icon: <Home size={16} />, text: '1000+ Homes Delivered' },
               ].map((s, i) => (
                 <div key={i} className="ct-hero__stat">
                   {s.icon} <span>{s.text}</span>

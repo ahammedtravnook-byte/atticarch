@@ -125,9 +125,12 @@ export default function ProjectCategory() {
   const cat = categoryMap[category] || (categories.length ? categoryMap[categories[0].slug] : { title: 'All Projects', short: 'All', slug: '', filter: [], subcategories: [] })
   const baseFiltered = cat.filter && cat.filter.length ? projects.filter((p) => cat.filter.includes(p.category)) : projects
 
-  // Subcategory chips + ?sub= filtering
+  // Subcategory chips + ?sub= filtering. A chip matches a project's own
+  // subcategory tag, or its category id — so an aggregate page (e.g.
+  // Residential = apartments + villas) can use the base categories as chips.
   const subcats = cat.subcategories || []
-  const filtered = sub ? baseFiltered.filter((p) => p.subcategory === sub) : baseFiltered
+  const matchesSub = (p, slug) => p.subcategory === slug || p.category === slug
+  const filtered = sub ? baseFiltered.filter((p) => matchesSub(p, sub)) : baseFiltered
 
   const selectSub = (slug) => {
     const next = new URLSearchParams(searchParams)
@@ -303,7 +306,7 @@ export default function ProjectCategory() {
                   <span className="pc-pill__count">{baseFiltered.length}</span>
                 </button>
                 {subcats.map((sc) => {
-                  const count = baseFiltered.filter((p) => p.subcategory === sc.slug).length
+                  const count = baseFiltered.filter((p) => matchesSub(p, sc.slug)).length
                   return (
                     <button
                       type="button"

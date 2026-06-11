@@ -47,7 +47,7 @@ export default function Preloader() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Transforming Spaces
+            Transforming Spaces, Transforming Lives
           </motion.p>
         </motion.div>
       )}

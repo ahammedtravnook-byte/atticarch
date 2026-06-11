@@ -70,7 +70,7 @@ const defaultStudioSettings = {
   title: 'Built Around You. Made by Hand.',
   desc: 'Every ATTICARCH home starts with a conversation, not a catalogue. We have our own in-house production unit — our designers, carpenters and finishing experts work under one roof, so every wardrobe, kitchen and panel is built by us, not outsourced. That is how we control quality, cost and timelines from drawing board to handover.',
   highlights: [
-    { value: '200+', label: 'Homes Finished' },
+    { value: '1000+', label: 'Homes Finished' },
     { value: 'In-House', label: 'Production Unit' },
     { value: '100%', label: 'On-Site Supervision' },
     { value: '48 Hrs', label: 'Quick Quote' }
@@ -120,7 +120,7 @@ const defaultLandingSettings = {
   stats: [
     { value: 1000, suffix: '+', label: 'Homes Delivered' },
     { value: 22, suffix: ' yrs', label: 'Since 2002' },
-    { value: 4.8, suffix: '★', label: 'Google Rating', decimal: true },
+    { value: 4.5, suffix: '★', label: 'Google Rating', decimal: true },
     { value: 100, suffix: '%', label: 'On-Time Handover' }
   ],
   pricing: [

@@ -1083,7 +1083,7 @@ export default function Home() {
               </p>
               <div className="about-teaser__highlights">
                 {(studioSettings?.highlights || [
-                  { value: '200+', label: 'Homes Finished' },
+                  { value: '1000+', label: 'Homes Finished' },
                   { value: 'In-House', label: 'Production Unit' },
                   { value: '100%', label: 'On-Site Supervision' },
                   { value: '48 Hrs', label: 'Quick Quote' },

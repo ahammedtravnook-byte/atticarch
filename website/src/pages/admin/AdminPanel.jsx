@@ -745,13 +745,16 @@ function PortfolioManager({ showToast }) {
   }
 
   // ── Subcategory handlers (within the category editor) ──
-  const addSubcat = () => setCatForm((f) => ({ ...f, subcategories: [...(f.subcategories || []), { title: '', slug: '' }] }))
+  const addSubcat = () => setCatForm((f) => ({ ...f, subcategories: [...(f.subcategories || []), { title: '', slug: '', _new: true }] }))
   const removeSubcat = (i) => setCatForm((f) => ({ ...f, subcategories: (f.subcategories || []).filter((_, idx) => idx !== i) }))
   const changeSubcatTitle = (i, title) => setCatForm((f) => {
     const next = [...(f.subcategories || [])]
-    // auto-fill slug from title unless the user hand-edited it
+    // Auto-fill the slug from the title only for rows added this session (or
+    // with no slug yet). Renaming an already-saved subcategory must keep its
+    // slug, otherwise projects tagged with the old slug stop matching.
+    const isNew = next[i]._new || !next[i].slug
     const prevAuto = slugify(next[i].title)
-    const slug = (!next[i].slug || next[i].slug === prevAuto) ? slugify(title) : next[i].slug
+    const slug = (isNew && (!next[i].slug || next[i].slug === prevAuto)) ? slugify(title) : next[i].slug
     next[i] = { ...next[i], title, slug }
     return { ...f, subcategories: next }
   })
@@ -768,9 +771,11 @@ function PortfolioManager({ showToast }) {
     const slug = catForm.slug || `projects-${id}`
     const filterArray = catForm.filter ? catForm.filter.split(',').map(s => s.trim()) : [id]
 
-    // Clean subcategories: drop blanks, ensure each has a slug + short label
+    // Clean subcategories: drop blanks, ensure each has a slug; the chip label
+    // always follows the current title (a stale `short` from before a rename
+    // would otherwise keep showing the old name on the category page).
     const subcategories = (catForm.subcategories || [])
-      .map((s) => ({ title: (s.title || '').trim(), short: (s.short || s.title || '').trim(), slug: slugify(s.slug || s.title) }))
+      .map((s) => ({ title: (s.title || '').trim(), short: (s.title || '').trim(), slug: slugify(s.slug || s.title) }))
       .filter((s) => s.title && s.slug)
 
     const itemToSave = {

@@ -34,7 +34,7 @@ const BENEFITS = [
 const STATS = [
   { value: 1000, suffix: '+', label: 'Homes Delivered' },
   { value: 22, suffix: ' yrs', label: 'Since 2002' },
-  { value: 4.8, suffix: '★', label: 'Google Rating', decimal: true },
+  { value: 4.5, suffix: '★', label: 'Google Rating', decimal: true },
   { value: 100, suffix: '%', label: 'On-Time Handover' },
 ]
 
@@ -290,7 +290,7 @@ export default function LandingPage() {
           email: 'sales@atticarch.com',
           address: { '@type': 'PostalAddress', streetAddress: '#12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi', addressLocality: 'Bengaluru', addressRegion: 'KA', postalCode: '560043', addressCountry: 'IN' },
           priceRange: '₹₹₹',
-          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '347' },
+          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.5', reviewCount: '41' },
         })}</script>
       </Helmet>
 
@@ -378,7 +378,7 @@ export default function LandingPage() {
               <div className="lp-hero__stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={15} fill="#FFB800" color="#FFB800" />)}
               </div>
-              <span className="lp-hero__rating-text"><strong>4.8</strong> · 347+ Google Reviews</span>
+              <span className="lp-hero__rating-text"><strong>4.5</strong> · 41 Google Reviews</span>
             </div>
 
             <div className="lp-hero__ctas">
