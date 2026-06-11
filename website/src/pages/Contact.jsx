@@ -316,27 +316,31 @@ export default function Contact() {
                       <span className="ct-contact__value">98450 13138</span>
                     </div>
                   </a>
-                  <a href="mailto:info@atticarch.com" className="ct-contact">
+                  <a href="mailto:sales@atticarch.com" className="ct-contact">
                     <div className="ct-contact__icon"><Mail size={18} /></div>
                     <div>
                       <span className="ct-contact__label">Email Enquiries</span>
-                      <span className="ct-contact__value">info@atticarch.com</span>
+                      <span className="ct-contact__value">sales@atticarch.com</span>
                     </div>
                   </a>
-                  <div className="ct-contact ct-contact--address">
+                  <a
+                    href="https://maps.google.com/?q=ATTICARCH,+Outer+Ring+Rd,+Banaswadi,+Bengaluru"
+                    target="_blank" rel="noopener noreferrer"
+                    className="ct-contact ct-contact--address"
+                  >
                     <div className="ct-contact__icon"><MapPin size={18} /></div>
                     <div>
                       <span className="ct-contact__label">Visit Studio</span>
-                      <span className="ct-contact__value">Bangalore, Karnataka</span>
+                      <span className="ct-contact__value">#12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi, Bengaluru 560043</span>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </Reveal>
 
               <Reveal delay={0.3}>
                 <div className="ct-map">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d248849.84916296526!2d77.6309395!3d12.9539974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1"
+                    src="https://maps.google.com/maps?q=ATTICARCH%2C%20Outer%20Ring%20Rd%2C%20Banaswadi%2C%20Bengaluru%20560043&ll=13.0132131,77.6485128&z=16&output=embed"
                     width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
                     title="ATTICARCH Location"
                   />

@@ -166,11 +166,11 @@ export default function NotFound() {
                 <strong>Message us</strong>
               </div>
             </a>
-            <a href="mailto:info@atticarch.com" className="nf-contact-btn">
+            <a href="mailto:sales@atticarch.com" className="nf-contact-btn">
               <Mail size={18} />
               <div>
                 <small>Email</small>
-                <strong>info@atticarch.com</strong>
+                <strong>sales@atticarch.com</strong>
               </div>
             </a>
           </motion.div>

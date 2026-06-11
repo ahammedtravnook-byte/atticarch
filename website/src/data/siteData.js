@@ -249,8 +249,8 @@ export const blogPosts = [
 export const valueProps = [
   { value: 'Est. 2002', label: 'Bangalore Studio' },
   { value: '10-Year', label: 'Workmanship Warranty' },
-  { value: 'Turnkey', label: 'End-to-End Execution' },
-  { value: '₹10L+', label: 'Bespoke Interiors' },
+  { value: 'In-House', label: 'Production Unit' },
+  { value: 'From ₹10 Lakhs', label: 'Bespoke Interiors' },
 ]
 
 export const processSteps = [

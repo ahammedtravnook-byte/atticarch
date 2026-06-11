@@ -110,7 +110,7 @@ export default function About() {
           </h1>
           <div className="about-hero__line" ref={heroLineRef} />
           <p className="about-hero__subtitle">
-            Bangalore's trusted turnkey interior design studio — delivering residential, commercial and renovation interiors with a 10-Year Workmanship Warranty, starting from ₹10 Lacs.
+            Bangalore's trusted end-to-end interior design studio — delivering residential, commercial and renovation interiors with a 10-Year Workmanship Warranty, starting from ₹10 Lakhs.
           </p>
         </div>
       </section>
@@ -251,7 +251,7 @@ export default function About() {
               <div className="about-approach__sticker">
                 <Sparkles size={18} />
                 <div>
-                  <span className="about-approach__sticker-label">Turnkey Solutions</span>
+                  <span className="about-approach__sticker-label">In-House Production</span>
                   <span className="about-approach__sticker-sub">Residential · Commercial</span>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function About() {
               <span className="section-label">The Essence of Design</span>
               <h2 className="about-approach__title">Our Approach</h2>
               <p className="about-approach__lead">
-                We offer complete turnkey solutions for residential and commercial interiors. Beyond key client
+                We offer complete end-to-end interiors for residential and commercial spaces. Beyond key client
                 considerations of time, cost and operations — we pay equal attention to creating aesthetically
                 pleasant and functionally reliable spaces.
               </p>

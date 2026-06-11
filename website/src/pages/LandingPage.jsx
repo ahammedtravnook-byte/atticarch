@@ -287,7 +287,8 @@ export default function LandingPage() {
           '@type': 'LocalBusiness',
           name: 'ATTICARCH',
           telephone: phone,
-          address: { '@type': 'PostalAddress', addressLocality: 'Bangalore', addressRegion: 'KA', addressCountry: 'IN' },
+          email: 'sales@atticarch.com',
+          address: { '@type': 'PostalAddress', streetAddress: '#12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi', addressLocality: 'Bengaluru', addressRegion: 'KA', postalCode: '560043', addressCountry: 'IN' },
           priceRange: '₹₹₹',
           aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '347' },
         })}</script>
@@ -725,8 +726,8 @@ export default function LandingPage() {
           </div>
           <div className="lp-mini-footer__contact">
             <a href={telLink}><Phone size={14} /> {phone}</a>
-            <a href="mailto:info@atticarch.com"><Mail size={14} /> info@atticarch.com</a>
-            <span><MapPin size={14} /> Bangalore, KA</span>
+            <a href="mailto:sales@atticarch.com"><Mail size={14} /> sales@atticarch.com</a>
+            <span><MapPin size={14} /> #12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi, Bengaluru 560043</span>
           </div>
           <small>© {new Date().getFullYear()} ATTICARCH. All rights reserved.</small>
         </div>

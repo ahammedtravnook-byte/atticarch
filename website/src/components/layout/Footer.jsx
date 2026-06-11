@@ -98,8 +98,8 @@ export default function Footer() {
             <div className="footer__col">
               <h4 className="footer__heading">Contact</h4>
               <a href="tel:09845013138" className="footer__contact-item"><Phone size={14} /> 98450 13138</a>
-              <a href="mailto:info@atticarch.com" className="footer__contact-item"><Mail size={14} /> info@atticarch.com</a>
-              <div className="footer__contact-item"><MapPin size={14} /> Bangalore, Karnataka, India</div>
+              <a href="mailto:sales@atticarch.com" className="footer__contact-item"><Mail size={14} /> sales@atticarch.com</a>
+              <div className="footer__contact-item"><MapPin size={14} /> #12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi, Bengaluru, Karnataka 560043</div>
             </div>
           </div>
         </div>

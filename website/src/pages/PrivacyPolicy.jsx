@@ -14,7 +14,7 @@ function PrivacyBody() {
       <h2 className="text-heading" style={h2}>How We Use Your Information</h2>
       <p>We use the information we collect to provide, maintain, and improve our services, to communicate with you about projects and consultations, and to send you updates about our services (with your consent).</p>
       <h2 className="text-heading" style={h2}>Contact Us</h2>
-      <p>If you have any questions about this Privacy Policy, please contact us at info@atticarch.com or call 98450 13138.</p>
+      <p>If you have any questions about this Privacy Policy, please contact us at sales@atticarch.com or call 98450 13138.</p>
     </>
   )
 }
@@ -31,7 +31,7 @@ function TermsBody() {
       <h2 className="text-heading" style={h2}>Limitation of Liability</h2>
       <p>ATTICARCH is not liable for any indirect or consequential loss arising from the use of this website. We strive for accuracy but do not warrant that all content is error-free or current at all times.</p>
       <h2 className="text-heading" style={h2}>Contact Us</h2>
-      <p>Questions about these Terms? Email info@atticarch.com or call 98450 13138.</p>
+      <p>Questions about these Terms? Email sales@atticarch.com or call 98450 13138.</p>
     </>
   )
 }

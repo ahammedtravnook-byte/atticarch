@@ -5,6 +5,7 @@ import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import Preloader from './components/layout/Preloader'
 import SmoothScroll from './components/layout/SmoothScroll'
+import WhatsAppFloat from './components/ui/WhatsAppFloat'
 import Home from './pages/Home'
 import About from './pages/About'
 import HowWeWork from './pages/HowWeWork'
@@ -64,6 +65,7 @@ export default function App() {
         </Routes>
       </AnimatePresence>
       {!isAdmin && !isLanding && <Footer />}
+      {!isAdmin && !isLanding && <WhatsAppFloat />}
     </div>
   )
 }
