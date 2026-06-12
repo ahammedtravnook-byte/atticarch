@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'fra
 import { Helmet } from 'react-helmet-async'
 import {
   Phone, Send, Star, Check, MessageCircle, ArrowRight, ArrowUpRight, MapPin, Mail,
-  ShieldCheck, Play, Hammer, Clock
+  ShieldCheck, Play, Hammer, Clock, Plus, Minus, Box, Palette, FileText, Shield
 } from 'lucide-react'
 import {
   services as staticServices, workTypes as staticWorkTypes, valueProps,
@@ -41,6 +41,57 @@ const FALLBACK_HIGHLIGHTS = [
   { value: '48 Hrs', label: 'Quick Quote' },
 ]
 
+const FALLBACK_STATS = [
+  { value: 1000, suffix: '+', label: 'Homes Delivered' },
+  { value: 22, suffix: ' yrs', label: 'Since 2002' },
+  { value: 4.5, suffix: '★', label: 'Google Rating', decimal: true },
+  { value: 100, suffix: '%', label: 'On-Time Handover' }
+]
+
+const FALLBACK_BENEFITS = [
+  { iconName: 'Box', title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
+  { iconName: 'Palette', title: 'Material Selection', desc: '500+ finishes from premium brand partners, all visualized for you.' },
+  { iconName: 'FileText', title: 'Detailed Quote', desc: 'Itemized BOQ with zero hidden costs — what you see is what you pay.' },
+  { iconName: 'MapPin', title: 'On-site Survey', desc: 'Our designer visits your home and measures everything — free.' }
+]
+
+const FALLBACK_PRICING = [
+  {
+    type: '1 BHK',
+    starts: '₹4 Lacs',
+    range: '₹4L – ₹6L',
+    inclusions: 'Modular Kitchen, 1 Wardrobe, False Ceiling (Living), TV Unit, Basic Electrical'
+  },
+  {
+    type: '2 BHK',
+    starts: '₹6 Lacs',
+    range: '₹6L – ₹10L',
+    featured: true,
+    inclusions: 'Modular Kitchen, 2 Wardrobes, Full False Ceiling, TV Unit + Crockery, Lighting & Electrical, Painting Included'
+  },
+  {
+    type: '3 BHK +',
+    starts: '₹10 Lacs',
+    range: '₹10L – ₹18L',
+    inclusions: 'Premium Modular Kitchen, 3+ Wardrobes, Full False Ceiling, TV + Crockery + Pooja, Premium Finishes, Bathroom Upgrades'
+  }
+]
+
+const FALLBACK_STEPS = [
+  { num: '01', day: 'Day 1', title: 'Free Consultation Call', desc: 'A 20-minute call with our senior designer to understand your style, family needs and budget.' },
+  { num: '02', day: 'Days 2-7', title: '3D Design & Quote', desc: 'You receive photo-real 3D renders of every room + a detailed itemized BOQ — completely free.' },
+  { num: '03', day: 'Day 8 onwards', title: 'Execute & Move In', desc: 'Sign-off and we begin. Weekly progress photos, on-time handover, 10-year warranty.' }
+]
+
+const FALLBACK_FAQS = [
+  { q: 'How much does interior design cost in Bangalore?', a: 'Our turnkey interior projects start at ₹4 Lacs for 1BHK, ₹6 Lacs for 2BHK and ₹10 Lacs for 3BHK+. You get an exact quote after the free consultation — no hidden costs, ever.' },
+  { q: 'How long does a typical project take?', a: 'A 2BHK takes 45-60 days from sign-off to handover. 3BHK and villas: 60-90 days. We commit to a date in writing and pay you for delays.' },
+  { q: 'What does the 10-year warranty cover?', a: 'Full workmanship warranty on all carpentry, modular units, false ceiling, electrical and plumbing work executed by us. We come back and fix anything, free.' },
+  { q: 'Do you offer EMI or flexible payment plans?', a: 'Yes. We accept staged payments tied to project milestones and can also help arrange EMI through partner banks.' },
+  { q: 'What brands and materials do you use?', a: 'CenturyPly, Kitply, Hettich, Blum, Saint-Gobain, Asian Paints, KAFF, Elica and more — all premium IS-certified brands you can verify.' },
+  { q: 'Which areas in Bangalore do you serve?', a: 'All of Bangalore — Whitefield, Sarjapur, Electronic City, North Bangalore, JP Nagar, HSR Layout, Indiranagar and more. We have project teams across the city.' }
+]
+
 const parseRotating = (raw) =>
   String(raw || FALLBACK_ROTATING)
     .split('\n')
@@ -54,6 +105,18 @@ const parseRotating = (raw) =>
 function fireConversion() {
   if (typeof window !== 'undefined' && window.gtag) {
     // window.gtag('event', 'conversion', { send_to: 'AW-XXXXX/YYYYY' })
+  }
+}
+
+const getBenefitIcon = (name) => {
+  switch (name) {
+    case 'Box': return <Box size={24} />
+    case 'Palette': return <Palette size={24} />
+    case 'FileText': return <FileText size={24} />
+    case 'MapPin': return <MapPin size={24} />
+    case 'Shield': return <Shield size={24} />
+    case 'Clock': return <Clock size={24} />
+    default: return <Check size={24} />
   }
 }
 
@@ -103,13 +166,27 @@ export default function LandingPage() {
   const [imgIdx, setImgIdx] = useState(0)
   const [showSticky, setShowSticky] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [expandedFaq, setExpandedFaq] = useState(null)
+  const [sliderPos, setSliderPos] = useState(50)
 
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
   const heroRef = useRef(null)
+  const sliderRef = useRef(null)
   const { scrollYProgress: heroProg } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroImgY = useTransform(heroProg, [0, 1], ['0%', '12%'])
+
+  const sliderImages = pickImages(2, 53)
+
+  const handleSliderMove = (e) => {
+    if (!sliderRef.current) return
+    const rect = sliderRef.current.getBoundingClientRect()
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const x = clientX - rect.left
+    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100))
+    setSliderPos(pct)
+  }
 
   const phone = landingSettings?.phone || '+919845013138'
   const whatsapp = landingSettings?.whatsapp || '919845013138'
@@ -120,6 +197,12 @@ export default function LandingPage() {
   const heroPoints = landingSettings?.bullets?.length ? landingSettings.bullets : HERO_POINTS
   const eyebrow = heroSettings?.eyebrow || 'An Award-Winning Design Studio in Bangalore'
   const rotating = parseRotating(heroSettings?.rotatingTitles)
+
+  const stats = landingSettings?.stats?.length ? landingSettings.stats : FALLBACK_STATS
+  const benefits = landingSettings?.benefits?.length ? landingSettings.benefits : FALLBACK_BENEFITS
+  const pricing = landingSettings?.pricing?.length ? landingSettings.pricing : FALLBACK_PRICING
+  const steps = landingSettings?.steps?.length ? landingSettings.steps : FALLBACK_STEPS
+  const faqs = landingSettings?.faqs?.length ? landingSettings.faqs : FALLBACK_FAQS
 
   /* Prefer each project's second photo for variety (living rooms / bedrooms
      rather than the cover wardrobe shots) */
@@ -195,6 +278,12 @@ export default function LandingPage() {
 
   return (
     <motion.main className="lx" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {/* Decorative Golden Glow Blobs */}
+      <div className="lx-glow lx-glow-1" />
+      <div className="lx-glow lx-glow-2" />
+      <div className="lx-glow lx-glow-3" />
+      <div className="lx-glow lx-glow-4" />
+
       <Helmet>
         <title>Book a Design Consultation in Bangalore | ATTICARCH</title>
         <meta name="description" content="ATTICARCH — an award-winning interior design studio in Bangalore since 2002. In-house production, 10-year workmanship warranty, interiors from ₹10 Lakhs. Book a consultation." />
@@ -262,22 +351,6 @@ export default function LandingPage() {
                 </motion.span>
               </AnimatePresence>
             </h1>
-
-            <motion.ul
-              className="lx-hero__points"
-              initial="hidden"
-              animate="show"
-              variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: 0.55 } } }}
-            >
-              {heroPoints.map((p, i) => (
-                <motion.li
-                  key={i}
-                  variants={{ hidden: { opacity: 0, x: -14 }, show: { opacity: 1, x: 0, transition: { duration: 0.5 } } }}
-                >
-                  <span className="lx-hero__point-tick"><Check size={11} /></span> {p}
-                </motion.li>
-              ))}
-            </motion.ul>
 
             <motion.div
               className="lx-hero__ctas"
@@ -372,6 +445,28 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* ═══ STATS RAIL ═══ */}
+      <section className="lx-stats-rail">
+        <div className="lx-stats-rail__inner">
+          {stats.map((s, i) => (
+            <motion.div
+              key={i}
+              className="lx-stat-card"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span className="lx-stat-card__val">
+                {s.value}
+                <span className="lx-stat-card__suffix">{s.suffix}</span>
+              </span>
+              <span className="lx-stat-card__label">{s.label}</span>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* ═══ BOOKING — form + contact rail ═══ */}
       <section className="lx-book" id="lead-form">
         <div className="lx-book__panel">
@@ -455,6 +550,107 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ BENEFITS BENTO GRID ═══ */}
+      <section className="lx-section lx-benefits">
+        <div className="lx-head">
+          <Kicker center>Why Choose Atticarch</Kicker>
+          <H2 center>Built For Quality. <em>Designed For Living.</em></H2>
+        </div>
+        <div className="lx-benefits__grid">
+          {benefits.map((b, i) => (
+            <motion.div
+              key={i}
+              className={`lx-benefit-card lx-benefit-card--${i}`}
+              initial={{ opacity: 0, scale: 0.96, y: 30 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.8, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="lx-benefit-card__icon">
+                {getBenefitIcon(b.iconName)}
+              </div>
+              <div className="lx-benefit-card__content">
+                <h3>{b.title}</h3>
+                <p>{b.desc}</p>
+              </div>
+              <div className="lx-benefit-card__bg-glow" />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ BEFORE/AFTER SLIDER ═══ */}
+      <section className="lx-section lx-slider-sec">
+        <div className="lx-head">
+          <Kicker center>Interactive Showcase</Kicker>
+          <H2 center>From Concept <em>To Reality</em></H2>
+          <p className="lx-slider-subtext">Drag the golden slider to compare our design concept render with the final delivered room handover.</p>
+        </div>
+        <div className="lx-slider-wrapper">
+          <div
+            ref={sliderRef}
+            className="lx-slider-container"
+            onMouseMove={(e) => {
+              if (e.buttons === 1) handleSliderMove(e)
+            }}
+            onTouchMove={handleSliderMove}
+            onClick={handleSliderMove}
+            style={{ position: 'relative', overflow: 'hidden', cursor: 'ew-resize' }}
+          >
+            {/* After Image (Full background) */}
+            <img
+              src={sliderImages[1]}
+              alt="Luxury handover interior"
+              className="lx-slider-img lx-slider-img--after"
+              draggable="false"
+            />
+            
+            {/* Before Image (Overlay clipped by slider position) */}
+            <div
+              className="lx-slider-overlay"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: `${sliderPos}%`,
+                overflow: 'hidden',
+                borderRight: '3px solid var(--lx-gold-deep)'
+              }}
+            >
+              <img
+                src={sliderImages[0]}
+                alt="Concept render interior"
+                className="lx-slider-img lx-slider-img--before"
+                draggable="false"
+              />
+              <span className="lx-slider-badge lx-slider-badge--before">Concept Render</span>
+            </div>
+            
+            <span className="lx-slider-badge lx-slider-badge--after">Final Handover</span>
+
+            {/* Slider Handle Line & Button */}
+            <div
+              className="lx-slider-handle"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: `${sliderPos}%`,
+                width: '4px',
+                background: 'var(--lx-gold)',
+                transform: 'translateX(-50%)',
+                pointerEvents: 'none'
+              }}
+            >
+              <div className="lx-slider-handle-btn">
+                <span className="lx-slider-arrow">&larr;&nbsp;&rarr;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══ CORE SERVICES — alternating editorial rows ═══ */}
       <section className="lx-section">
         <div className="lx-head">
@@ -511,6 +707,82 @@ export default function LandingPage() {
             >
               <span className="lx-build__num">{String(i + 1).padStart(2, '0')}</span>
               <span className="lx-build__title">{w}</span>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ PRICING PACKAGES ═══ */}
+      <section className="lx-section lx-pricing-sec">
+        <div className="lx-head">
+          <Kicker center>Transparent Estimates</Kicker>
+          <H2 center>Interior Design <em>Packages</em></H2>
+        </div>
+        <div className="lx-pricing-grid">
+          {pricing.map((p, i) => (
+            <motion.div
+              key={i}
+              className={`lx-pricing-card ${p.featured ? 'is-featured' : ''}`}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {p.featured && <span className="lx-pricing-card__badge">Most Popular</span>}
+              <div className="lx-pricing-card__header">
+                <span className="lx-pricing-card__type">{p.type}</span>
+                <div className="lx-pricing-card__price-box">
+                  <span className="lx-pricing-card__lbl">Starting at</span>
+                  <span className="lx-pricing-card__price">{p.starts}</span>
+                  <span className="lx-pricing-card__range">Range: {p.range}</span>
+                </div>
+              </div>
+              <div className="lx-pricing-card__body">
+                <h4>Inclusions:</h4>
+                <ul>
+                  {p.inclusions?.split(',').map((inc, idx) => (
+                    <li key={idx}>
+                      <span className="lx-pricing-card__check"><Check size={11} /></span>
+                      {inc.trim()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="lx-pricing-card__footer">
+                <a href="#lead-form" className={`lx-btn ${p.featured ? 'lx-btn--gold' : 'lx-btn--ghost'}`} style={{ width: '100%' }}>
+                  Get Detailed Quote
+                </a>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ WORK TIMELINE ═══ */}
+      <section className="lx-section lx-timeline-sec">
+        <div className="lx-head">
+          <Kicker center>Our Process</Kicker>
+          <H2 center>How We <em>Deliver Excellence</em></H2>
+        </div>
+        <div className="lx-timeline">
+          <div className="lx-timeline__line" />
+          {steps.map((s, i) => (
+            <motion.div
+              key={i}
+              className={`lx-timeline-item ${i % 2 === 1 ? 'lx-timeline-item--alt' : ''}`}
+              initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="lx-timeline-item__marker">
+                <span>{s.num}</span>
+              </div>
+              <div className="lx-timeline-item__card">
+                <span className="lx-timeline-item__day">{s.day}</span>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -590,6 +862,56 @@ export default function LandingPage() {
               <div key={p.slug} className="lx-partners__logo" title={p.name}>
                 {logo ? <img src={logo} alt={p.name} /> : <span>{p.name}</span>}
               </div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* ═══ FAQ SECTION ═══ */}
+      <section className="lx-section lx-faq-sec">
+        <div className="lx-head">
+          <Kicker center>Have Questions?</Kicker>
+          <H2 center>Frequently Asked <em>Questions</em></H2>
+        </div>
+        <div className="lx-faq-list">
+          {faqs.map((faq, i) => {
+            const isExpanded = expandedFaq === i
+            return (
+              <motion.div
+                key={i}
+                className={`lx-faq-item ${isExpanded ? 'is-expanded' : ''}`}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: i * 0.05 }}
+              >
+                <button
+                  type="button"
+                  className="lx-faq-item__trigger"
+                  onClick={() => setExpandedFaq(isExpanded ? null : i)}
+                  aria-expanded={isExpanded}
+                >
+                  <span>{faq.q}</span>
+                  <span className="lx-faq-item__icon-wrapper">
+                    {isExpanded ? <Minus size={15} /> : <Plus size={15} />}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="lx-faq-item__collapse"
+                    >
+                      <div className="lx-faq-item__answer">
+                        <p>{faq.a}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )
           })}
         </div>

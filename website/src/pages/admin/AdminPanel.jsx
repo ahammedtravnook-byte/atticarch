@@ -2397,19 +2397,6 @@ function LandingPageManager({ showToast }) {
           </div>
         </div>
 
-        {/* Hero points */}
-        <div className="admin-card">
-          <h3 className="admin-card__title">Hero Points (3 slots)</h3>
-          <p style={{ color: 'var(--ash)', fontSize: 13, marginBottom: 16 }}>The three check-marked lines under the rotating headline.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-            {(form.bullets || []).map((bullet, idx) => (
-              <div key={idx} className="admin-form-group" style={{ marginBottom: 0 }}>
-                <label>Point {idx + 1}</label>
-                <input type="text" className="admin-input" value={bullet} onChange={e => handleBulletChange(idx, e.target.value)} />
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Where the rest of the landing page is edited */}
         <div className="admin-card">
@@ -2425,7 +2412,6 @@ function LandingPageManager({ showToast }) {
         </div>
 
         {/* Benefits Grid */}
-        {false && <>
         <div className="admin-card">
           <h3 className="admin-card__title">Highlight Stats</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
@@ -2588,7 +2574,6 @@ function LandingPageManager({ showToast }) {
             ))}
           </div>
         </div>
-        </>}
 
         {/* Global Save Button */}
         <SaveBtn saving={saving} type="submit" className="btn-gold" style={{ height: 48, fontSize: 15, justifyContent: 'center' }}>
