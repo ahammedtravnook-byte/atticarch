@@ -5,7 +5,7 @@ import {
 import { Helmet } from 'react-helmet-async'
 import {
   Phone, Send, Star, Check, Shield, Clock, Award, MessageCircle,
-  ArrowRight, ArrowDown, MapPin, Mail, Sparkles, Box, Palette, FileText,
+  ArrowRight, MapPin, Mail, Sparkles, Box, Palette, FileText,
   ChevronDown, ShieldCheck, Wallet, Calendar, Users, Hammer
 } from 'lucide-react'
 import { projects as staticProjects, pickImages, partners, partnerLogo } from '../data/siteData'
@@ -300,8 +300,7 @@ export default function LandingPage() {
   /* Hero parallax */
   const heroRef = useRef(null)
   const { scrollYProgress: heroProg } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const heroBgY = useTransform(heroProg, [0, 1], ['0%', '18%'])
-  const heroFade = useTransform(heroProg, [0, 0.7], [1, 0])
+  const heroBgY = useTransform(heroProg, [0, 1], ['-4%', '8%'])
 
   /* Timeline draw */
   const stepsRef = useRef(null)
@@ -446,25 +445,7 @@ export default function LandingPage() {
           HERO — cinematic
       ═══════════════════════════════════════ */}
       <section className="lpx-hero" ref={heroRef}>
-        <motion.div className="lpx-hero__bg" style={{ y: heroBgY }}>
-          <AnimatePresence mode="sync">
-            {heroImages[heroIdx] && (
-              <motion.img
-                key={heroIdx}
-                src={heroImages[heroIdx]}
-                alt=""
-                initial={{ opacity: 0, scale: 1.14 }}
-                animate={{ opacity: 1, scale: 1.04 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 2.2, ease: 'easeInOut' }}
-              />
-            )}
-          </AnimatePresence>
-        </motion.div>
-        <div className="lpx-hero__veil" />
-        <div className="lpx-hero__frame" aria-hidden="true" />
-
-        <motion.div className="lpx-hero__inner" style={{ opacity: heroFade }}>
+        <div className="lpx-hero__inner">
           <div className="lpx-hero__copy">
             <motion.span
               className="lpx-hero__pill"
@@ -627,16 +608,36 @@ export default function LandingPage() {
               </AnimatePresence>
             </div>
           </motion.div>
-        </motion.div>
+        </div>
 
-        <motion.a
-          href="#lpx-marquee" className="lpx-hero__scrollcue"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
-          aria-label="Scroll down"
+        {/* Cinematic showcase band — framed, parallax, crossfading */}
+        <motion.div
+          className="lpx-hero__showcase"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span>Scroll</span>
-          <ArrowDown size={14} />
-        </motion.a>
+          <div className="lpx-hero__showcase-frame">
+            <motion.div className="lpx-hero__showcase-media" style={{ y: heroBgY }}>
+              <AnimatePresence mode="sync">
+                {heroImages[heroIdx] && (
+                  <motion.img
+                    key={heroIdx}
+                    src={heroImages[heroIdx]}
+                    alt="ATTICARCH interiors"
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1.03 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 2, ease: 'easeInOut' }}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.div>
+            <span className="lpx-hero__showcase-caption">
+              Recent ATTICARCH residence · Bangalore
+            </span>
+          </div>
+        </motion.div>
       </section>
 
       {/* ═══════════════════════════════════════
@@ -802,7 +803,7 @@ export default function LandingPage() {
           TESTIMONIALS — editorial quotes
       ═══════════════════════════════════════ */}
       <section className="lpx-section lpx-quotes">
-        <SectionHead kicker="What Our Clients Say" light>
+        <SectionHead kicker="What Our Clients Say">
           Real Stories. <em>Real Homes.</em>
         </SectionHead>
         <div className="lpx-quotes__grid">
