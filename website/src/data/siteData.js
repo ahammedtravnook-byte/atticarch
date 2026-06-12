@@ -250,7 +250,7 @@ export const valueProps = [
   { value: 'Est. 2002', label: 'Bangalore Studio' },
   { value: '10-Year', label: 'Workmanship Warranty' },
   { value: 'In-House', label: 'Production Unit' },
-  { value: 'From ₹10 Lakhs', label: 'Bespoke Interiors' },
+  { value: '₹10 Lakhs', label: 'Starting From' },
 ]
 
 export const processSteps = [

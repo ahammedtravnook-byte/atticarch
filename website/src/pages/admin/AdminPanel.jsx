@@ -763,6 +763,66 @@ function PortfolioManager({ showToast }) {
     next[i] = { ...next[i], slug: slugify(slug) }
     return { ...f, subcategories: next }
   })
+  // Generic field setter for the richer subcategory fields (tagline, description)
+  const changeSubcatField = (i, field, value) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    next[i] = { ...next[i], [field]: value }
+    return { ...f, subcategories: next }
+  })
+  // Which subcategory row is currently uploading (index), so we can show state
+  const [subcatUploading, setSubcatUploading] = useState(null)
+  const uploadSubcatCover = async (i, file) => {
+    if (!file) return
+    setSubcatUploading(`cover-${i}`)
+    try {
+      const res = await uploadToCloudinary(file, CLOUDINARY_FOLDERS.categories || CLOUDINARY_FOLDERS.misc)
+      changeSubcatField(i, 'image', res.url)
+      changeSubcatField(i, 'imagePublicId', res.publicId)
+    } catch (err) {
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setSubcatUploading(null)
+    }
+  }
+  const removeSubcatCover = (i) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    next[i] = { ...next[i], image: '', imagePublicId: '' }
+    return { ...f, subcategories: next }
+  })
+  const uploadSubcatGallery = async (i, files) => {
+    const list = Array.from(files || [])
+    if (!list.length) return
+    setSubcatUploading(`gallery-${i}`)
+    try {
+      const uploaded = []
+      for (const file of list) {
+        const res = await uploadToCloudinary(file, CLOUDINARY_FOLDERS.categories || CLOUDINARY_FOLDERS.misc)
+        uploaded.push({ imageUrl: res.url, publicId: res.publicId })
+      }
+      setCatForm((f) => {
+        const next = [...(f.subcategories || [])]
+        next[i] = { ...next[i], gallery: [...(next[i].gallery || []), ...uploaded] }
+        return { ...f, subcategories: next }
+      })
+    } catch (err) {
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setSubcatUploading(null)
+    }
+  }
+  const removeSubcatGalleryImage = (i, gi) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    next[i] = { ...next[i], gallery: (next[i].gallery || []).filter((_, idx) => idx !== gi) }
+    return { ...f, subcategories: next }
+  })
+  const moveSubcatGalleryImage = (i, gi, dir) => setCatForm((f) => {
+    const next = [...(f.subcategories || [])]
+    const g = [...(next[i].gallery || [])]
+    if (gi + dir < 0 || gi + dir >= g.length) return f
+    const tmp = g[gi]; g[gi] = g[gi + dir]; g[gi + dir] = tmp
+    next[i] = { ...next[i], gallery: g }
+    return { ...f, subcategories: next }
+  })
 
   const handleCatSubmit = async (e) => {
     e.preventDefault()
@@ -775,7 +835,16 @@ function PortfolioManager({ showToast }) {
     // always follows the current title (a stale `short` from before a rename
     // would otherwise keep showing the old name on the category page).
     const subcategories = (catForm.subcategories || [])
-      .map((s) => ({ title: (s.title || '').trim(), short: (s.title || '').trim(), slug: slugify(s.slug || s.title) }))
+      .map((s) => ({
+        title: (s.title || '').trim(),
+        short: (s.title || '').trim(),
+        slug: slugify(s.slug || s.title),
+        tagline: (s.tagline || '').trim(),
+        description: (s.description || '').trim(),
+        image: s.image || '',
+        imagePublicId: s.imagePublicId || '',
+        gallery: (s.gallery || []).filter((g) => g && g.imageUrl),
+      }))
       .filter((s) => s.title && s.slug)
 
     const itemToSave = {
@@ -1155,35 +1224,99 @@ function PortfolioManager({ showToast }) {
                 />
               </div>
 
-              {/* Subcategories */}
+              {/* Subcategories — each gets its own dedicated page (cover, tagline, description, gallery) */}
               <div className="admin-form-group">
-                <label>Subcategories <span style={{ textTransform: 'none', color: 'var(--mist)' }}>(shown as filter chips on the category page)</span></label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label>Subcategories <span style={{ textTransform: 'none', color: 'var(--mist)' }}>(each becomes a filter chip + its own page with cover, content & gallery)</span></label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {(catForm.subcategories || []).map((s, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div key={i} style={{ border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: 16, background: 'rgba(0,0,0,0.015)' }}>
+                      {/* Row 1: name + slug + delete */}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          placeholder="Name (e.g. Villas)"
+                          value={s.title}
+                          onChange={e => changeSubcatTitle(i, e.target.value)}
+                          style={{ flex: 2 }}
+                        />
+                        <input
+                          type="text"
+                          className="admin-input"
+                          placeholder="slug"
+                          value={s.slug}
+                          onChange={e => changeSubcatSlug(i, e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                        <button type="button" onClick={() => removeSubcat(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 32, height: 32, flexShrink: 0 }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+
+                      {/* Tagline */}
                       <input
                         type="text"
                         className="admin-input"
-                        placeholder="Name (e.g. 2 BHK)"
-                        value={s.title}
-                        onChange={e => changeSubcatTitle(i, e.target.value)}
-                        style={{ flex: 2 }}
+                        placeholder="Tagline — one line shown under the title"
+                        value={s.tagline || ''}
+                        onChange={e => changeSubcatField(i, 'tagline', e.target.value)}
+                        style={{ marginBottom: 10 }}
                       />
-                      <input
-                        type="text"
+
+                      {/* Description */}
+                      <textarea
                         className="admin-input"
-                        placeholder="slug"
-                        value={s.slug}
-                        onChange={e => changeSubcatSlug(i, e.target.value)}
-                        style={{ flex: 1 }}
+                        placeholder="Description — a short paragraph for this subcategory's page"
+                        value={s.description || ''}
+                        onChange={e => changeSubcatField(i, 'description', e.target.value)}
+                        rows={3}
+                        style={{ marginBottom: 12, resize: 'vertical' }}
                       />
-                      <button type="button" onClick={() => removeSubcat(i)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 32, height: 32, flexShrink: 0 }}>
-                        <Trash2 size={13} />
-                      </button>
+
+                      {/* Cover image */}
+                      <div style={{ marginBottom: 12 }}>
+                        <span style={{ fontSize: 12, color: 'var(--mist)', display: 'block', marginBottom: 6 }}>Cover image (shown as the page hero)</span>
+                        {s.image ? (
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <img src={s.image} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 6 }} />
+                            <button type="button" onClick={() => removeSubcatCover(i)} className="admin-gallery-btn admin-gallery-btn--danger">
+                              <Trash2 size={13} /> Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="admin-gallery-btn" style={{ cursor: 'pointer' }}>
+                            {subcatUploading === `cover-${i}` ? 'Uploading…' : (<><Plus size={14} /> Upload Cover</>)}
+                            <input type="file" accept="image/*" hidden onChange={e => uploadSubcatCover(i, e.target.files?.[0])} />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Gallery */}
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--mist)', display: 'block', marginBottom: 6 }}>Gallery images</span>
+                        {(s.gallery || []).length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                            {(s.gallery || []).map((g, gi) => (
+                              <div key={gi} style={{ position: 'relative', width: 80, height: 60 }}>
+                                <img src={g.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
+                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: 2 }}>
+                                  <button type="button" onClick={() => moveSubcatGalleryImage(i, gi, -1)} className="admin-gallery-btn" style={{ width: 20, height: 20, padding: 0, fontSize: 11 }}>‹</button>
+                                  <button type="button" onClick={() => removeSubcatGalleryImage(i, gi)} className="admin-gallery-btn admin-gallery-btn--danger" style={{ width: 20, height: 20, padding: 0 }}><Trash2 size={10} /></button>
+                                  <button type="button" onClick={() => moveSubcatGalleryImage(i, gi, 1)} className="admin-gallery-btn" style={{ width: 20, height: 20, padding: 0, fontSize: 11 }}>›</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <label className="admin-gallery-btn" style={{ cursor: 'pointer' }}>
+                          {subcatUploading === `gallery-${i}` ? 'Uploading…' : (<><Plus size={14} /> Add Gallery Images</>)}
+                          <input type="file" accept="image/*" multiple hidden onChange={e => uploadSubcatGallery(i, e.target.files)} />
+                        </label>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={addSubcat} className="admin-gallery-btn" style={{ marginTop: 8 }}>
+                <button type="button" onClick={addSubcat} className="admin-gallery-btn" style={{ marginTop: 12 }}>
                   <Plus size={14} /> Add Subcategory
                 </button>
               </div>
@@ -2397,6 +2530,19 @@ function LandingPageManager({ showToast }) {
           </div>
         </div>
 
+        {/* Hero points */}
+        <div className="admin-card">
+          <h3 className="admin-card__title">Hero Points (3 slots)</h3>
+          <p style={{ color: 'var(--ash)', fontSize: 13, marginBottom: 16 }}>The three check-marked lines under the rotating headline.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            {(form.bullets || []).map((bullet, idx) => (
+              <div key={idx} className="admin-form-group" style={{ marginBottom: 0 }}>
+                <label>Point {idx + 1}</label>
+                <input type="text" className="admin-input" value={bullet} onChange={e => handleBulletChange(idx, e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Where the rest of the landing page is edited */}
         <div className="admin-card">

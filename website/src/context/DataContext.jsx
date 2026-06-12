@@ -41,8 +41,24 @@ const usableImg = (stored, fallback) =>
 // Predefined categories mapping matching site data
 const defaultCategories = [
   { id: 'residential', title: 'Residential Projects', short: 'Residential', slug: 'projects-residential', filter: ['apartments', 'villas'], order: 1 },
-  { id: 'apartments', title: 'Apartment Projects', short: 'Apartments', slug: 'projects-apartments', filter: ['apartments'], order: 2 },
-  { id: 'villas', title: 'Villa Projects', short: 'Villas', slug: 'projects-villas', filter: ['villas'], order: 3 },
+  {
+    id: 'apartments', title: 'Apartment Projects', short: 'Apartments', slug: 'projects-apartments',
+    filter: ['apartments', 'villas'], order: 2,
+    subcategories: [
+      {
+        title: 'Apartments', short: 'Apartments', slug: 'apartments',
+        tagline: 'Smart, space-savvy interiors for modern flats.',
+        description: 'From compact 2BHKs to sprawling penthouses, we design apartment interiors that make every square foot work harder — clever storage, seamless layouts and finishes built to last, all handled by our in-house team.',
+        image: '', imagePublicId: '', gallery: []
+      },
+      {
+        title: 'Villas', short: 'Villas', slug: 'villas',
+        tagline: 'Standalone luxury homes, designed end-to-end.',
+        description: 'For independent homes and villas we craft a complete narrative across every floor — bespoke joinery, statement living spaces and private retreats, designed and executed under one roof from first sketch to final handover.',
+        image: '', imagePublicId: '', gallery: []
+      }
+    ]
+  },
   { id: 'commercial', title: 'Commercial Projects', short: 'Commercial', slug: 'projects-commercial', filter: ['commercial'], order: 4 },
   { id: 'renovation', title: 'Renovation Projects', short: 'Renovation', slug: 'projects-renovation', filter: ['renovation'], order: 5 }
 ]
@@ -67,7 +83,7 @@ const defaultHeroSettings = {
 
 const defaultStudioSettings = {
   eyebrow: 'Inside the Studio',
-  title: 'Built Around You. Made by Hand.',
+  title: 'Built Around You. Made In Our Own Production Unit.',
   desc: 'Every ATTICARCH home starts with a conversation, not a catalogue. We have our own in-house production unit — our designers, carpenters and finishing experts work under one roof, so every wardrobe, kitchen and panel is built by us, not outsourced. That is how we control quality, cost and timelines from drawing board to handover.',
   highlights: [
     { value: '1000+', label: 'Homes Finished' },

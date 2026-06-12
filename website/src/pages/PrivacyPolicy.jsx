@@ -53,7 +53,7 @@ function SitemapBody() {
       heading: 'Portfolio',
       links: [
         { to: '/project-category/projects-apartments', label: 'Apartment Projects' },
-        { to: '/project-category/projects-villas', label: 'Villa Projects' },
+        { to: '/project-category/projects-apartments?sub=villas', label: 'Villa Projects' },
         { to: '/project-category/projects-commercial', label: 'Commercial Projects' },
         { to: '/project-category/projects-renovation', label: 'Renovation Projects' },
       ],

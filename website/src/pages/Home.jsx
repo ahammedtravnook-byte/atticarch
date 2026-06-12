@@ -1065,7 +1065,7 @@ export default function Home() {
               </span>
               <h2 className="section-title" style={{ color: 'var(--warm-white)' }}>
                 {(() => {
-                  const title = studioSettings?.title || 'Built Around You.\nMade by Hand.'
+                  const title = studioSettings?.title || 'Built Around You.\nMade In Our Own Production Unit.'
                   return title.includes('<span') ? (
                     <span dangerouslySetInnerHTML={{ __html: title }} />
                   ) : (

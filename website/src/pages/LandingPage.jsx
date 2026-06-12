@@ -120,6 +120,16 @@ const getBenefitIcon = (name) => {
   }
 }
 
+const getHeroPointIcon = (idx) => {
+  switch (idx) {
+    case 0: return <ShieldCheck size={14} />
+    case 1: return <Hammer size={14} />
+    case 2: return <Clock size={14} />
+    default: return <Check size={14} />
+  }
+}
+
+
 /* ─────────────────────────────────────────
    PIECES
 ───────────────────────────────────────── */
@@ -167,26 +177,13 @@ export default function LandingPage() {
   const [showSticky, setShowSticky] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [expandedFaq, setExpandedFaq] = useState(null)
-  const [sliderPos, setSliderPos] = useState(50)
 
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
   const heroRef = useRef(null)
-  const sliderRef = useRef(null)
   const { scrollYProgress: heroProg } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroImgY = useTransform(heroProg, [0, 1], ['0%', '12%'])
-
-  const sliderImages = pickImages(2, 53)
-
-  const handleSliderMove = (e) => {
-    if (!sliderRef.current) return
-    const rect = sliderRef.current.getBoundingClientRect()
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    const x = clientX - rect.left
-    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100))
-    setSliderPos(pct)
-  }
 
   const phone = landingSettings?.phone || '+919845013138'
   const whatsapp = landingSettings?.whatsapp || '919845013138'
@@ -278,12 +275,6 @@ export default function LandingPage() {
 
   return (
     <motion.main className="lx" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* Decorative Golden Glow Blobs */}
-      <div className="lx-glow lx-glow-1" />
-      <div className="lx-glow lx-glow-2" />
-      <div className="lx-glow lx-glow-3" />
-      <div className="lx-glow lx-glow-4" />
-
       <Helmet>
         <title>Book a Design Consultation in Bangalore | ATTICARCH</title>
         <meta name="description" content="ATTICARCH — an award-winning interior design studio in Bangalore since 2002. In-house production, 10-year workmanship warranty, interiors from ₹10 Lakhs. Book a consultation." />
@@ -351,6 +342,27 @@ export default function LandingPage() {
                 </motion.span>
               </AnimatePresence>
             </h1>
+
+            <motion.div
+              className="lx-hero__badges"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.1, delayChildren: 0.55 } } }}
+            >
+              {heroPoints.map((p, i) => (
+                <motion.div
+                  key={i}
+                  className="lx-hero__badge-item"
+                  variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}
+                >
+                  <span className="lx-hero__badge-icon-wrapper">
+                    {getHeroPointIcon(i)}
+                  </span>
+                  <span className="lx-hero__badge-text">{p}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
 
             <motion.div
               className="lx-hero__ctas"
@@ -579,78 +591,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ BEFORE/AFTER SLIDER ═══ */}
-      <section className="lx-section lx-slider-sec">
-        <div className="lx-head">
-          <Kicker center>Interactive Showcase</Kicker>
-          <H2 center>From Concept <em>To Reality</em></H2>
-          <p className="lx-slider-subtext">Drag the golden slider to compare our design concept render with the final delivered room handover.</p>
-        </div>
-        <div className="lx-slider-wrapper">
-          <div
-            ref={sliderRef}
-            className="lx-slider-container"
-            onMouseMove={(e) => {
-              if (e.buttons === 1) handleSliderMove(e)
-            }}
-            onTouchMove={handleSliderMove}
-            onClick={handleSliderMove}
-            style={{ position: 'relative', overflow: 'hidden', cursor: 'ew-resize' }}
-          >
-            {/* After Image (Full background) */}
-            <img
-              src={sliderImages[1]}
-              alt="Luxury handover interior"
-              className="lx-slider-img lx-slider-img--after"
-              draggable="false"
-            />
-            
-            {/* Before Image (Overlay clipped by slider position) */}
-            <div
-              className="lx-slider-overlay"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                width: `${sliderPos}%`,
-                overflow: 'hidden',
-                borderRight: '3px solid var(--lx-gold-deep)'
-              }}
-            >
-              <img
-                src={sliderImages[0]}
-                alt="Concept render interior"
-                className="lx-slider-img lx-slider-img--before"
-                draggable="false"
-              />
-              <span className="lx-slider-badge lx-slider-badge--before">Concept Render</span>
-            </div>
-            
-            <span className="lx-slider-badge lx-slider-badge--after">Final Handover</span>
-
-            {/* Slider Handle Line & Button */}
-            <div
-              className="lx-slider-handle"
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                left: `${sliderPos}%`,
-                width: '4px',
-                background: 'var(--lx-gold)',
-                transform: 'translateX(-50%)',
-                pointerEvents: 'none'
-              }}
-            >
-              <div className="lx-slider-handle-btn">
-                <span className="lx-slider-arrow">&larr;&nbsp;&rarr;</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ═══ CORE SERVICES — alternating editorial rows ═══ */}
       <section className="lx-section">
         <div className="lx-head">
@@ -812,7 +752,7 @@ export default function LandingPage() {
             transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
             <Kicker>Inside the Studio</Kicker>
-            <h2 className="lx-h2">Built Around You. <em>Made by Hand.</em></h2>
+            <h2 className="lx-h2">Built Around You. <em>Made In Our Own Production Unit.</em></h2>
             <p className="lx-studio__desc">{studioDesc}</p>
             <div className="lx-studio__highlights">
               {studioHighlights.map((h, i) => (

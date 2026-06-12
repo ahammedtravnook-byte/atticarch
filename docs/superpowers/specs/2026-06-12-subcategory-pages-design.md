@@ -1,0 +1,89 @@
+# Subcategory Dedicated Pages + Villas-under-Apartments — Design
+
+Date: 2026-06-12
+
+## Goal
+
+1. Give subcategories their own content (cover image, tagline, description, gallery) and a dedicated page experience instead of being filter-chips only.
+2. Restructure categories: remove the top-level **Villas** category and make **Villas** a subcategory under **Apartments**.
+3. Seed a little default content for the Apartments and Villas subcategories.
+
+## Background (current behavior)
+
+- Categories are defined in `defaultCategories` (`DataContext.jsx:42`) and overridden by Firestore. The live site reads Firestore; code defaults + the seed script are fallback/seed only.
+- A subcategory is `{ title, short, slug }`. The admin "Subcategories" editor (`AdminPanel.jsx:1158`) only edits title + slug.
+- Subcategory chips on `ProjectCategory.jsx` filter the project grid via `matchesSub = p.subcategory === slug || p.category === slug` (`ProjectCategory.jsx:132`). URLs use `?sub=<slug>`.
+- Admin image uploads use `uploadToCloudinary(file, CLOUDINARY_FOLDERS.x)` returning `{ url, publicId }` (`AdminPanel.jsx:31,1298`).
+
+## Data model (backward-compatible)
+
+Extend each subcategory object with optional fields:
+
+```js
+{
+  title, short, slug,        // existing — unchanged
+  tagline:     '',           // one-line subtitle
+  description: '',           // paragraph
+  image:       '',           // cover image URL (Cloudinary)
+  imagePublicId: '',         // cover public id
+  gallery:     []            // [{ imageUrl, publicId }]
+}
+```
+
+Subcategories with none of these fields render exactly as today (plain chip + grid). No migration needed.
+
+## Category restructure
+
+In `defaultCategories` (DataContext) and the seed script's categories:
+- **Remove** the `villas` category entry.
+- **Apartments** category:
+  - `filter: ['apartments', 'villas']` (so villa projects appear under Apartments)
+  - `subcategories: [ { Apartments... }, { Villas... } ]` with default content (below)
+- The hidden `residential` aggregate is unaffected (already filtered out of display).
+
+Villa projects keep `category: 'villas'`, so the "Villas" chip (slug `villas`) matches them via `p.category === slug`. The "Apartments" chip (slug `apartments`) matches apartment projects the same way.
+
+### Default content to seed
+
+- **Apartments** — tagline: "Smart, space-savvy interiors for modern flats." + a 1–2 sentence paragraph.
+- **Villas** — tagline: "Standalone luxury homes, designed end-to-end." + a 1–2 sentence paragraph.
+
+## Admin side (`AdminPanel.jsx`)
+
+Convert each subcategory row in the category editor into an **expandable card** with:
+- Name + slug (as today)
+- Tagline (text input)
+- Description (textarea)
+- Cover image: upload button (reuse `uploadToCloudinary` + a `CLOUDINARY_FOLDERS` value) with preview + remove
+- Gallery: multi-image upload with thumbnails, reorder (up/down), delete — mirroring existing project-gallery handlers
+
+`saveCategory` (`AdminPanel.jsx:777`) updated to persist the new fields (currently it strips subcategories to `{title, short, slug}`).
+
+## Frontend (`ProjectCategory.jsx` + `ProjectCategory.css`)
+
+When `?sub=<slug>` is active AND the selected subcategory has content:
+- Replace the category hero with the subcategory **cover hero**: cover image background + title + tagline.
+- Below the chip row: **description** block (if present).
+- **Gallery** section: responsive image grid (if gallery non-empty). Simple grid, no lightbox (YAGNI).
+- Then the existing filtered **project grid** (unchanged).
+- "All" chip returns to the normal category hero.
+
+Fallback: subcategory without cover/content → current behavior (no hero swap), so old data never breaks.
+
+## Files touched
+
+- `website/src/context/DataContext.jsx` — defaultCategories restructure.
+- `website/scripts/seed-firestore.js` — seed categories restructure + default subcategory content.
+- `website/src/pages/admin/AdminPanel.jsx` — subcategory editor (expandable cards) + saveCategory persistence.
+- `website/src/pages/ProjectCategory.jsx` — subcategory hero / description / gallery render.
+- `website/src/pages/ProjectCategory.css` — styles for new sections.
+
+## Out of scope (YAGNI)
+
+- No new routes / router changes (reuses `?sub=`).
+- No gallery lightbox/carousel — simple responsive grid only.
+- No automated Firestore migration; live site updated via admin or re-seed (same as other content edits).
+
+## Caveat
+
+Live category list lives in Firestore. Code + seed changes are fallback/seed. To apply on the live site: re-run the seed script OR perform the restructure in the Admin Panel (the new admin UI supports it).

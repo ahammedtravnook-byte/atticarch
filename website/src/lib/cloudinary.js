@@ -160,5 +160,6 @@ export const CLOUDINARY_FOLDERS = {
   hero: 'atticarch/hero',
   rooms: 'atticarch/rooms',
   blog: 'atticarch/blog',
+  categories: 'atticarch/categories',
   misc: 'atticarch/misc',
 }

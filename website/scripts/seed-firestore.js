@@ -63,8 +63,24 @@ const PLACEHOLDER = '/placeholder.webp'
 // ── 1. Categories ──
 const categories = [
   { id: 'residential',  title: 'Residential Projects', short: 'Residential', slug: 'projects-residential', filter: ['apartments', 'villas'], order: 1 },
-  { id: 'apartments',   title: 'Apartment Projects',   short: 'Apartments',  slug: 'projects-apartments',  filter: ['apartments'],            order: 2 },
-  { id: 'villas',       title: 'Villa Projects',        short: 'Villas',      slug: 'projects-villas',      filter: ['villas'],                order: 3 },
+  {
+    id: 'apartments', title: 'Apartment Projects', short: 'Apartments', slug: 'projects-apartments',
+    filter: ['apartments', 'villas'], order: 2,
+    subcategories: [
+      {
+        title: 'Apartments', short: 'Apartments', slug: 'apartments',
+        tagline: 'Smart, space-savvy interiors for modern flats.',
+        description: 'From compact 2BHKs to sprawling penthouses, we design apartment interiors that make every square foot work harder — clever storage, seamless layouts and finishes built to last, all handled by our in-house team.',
+        image: '', imagePublicId: '', gallery: [],
+      },
+      {
+        title: 'Villas', short: 'Villas', slug: 'villas',
+        tagline: 'Standalone luxury homes, designed end-to-end.',
+        description: 'For independent homes and villas we craft a complete narrative across every floor — bespoke joinery, statement living spaces and private retreats, designed and executed under one roof from first sketch to final handover.',
+        image: '', imagePublicId: '', gallery: [],
+      },
+    ],
+  },
   { id: 'commercial',   title: 'Commercial Projects',   short: 'Commercial',  slug: 'projects-commercial',  filter: ['commercial'],            order: 4 },
   { id: 'renovation',   title: 'Renovation Projects',   short: 'Renovation',  slug: 'projects-renovation',  filter: ['renovation'],            order: 5 },
 ]
@@ -187,7 +203,7 @@ const aboutContent = {
     { value: 'Est. 2002', label: 'Bangalore Studio' },
     { value: '10-Year',   label: 'Workmanship Warranty' },
     { value: 'Turnkey',   label: 'End-to-End Execution' },
-    { value: '₹10L+',    label: 'Bespoke Interiors' },
+    { value: '₹10 Lakhs', label: 'Starting From' },
   ],
   processSteps: [
     { step: 1, title: 'Get Acquainted',      description: 'We begin with understanding your vision, lifestyle, and preferences through an in-depth consultation.' },
@@ -216,7 +232,7 @@ const homepageSettings = {
   },
   studio: {
     eyebrow: 'Inside the Studio',
-    title: 'Built Around You. Made by Hand.',
+    title: 'Built Around You. Made In Our Own Production Unit.',
     desc: 'Every ATTICARCH home starts with a conversation, not a catalogue. Our in-house team of designers and on-site experts work side-by-side under one roof — drawing, picking materials and finishing each room with care, so the work lasts long after we hand over the keys.',
     highlights: [
       { value: '200+', label: 'Homes Finished' },

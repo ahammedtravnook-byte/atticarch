@@ -132,6 +132,12 @@ export default function ProjectCategory() {
   const matchesSub = (p, slug) => p.subcategory === slug || p.category === slug
   const filtered = sub ? baseFiltered.filter((p) => matchesSub(p, sub)) : baseFiltered
 
+  // When a subcategory with its own content is selected, the page becomes a
+  // dedicated subcategory experience (cover hero + description + gallery).
+  const activeSub = sub ? subcats.find((s) => s.slug === sub) : null
+  const subGallery = activeSub?.gallery?.filter((g) => g?.imageUrl) || []
+  const subHasContent = !!(activeSub && (activeSub.image || activeSub.description || activeSub.tagline || subGallery.length))
+
   const selectSub = (slug) => {
     const next = new URLSearchParams(searchParams)
     if (slug) next.set('sub', slug)
@@ -162,7 +168,51 @@ export default function ProjectCategory() {
         <title>{cat.title} — ATTICARCH Portfolio | Interior Design Bangalore</title>
       </Helmet>
 
+      {/* ── SUBCATEGORY COVER HERO (replaces the category hero when a sub with content is selected) ── */}
+      {subHasContent && (
+        <section className="pc-subhero">
+          {activeSub.image && (
+            <div className="pc-subhero__bg" aria-hidden="true">
+              <SmartImage src={activeSub.image} alt={activeSub.title} />
+              <div className="pc-subhero__bg-grad" />
+            </div>
+          )}
+          <div className="container">
+            <Reveal>
+              <nav className="pc-crumb pc-crumb--light">
+                <Link to="/">Home</Link>
+                <span>/</span>
+                <Link to={`/project-category/${cat.slug}`}>{cat.short}</Link>
+                <span>/</span>
+                <span className="pc-crumb__current">{activeSub.short || activeSub.title}</span>
+              </nav>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="pc-hero__eyebrow">
+                <span className="pc-hero__eyebrow-dot" />
+                <span>{cat.short} Portfolio</span>
+              </div>
+            </Reveal>
+            <Reveal delay={0.18}>
+              <h1 className="pc-subhero__title">{activeSub.title}</h1>
+            </Reveal>
+            {activeSub.tagline && (
+              <Reveal delay={0.26}>
+                <p className="pc-subhero__tagline">{activeSub.tagline}</p>
+              </Reveal>
+            )}
+            <Reveal delay={0.34}>
+              <a href="#grid" className="pc-hero__scroll">
+                <span>Browse {filtered.length} {filtered.length === 1 ? 'project' : 'projects'}</span>
+                <ArrowRight size={14} />
+              </a>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
       {/* ── HERO ── */}
+      {!subHasContent && (
       <section className="pc-hero" ref={heroRef}>
         <div className="pc-hero__decor" aria-hidden="true">
           <div className="pc-hero__orb pc-hero__orb--1" />
@@ -251,6 +301,7 @@ export default function ProjectCategory() {
           <span className="pc-hero__scroll-text">Scroll to explore</span>
         </div>
       </section>
+      )}
 
       {/* ── STATS STRIP ── */}
       <section className="pc-stats">
@@ -324,6 +375,34 @@ export default function ProjectCategory() {
           )}
         </div>
       </section>
+
+      {/* ── SUBCATEGORY CONTENT (description + gallery) ── */}
+      {subHasContent && (activeSub.description || subGallery.length > 0) && (
+        <section className="pc-subcontent">
+          <div className="container">
+            {activeSub.description && (
+              <Reveal>
+                <div className="pc-subcontent__intro">
+                  <span className="pc-eyebrow">About {activeSub.short || activeSub.title}</span>
+                  <p className="pc-subcontent__desc">{activeSub.description}</p>
+                </div>
+              </Reveal>
+            )}
+
+            {subGallery.length > 0 && (
+              <Reveal delay={0.1}>
+                <div className="pc-subgallery">
+                  {subGallery.map((g, i) => (
+                    <div key={i} className={`pc-subgallery__item ${i === 0 ? 'pc-subgallery__item--lead' : ''}`}>
+                      <SmartImage src={g.imageUrl} alt={`${activeSub.title} ${i + 1}`} />
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── PROJECTS GRID ── */}
       <section className="pc-grid-section" id="grid">

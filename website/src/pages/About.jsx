@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ArrowRight, ArrowUpRight, Target, Eye, Award, Check, Sparkles } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Target, Eye, Award, Check } from 'lucide-react'
 import { FaLinkedin } from 'react-icons/fa'
 import { valueProps, principles, approachPoints, team, visionStatement, partners, partnerLogo, pickImages } from '../data/siteData'
 import { useData } from '../context/DataContext'
@@ -247,13 +247,6 @@ export default function About() {
               <div className="about-approach__img">
                 <img src={approachImg} alt="Our Approach" />
                 <div className="about-approach__img-grad" />
-              </div>
-              <div className="about-approach__sticker">
-                <Sparkles size={18} />
-                <div>
-                  <span className="about-approach__sticker-label">In-House Production</span>
-                  <span className="about-approach__sticker-sub">Residential · Commercial</span>
-                </div>
               </div>
             </motion.div>
 
