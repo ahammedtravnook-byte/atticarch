@@ -2374,28 +2374,13 @@ function LandingPageManager({ showToast }) {
   return (
     <div>
       <h2 className="text-display" style={{ fontSize: '32px', marginBottom: 8 }}>Landing Page Editor</h2>
-      <p style={{ color: 'var(--ash)', marginBottom: 32 }}>Configure pricing cards, benefits, timeline steps, FAQs, and WhatsApp consultation links.</p>
+      <p style={{ color: 'var(--ash)', marginBottom: 32 }}>Contact details, WhatsApp link and the three hero points shown on the consultation landing page.</p>
 
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-        
-        {/* Hero Section Copy & General Info */}
-        <div className="admin-card">
-          <h3 className="admin-card__title">Hero & General Copy</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="admin-form-group">
-              <label>Hero Title Line 1</label>
-              <input type="text" name="heroTitleLine1" className="admin-input" value={form.heroTitleLine1 || ''} onChange={handleChange} />
-            </div>
-            <div className="admin-form-group">
-              <label>Hero Title Line 2</label>
-              <input type="text" name="heroTitleLine2" className="admin-input" value={form.heroTitleLine2 || ''} onChange={handleChange} />
-            </div>
-          </div>
-          <div className="admin-form-group">
-            <label>Hero Subtitle</label>
-            <input type="text" name="heroSubtitle" className="admin-input" value={form.heroSubtitle || ''} onChange={handleChange} />
-          </div>
 
+        {/* Contact & WhatsApp */}
+        <div className="admin-card">
+          <h3 className="admin-card__title">Contact & WhatsApp</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             <div className="admin-form-group">
               <label>Phone Number (e.g. +919845013138)</label>
@@ -2410,19 +2395,37 @@ function LandingPageManager({ showToast }) {
               <input type="text" name="whatsappPrefill" className="admin-input" value={form.whatsappPrefill || ''} onChange={handleChange} />
             </div>
           </div>
+        </div>
 
-          <h4 style={{ margin: '24px 0 12px 0', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Hero Bullets (3 slots)</h4>
+        {/* Hero points */}
+        <div className="admin-card">
+          <h3 className="admin-card__title">Hero Points (3 slots)</h3>
+          <p style={{ color: 'var(--ash)', fontSize: 13, marginBottom: 16 }}>The three check-marked lines under the rotating headline.</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             {(form.bullets || []).map((bullet, idx) => (
               <div key={idx} className="admin-form-group" style={{ marginBottom: 0 }}>
-                <label>Bullet {idx + 1}</label>
+                <label>Point {idx + 1}</label>
                 <input type="text" className="admin-input" value={bullet} onChange={e => handleBulletChange(idx, e.target.value)} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Highlight Stats */}
+        {/* Where the rest of the landing page is edited */}
+        <div className="admin-card">
+          <h3 className="admin-card__title">Where the other sections are edited</h3>
+          <p style={{ color: 'var(--ash)', fontSize: 13, lineHeight: 1.8, margin: 0 }}>
+            The landing page mirrors your homepage content, so it stays in sync automatically:<br />
+            • <strong>Rotating headline & eyebrow</strong> — Homepage → Hero Section<br />
+            • <strong>Inside the Studio text & highlights</strong> — Homepage → Studio Section<br />
+            • <strong>What We Build list</strong> — Homepage → Work Types<br />
+            • <strong>Client video walkthroughs</strong> — Client Reviews (testimonials with a YouTube video)<br />
+            • <strong>Core Services & stats</strong> — fixed site content
+          </p>
+        </div>
+
+        {/* Benefits Grid */}
+        {false && <>
         <div className="admin-card">
           <h3 className="admin-card__title">Highlight Stats</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
@@ -2449,8 +2452,6 @@ function LandingPageManager({ showToast }) {
             ))}
           </div>
         </div>
-
-        {/* Benefits Grid */}
         <div className="admin-card">
           <h3 className="admin-card__title">Benefits Grid</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -2587,6 +2588,7 @@ function LandingPageManager({ showToast }) {
             ))}
           </div>
         </div>
+        </>}
 
         {/* Global Save Button */}
         <SaveBtn saving={saving} type="submit" className="btn-gold" style={{ height: 48, fontSize: 15, justifyContent: 'center' }}>

@@ -11,6 +11,7 @@ import {
 } from '../data/siteData'
 import { useData } from '../context/DataContext'
 import { db, doc, setDoc } from '../lib/firebase'
+import logoSrc from '../assets/logo.png'
 import './LandingPage.css'
 
 /* ─────────────────────────────────────────
@@ -131,6 +132,7 @@ export default function LandingPage() {
   const telLink = `tel:${phone}`
 
   /* Homepage-driven content */
+  const heroPoints = landingSettings?.bullets?.length ? landingSettings.bullets : HERO_POINTS
   const eyebrow = heroSettings?.eyebrow || 'An Award-Winning Design Studio in Bangalore'
   const rotating = parseRotating(heroSettings?.rotatingTitles)
   const heroImage = projects?.[0]?.image || pickImages(1, 0)[0]
@@ -218,16 +220,15 @@ export default function LandingPage() {
       <header className="lnd-topbar">
         <div className="lnd-topbar__inner">
           <div className="lnd-topbar__brand">
-            <span className="lnd-topbar__mark">A</span>
-            <div className="lnd-topbar__name">
-              <strong>ATTICARCH</strong>
-              <span>Bangalore · Est. 2002</span>
-            </div>
+            <img src={logoSrc} alt="ATTICARCH" className="lnd-topbar__logo" />
           </div>
           <div className="lnd-topbar__actions">
-            <a href={telLink} className="lnd-topbar__phone"><Phone size={13} /> <span>{phone}</span></a>
+            <a href={telLink} className="lnd-topbar__phone"><Phone size={14} /> <span>{phone}</span></a>
             <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lnd-topbar__wa">
               <MessageCircle size={13} /> <span>WhatsApp</span>
+            </a>
+            <a href="#lead-form" className="lnd-topbar__cta hide-mobile-cta">
+              <span>Book Consultation</span>
             </a>
           </div>
         </div>
@@ -235,6 +236,8 @@ export default function LandingPage() {
 
       {/* ═══ HERO — rotating headline + consultation form ═══ */}
       <section className="lnd-hero">
+        <span className="lnd-blob lnd-blob--1" aria-hidden="true" />
+        <span className="lnd-blob lnd-blob--2" aria-hidden="true" />
         <div className="lnd-hero__inner">
           <div className="lnd-hero__copy">
             <motion.span
@@ -279,7 +282,7 @@ export default function LandingPage() {
               animate="show"
               variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: 0.6 } } }}
             >
-              {HERO_POINTS.map((p, i) => (
+              {heroPoints.map((p, i) => (
                 <motion.li
                   key={i}
                   variants={{ hidden: { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { duration: 0.55 } } }}
@@ -400,7 +403,7 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Framed hero image band */}
+        {/* Arched panoramic hero image */}
         <motion.div
           className="lnd-hero__band"
           initial={{ opacity: 0, y: 44 }}
@@ -410,6 +413,21 @@ export default function LandingPage() {
           <div className="lnd-hero__band-frame">
             <img src={heroImage} alt="ATTICARCH interiors, Bangalore" />
             <span className="lnd-hero__band-caption">ATTICARCH Residence · Bangalore</span>
+
+            {/* Rotating circular badge */}
+            <div className="lnd-orbit" aria-hidden="true">
+              <svg viewBox="0 0 120 120">
+                <defs>
+                  <path id="lnd-orbit-path" d="M 60,60 m -44,0 a 44,44 0 1,1 88,0 a 44,44 0 1,1 -88,0" />
+                </defs>
+                <text>
+                  <textPath href="#lnd-orbit-path">
+                    ATTICARCH · SINCE 2002 · BUILT IN-HOUSE ·
+                  </textPath>
+                </text>
+              </svg>
+              <span className="lnd-orbit__core">✦</span>
+            </div>
           </div>
         </motion.div>
       </section>
@@ -564,6 +582,7 @@ export default function LandingPage() {
 
       {/* ═══ FINAL CTA ═══ */}
       <section className="lnd-final">
+        <span className="lnd-blob lnd-blob--3" aria-hidden="true" />
         <motion.div
           className="lnd-final__inner"
           initial={{ opacity: 0, y: 30 }}
@@ -591,7 +610,7 @@ export default function LandingPage() {
       <footer className="lnd-footer">
         <div className="lnd-footer__inner">
           <div className="lnd-footer__brand">
-            <strong>ATTICARCH</strong>
+            <img src={logoSrc} alt="ATTICARCH" className="lnd-footer__logo" />
             <span>Transforming Spaces, Transforming Lives · Since 2002</span>
           </div>
           <div className="lnd-footer__contact">

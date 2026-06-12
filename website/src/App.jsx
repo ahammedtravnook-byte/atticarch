@@ -30,7 +30,7 @@ export default function App() {
 
   return (
     <div className="app grain-overlay">
-      <Preloader />
+      {!isAdmin && !isLanding && <Preloader />}
       {!isAdmin && <SmoothScroll />}
       {!isAdmin && !isLanding && <Header />}
       <AnimatePresence mode="wait">
