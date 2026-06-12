@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import {
-  Phone, Send, Star, Check, MessageCircle, ArrowRight, MapPin, Mail,
-  ShieldCheck, Play, Award, Hammer, Clock
+  Phone, Send, Star, Check, MessageCircle, ArrowRight, ArrowUpRight, MapPin, Mail,
+  ShieldCheck, Play, Hammer, Clock
 } from 'lucide-react'
 import {
   services as staticServices, workTypes as staticWorkTypes, valueProps,
@@ -41,8 +41,6 @@ const FALLBACK_HIGHLIGHTS = [
   { value: '48 Hrs', label: 'Quick Quote' },
 ]
 
-/* Parse the homepage rotating titles: one sentence per line, "|" splits the
-   two display lines, the second line is the gold accent. */
 const parseRotating = (raw) =>
   String(raw || FALLBACK_ROTATING)
     .split('\n')
@@ -60,27 +58,27 @@ function fireConversion() {
 }
 
 /* ─────────────────────────────────────────
-   SMALL PIECES
+   PIECES
 ───────────────────────────────────────── */
 
-function Kicker({ children }) {
+function Kicker({ children, center = false }) {
   return (
     <motion.span
-      className="lnd-kicker"
+      className={`lx-kicker ${center ? 'lx-kicker--center' : ''}`}
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.6 }}
       transition={{ duration: 0.6 }}
     >
-      <i />{children}<i />
+      <i />{children}
     </motion.span>
   )
 }
 
-function H2({ children }) {
+function H2({ children, center = false }) {
   return (
     <motion.h2
-      className="lnd-h2"
+      className={`lx-h2 ${center ? 'lx-h2--center' : ''}`}
       initial={{ opacity: 0, y: 26 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -88,24 +86,6 @@ function H2({ children }) {
     >
       {children}
     </motion.h2>
-  )
-}
-
-function ValueStat({ stat, index }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, amount: 0.5 })
-  return (
-    <motion.div
-      ref={ref}
-      className="lnd-stat"
-      initial={{ opacity: 0, y: 28 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <span className="lnd-stat__value">{stat.value}</span>
-      <span className="lnd-stat__rule" />
-      <span className="lnd-stat__label">{stat.label}</span>
-    </motion.div>
   )
 }
 
@@ -118,12 +98,18 @@ export default function LandingPage() {
 
   const [form, setForm] = useState({ name: '', phone: '', type: 'Apartment', budget: '10 - 15 Lakhs' })
   const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState('idle') // idle | sending | success | error
+  const [status, setStatus] = useState('idle')
   const [titleIdx, setTitleIdx] = useState(0)
+  const [imgIdx, setImgIdx] = useState(0)
   const [showSticky, setShowSticky] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
+
+  const heroRef = useRef(null)
+  const { scrollYProgress: heroProg } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroImgY = useTransform(heroProg, [0, 1], ['0%', '12%'])
 
   const phone = landingSettings?.phone || '+919845013138'
   const whatsapp = landingSettings?.whatsapp || '919845013138'
@@ -131,11 +117,15 @@ export default function LandingPage() {
   const whatsappLink = `https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappPrefill)}`
   const telLink = `tel:${phone}`
 
-  /* Homepage-driven content */
   const heroPoints = landingSettings?.bullets?.length ? landingSettings.bullets : HERO_POINTS
   const eyebrow = heroSettings?.eyebrow || 'An Award-Winning Design Studio in Bangalore'
   const rotating = parseRotating(heroSettings?.rotatingTitles)
-  const heroImage = projects?.[0]?.image || pickImages(1, 0)[0]
+
+  /* Prefer each project's second photo for variety (living rooms / bedrooms
+     rather than the cover wardrobe shots) */
+  const heroImages = projects?.length > 0
+    ? projects.slice(0, 8).map(p => p.images?.[2] || p.images?.[1] || p.image).filter(Boolean).slice(0, 5)
+    : pickImages(5, 24)
 
   const displayWorkTypes = (workTypes?.length ? workTypes : staticWorkTypes).map(w => w.title || w)
   const studioDesc = studioSettings?.desc || FALLBACK_STUDIO_DESC
@@ -145,7 +135,7 @@ export default function LandingPage() {
   const videoTestimonials = (testimonials || []).filter(t => t.videoId).slice(0, 3)
   const displayTestimonials = videoTestimonials.length ? videoTestimonials : FALLBACK_TESTIMONIALS
 
-  /* Rotating hero loop — same cadence as the home page */
+  /* loops */
   useEffect(() => {
     if (rotating.length < 2) return
     const t = setInterval(() => setTitleIdx(i => (i + 1) % rotating.length), 5000)
@@ -153,7 +143,16 @@ export default function LandingPage() {
   }, [rotating.length])
 
   useEffect(() => {
-    const onScroll = () => setShowSticky(window.scrollY > 600)
+    if (heroImages.length < 2) return
+    const t = setInterval(() => setImgIdx(i => (i + 1) % heroImages.length), 4600)
+    return () => clearInterval(t)
+  }, [heroImages.length])
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowSticky(window.scrollY > 700)
+      setScrolled(window.scrollY > 30)
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -192,11 +191,10 @@ export default function LandingPage() {
   }
 
   const update = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
-
   const active = rotating[titleIdx % rotating.length] || rotating[0]
 
   return (
-    <motion.main className="lnd" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <motion.main className="lx" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <Helmet>
         <title>Book a Design Consultation in Bangalore | ATTICARCH</title>
         <meta name="description" content="ATTICARCH — an award-winning interior design studio in Bangalore since 2002. In-house production, 10-year workmanship warranty, interiors from ₹10 Lakhs. Book a consultation." />
@@ -214,263 +212,271 @@ export default function LandingPage() {
         })}</script>
       </Helmet>
 
-      <motion.div className="lnd-progress" style={{ scaleX }} />
+      <motion.div className="lx-progress" style={{ scaleX }} />
 
-      {/* ═══ TOP BAR ═══ */}
-      <header className="lnd-topbar">
-        <div className="lnd-topbar__inner">
-          <div className="lnd-topbar__brand">
-            <img src={logoSrc} alt="ATTICARCH" className="lnd-topbar__logo" />
-          </div>
-          <div className="lnd-topbar__actions">
-            <a href={telLink} className="lnd-topbar__phone"><Phone size={14} /> <span>{phone}</span></a>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lnd-topbar__wa">
-              <MessageCircle size={13} /> <span>WhatsApp</span>
+      {/* ═══ NAVBAR — airy, hairline, gold CTA ═══ */}
+      <header className={`lx-nav ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="lx-nav__inner">
+          <img src={logoSrc} alt="ATTICARCH" className="lx-nav__logo" />
+          <div className="lx-nav__right">
+            <a href={telLink} className="lx-nav__phone">
+              <span className="lx-nav__phone-label">Call the studio</span>
+              <span className="lx-nav__phone-num">{phone}</span>
             </a>
-            <a href="#lead-form" className="lnd-topbar__cta hide-mobile-cta">
-              <span>Book Consultation</span>
+            <span className="lx-nav__divider" />
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lx-nav__wa" aria-label="WhatsApp">
+              <MessageCircle size={17} />
+            </a>
+            <a href="#lead-form" className="lx-nav__cta">
+              Book Consultation <ArrowUpRight size={14} />
             </a>
           </div>
         </div>
       </header>
 
-      {/* ═══ HERO — rotating headline + consultation form ═══ */}
-      <section className="lnd-hero">
-        <span className="lnd-blob lnd-blob--1" aria-hidden="true" />
-        <span className="lnd-blob lnd-blob--2" aria-hidden="true" />
-        <div className="lnd-hero__inner">
-          <div className="lnd-hero__copy">
+      {/* ═══ HERO — editorial split ═══ */}
+      <section className="lx-hero" ref={heroRef}>
+        <div className="lx-hero__inner">
+          <div className="lx-hero__copy">
             <motion.span
-              className="lnd-hero__eyebrow"
+              className="lx-hero__eyebrow"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
             >
-              <i className="lnd-hero__eyebrow-dot" /> {eyebrow}
+              <i /> {eyebrow}
             </motion.span>
 
-            <h1 className="lnd-hero__title" aria-live="polite">
+            <h1 className="lx-hero__title" aria-live="polite">
               <AnimatePresence mode="wait">
                 <motion.span
                   key={titleIdx}
-                  className="lnd-hero__title-frame"
-                  initial={{ opacity: 0, y: 34 }}
+                  className="lx-hero__title-frame"
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -28 }}
-                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  exit={{ opacity: 0, y: -24 }}
+                  transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <span className="lnd-hero__title-line">{active?.line1}</span>
-                  {active?.line2 && (
-                    <span className="lnd-hero__title-line lnd-hero__title-line--gold">{active.line2}</span>
-                  )}
+                  <span className="lx-hero__line1">{active?.line1}</span>
+                  {active?.line2 && <span className="lx-hero__line2">{active.line2}</span>}
                 </motion.span>
               </AnimatePresence>
             </h1>
 
-            <motion.div
-              className="lnd-hero__ornament"
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={{ duration: 0.9, delay: 0.5 }}
-            >
-              <i /><b /><i />
-            </motion.div>
-
             <motion.ul
-              className="lnd-hero__points"
+              className="lx-hero__points"
               initial="hidden"
               animate="show"
-              variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: 0.6 } } }}
+              variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: 0.55 } } }}
             >
               {heroPoints.map((p, i) => (
                 <motion.li
                   key={i}
-                  variants={{ hidden: { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { duration: 0.55 } } }}
+                  variants={{ hidden: { opacity: 0, x: -14 }, show: { opacity: 1, x: 0, transition: { duration: 0.5 } } }}
                 >
-                  <Check size={14} /> {p}
+                  <span className="lx-hero__point-tick"><Check size={11} /></span> {p}
                 </motion.li>
               ))}
             </motion.ul>
 
             <motion.div
-              className="lnd-hero__trust"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 1 }}
+              className="lx-hero__ctas"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.95 }}
             >
-              <span className="lnd-hero__stars">
-                {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#C9A96E" color="#C9A96E" />)}
-              </span>
-              <span className="lnd-hero__trust-text"><strong>4.5</strong> · 41 Google Reviews</span>
+              <a href="#lead-form" className="lx-btn lx-btn--gold">
+                Book a Consultation <ArrowRight size={15} />
+              </a>
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lx-btn lx-btn--ghost">
+                <MessageCircle size={15} /> WhatsApp Us
+              </a>
             </motion.div>
 
             <motion.div
-              className="lnd-hero__ctas"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 1.1 }}
+              className="lx-hero__meta"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 1.15 }}
             >
-              <a href="#lead-form" className="lnd-btn lnd-btn--gold">
-                <span>Book a Consultation</span> <ArrowRight size={15} />
-              </a>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lnd-btn lnd-btn--line">
-                <MessageCircle size={15} /> <span>WhatsApp Us</span>
-              </a>
+              {valueProps.slice(0, 3).map((v, i) => (
+                <div className="lx-hero__meta-item" key={i}>
+                  <strong>{v.value}</strong>
+                  <span>{v.label}</span>
+                </div>
+              ))}
             </motion.div>
           </div>
 
-          {/* CONSULTATION FORM */}
+          {/* Cinematic image column */}
           <motion.div
-            id="lead-form"
-            className="lnd-form-wrap"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="lx-hero__visual"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="lnd-form-card">
-              <i className="lnd-tick lnd-tick--tl" /><i className="lnd-tick lnd-tick--tr" />
-              <i className="lnd-tick lnd-tick--bl" /><i className="lnd-tick lnd-tick--br" />
+            <motion.div className="lx-hero__media" style={{ y: heroImgY }}>
+              <AnimatePresence mode="sync">
+                {heroImages[imgIdx] && (
+                  <motion.img
+                    key={imgIdx}
+                    src={heroImages[imgIdx]}
+                    alt="ATTICARCH interiors"
+                    initial={{ opacity: 0, scale: 1.08 }}
+                    animate={{ opacity: 1, scale: 1.02 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.6, ease: 'easeInOut' }}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-              <div className="lnd-form-card__head">
-                <span className="lnd-form-card__kicker">Start Your Project</span>
-                <h2>Book a Design Consultation</h2>
-                <p>Share your details — our senior designer will call you back.</p>
-              </div>
+            <motion.div
+              className="lx-hero__rating"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 1.1 }}
+            >
+              <span className="lx-hero__rating-stars">
+                {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="#C9A96E" color="#C9A96E" />)}
+              </span>
+              <strong>4.5 / 5</strong>
+              <span className="lx-hero__rating-sub">41 Google Reviews</span>
+            </motion.div>
 
-              <AnimatePresence mode="wait">
-                {status === 'success' ? (
-                  <motion.div
-                    key="ok" className="lnd-form-success"
-                    initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <div className="lnd-form-success__icon"><Check size={30} /></div>
-                    <h3>Thank you, {form.name.split(' ')[0]}!</h3>
-                    <p>We've received your request. Our designer will call you shortly.</p>
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lnd-btn lnd-btn--gold" style={{ marginTop: 16 }}>
-                      <MessageCircle size={15} /> <span>Chat on WhatsApp</span>
-                    </a>
-                  </motion.div>
-                ) : (
-                  <motion.form
-                    key="form" onSubmit={handleSubmit} className="lnd-form"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  >
-                    <div className={`lnd-field ${errors.name ? 'err' : ''}`}>
+            <span className="lx-hero__caption">ATTICARCH Residence · Bangalore</span>
+
+            {/* next-image preview + counter */}
+            <motion.div
+              className="lx-hero__next"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 1.25 }}
+              aria-hidden="true"
+            >
+              <img src={heroImages[(imgIdx + 1) % heroImages.length]} alt="" />
+              <span>{String(imgIdx + 1).padStart(2, '0')} / {String(heroImages.length).padStart(2, '0')}</span>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══ THIN GOLD TICKER ═══ */}
+      <div className="lx-ticker" aria-hidden="true">
+        <div className="lx-ticker__track">
+          {[...Array(3)].flatMap((_, r) =>
+            ['Award-Winning Studio', '10-Year Warranty', 'In-House Production', 'Since 2002', 'On-Time Handover', 'From ₹10 Lakhs'].map((m, i) => (
+              <span key={`${r}-${i}`}>{m}<b>✦</b></span>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* ═══ BOOKING — form + contact rail ═══ */}
+      <section className="lx-book" id="lead-form">
+        <div className="lx-book__panel">
+          <div className="lx-book__intro">
+            <Kicker>Start Your Project</Kicker>
+            <h2 className="lx-h2">Book a Design <em>Consultation</em></h2>
+            <p className="lx-book__sub">
+              Share your details and our senior designer will call you back to
+              understand your home, your style and your budget.
+            </p>
+            <div className="lx-book__alt">
+              <a href={telLink}><Phone size={15} /> {phone}</a>
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} /> Chat on WhatsApp</a>
+              <span><Clock size={15} /> We reply within working hours</span>
+            </div>
+          </div>
+
+          <div className="lx-book__form-side">
+            <AnimatePresence mode="wait">
+              {status === 'success' ? (
+                <motion.div
+                  key="ok" className="lx-form-success"
+                  initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className="lx-form-success__icon"><Check size={28} /></div>
+                  <h3>Thank you, {form.name.split(' ')[0]}!</h3>
+                  <p>We've received your request. Our designer will call you shortly.</p>
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lx-btn lx-btn--gold" style={{ marginTop: 16 }}>
+                    <MessageCircle size={15} /> Chat on WhatsApp
+                  </a>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form" onSubmit={handleSubmit} className="lx-form"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                >
+                  <div className="lx-form__row">
+                    <div className={`lx-field ${errors.name ? 'err' : ''}`}>
                       <label>Full Name <span>*</span></label>
                       <input type="text" placeholder="Your name" value={form.name} onChange={update('name')} />
                       {errors.name && <small>{errors.name}</small>}
                     </div>
-                    <div className={`lnd-field ${errors.phone ? 'err' : ''}`}>
+                    <div className={`lx-field ${errors.phone ? 'err' : ''}`}>
                       <label>Phone <span>*</span></label>
                       <input type="tel" placeholder="10-digit mobile" value={form.phone} onChange={update('phone')} maxLength={10} />
                       {errors.phone && <small>{errors.phone}</small>}
                     </div>
-                    <div className="lnd-field-row">
-                      <div className="lnd-field">
-                        <label>Property Type</label>
-                        <select value={form.type} onChange={update('type')}>
-                          <option>Apartment</option>
-                          <option>Villa</option>
-                          <option>Commercial</option>
-                          <option>Renovation</option>
-                          <option>Others</option>
-                        </select>
-                      </div>
-                      <div className="lnd-field">
-                        <label>Budget</label>
-                        <select value={form.budget} onChange={update('budget')}>
-                          <option>10 - 15 Lakhs</option>
-                          <option>15 - 20 Lakhs</option>
-                          <option>Over 20 Lakhs</option>
-                        </select>
-                      </div>
+                  </div>
+                  <div className="lx-form__row">
+                    <div className="lx-field">
+                      <label>Property Type</label>
+                      <select value={form.type} onChange={update('type')}>
+                        <option>Apartment</option>
+                        <option>Villa</option>
+                        <option>Commercial</option>
+                        <option>Renovation</option>
+                        <option>Others</option>
+                      </select>
                     </div>
-                    <button type="submit" disabled={status === 'sending'} className="lnd-form__submit">
-                      <span className="lnd-form__submit-sheen" />
-                      {status === 'sending' ? 'Sending…' : <>Request a Call Back <ArrowRight size={15} /></>}
-                    </button>
-                    {status === 'error' && (
-                      <p className="lnd-form__error">Couldn't submit right now. Please retry, or call us at {phone}.</p>
-                    )}
-                    <p className="lnd-form__privacy">
-                      <ShieldCheck size={12} /> Your details are 100% secure. We never spam.
-                    </p>
-                  </motion.form>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Arched panoramic hero image */}
-        <motion.div
-          className="lnd-hero__band"
-          initial={{ opacity: 0, y: 44 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="lnd-hero__band-frame">
-            <img src={heroImage} alt="ATTICARCH interiors, Bangalore" />
-            <span className="lnd-hero__band-caption">ATTICARCH Residence · Bangalore</span>
-
-            {/* Rotating circular badge */}
-            <div className="lnd-orbit" aria-hidden="true">
-              <svg viewBox="0 0 120 120">
-                <defs>
-                  <path id="lnd-orbit-path" d="M 60,60 m -44,0 a 44,44 0 1,1 88,0 a 44,44 0 1,1 -88,0" />
-                </defs>
-                <text>
-                  <textPath href="#lnd-orbit-path">
-                    ATTICARCH · SINCE 2002 · BUILT IN-HOUSE ·
-                  </textPath>
-                </text>
-              </svg>
-              <span className="lnd-orbit__core">✦</span>
-            </div>
+                    <div className="lx-field">
+                      <label>Budget</label>
+                      <select value={form.budget} onChange={update('budget')}>
+                        <option>10 - 15 Lakhs</option>
+                        <option>15 - 20 Lakhs</option>
+                        <option>Over 20 Lakhs</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={status === 'sending'} className="lx-form__submit">
+                    {status === 'sending' ? 'Sending…' : <>Request a Call Back <ArrowRight size={15} /></>}
+                  </button>
+                  {status === 'error' && (
+                    <p className="lx-form__error">Couldn't submit right now. Please retry, or call us at {phone}.</p>
+                  )}
+                  <p className="lx-form__privacy"><ShieldCheck size={12} /> Your details are 100% secure. We never spam.</p>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
-        </motion.div>
-      </section>
-
-      {/* ═══ STATS — homepage value props ═══ */}
-      <section className="lnd-stats">
-        <div className="lnd-stats__grid">
-          {valueProps.map((s, i) => <ValueStat key={i} stat={s} index={i} />)}
-        </div>
-        <div className="lnd-partners">
-          {partners.slice(0, 8).map(p => {
-            const logo = partnerLogo(p.slug)
-            return (
-              <div key={p.slug} className="lnd-partners__logo" title={p.name}>
-                {logo ? <img src={logo} alt={p.name} /> : <span>{p.name}</span>}
-              </div>
-            )
-          })}
         </div>
       </section>
 
-      {/* ═══ CORE SERVICES ═══ */}
-      <section className="lnd-section">
-        <div className="lnd-head">
-          <Kicker>Our Core Services</Kicker>
-          <H2>Spaces We <em>Design & Build</em></H2>
+      {/* ═══ CORE SERVICES — alternating editorial rows ═══ */}
+      <section className="lx-section">
+        <div className="lx-head">
+          <Kicker center>Our Core Services</Kicker>
+          <H2 center>Spaces We <em>Design & Build</em></H2>
         </div>
-        <div className="lnd-services">
+        <div className="lx-services">
           {staticServices.map((s, i) => (
             <motion.article
               key={s.id}
-              className="lnd-service"
-              initial={{ opacity: 0, y: 36 }}
+              className={`lx-service ${i % 2 ? 'lx-service--flip' : ''}`}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.75, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="lnd-service__media">
+              <div className="lx-service__media">
                 <img src={s.image} alt={s.title} loading="lazy" />
-                <span className="lnd-service__num">{String(i + 1).padStart(2, '0')}</span>
               </div>
-              <div className="lnd-service__body">
-                <span className="lnd-service__sub">{s.subtitle}</span>
+              <div className="lx-service__body">
+                <span className="lx-service__index">{String(i + 1).padStart(2, '0')}</span>
+                <span className="lx-service__sub">{s.subtitle}</span>
                 <h3>{s.title}</h3>
                 <p>{s.description}</p>
                 <ul>
@@ -478,68 +484,67 @@ export default function LandingPage() {
                     <li key={j}><Check size={12} /> {f}</li>
                   ))}
                 </ul>
+                <a href="#lead-form" className="lx-service__link">
+                  Discuss your project <ArrowUpRight size={14} />
+                </a>
               </div>
             </motion.article>
           ))}
         </div>
       </section>
 
-      {/* ═══ WHAT WE BUILD — compact listing ═══ */}
-      <section className="lnd-section lnd-build">
-        <div className="lnd-head">
-          <Kicker>What We Build</Kicker>
-          <H2>Everything, <em>Under One Roof</em></H2>
+      {/* ═══ WHAT WE BUILD — minimal index ═══ */}
+      <section className="lx-section lx-build">
+        <div className="lx-head">
+          <Kicker center>What We Build</Kicker>
+          <H2 center>Everything, <em>Under One Roof</em></H2>
         </div>
-        <div className="lnd-build__list">
+        <div className="lx-build__grid">
           {displayWorkTypes.map((w, i) => (
             <motion.div
               key={i}
-              className="lnd-build__item"
-              initial={{ opacity: 0, y: 16 }}
+              className="lx-build__item"
+              initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.45, delay: (i % 8) * 0.05 }}
+              transition={{ duration: 0.45, delay: (i % 4) * 0.06 }}
             >
-              <span className="lnd-build__num">{String(i + 1).padStart(2, '0')}</span>
-              <span className="lnd-build__title">{w}</span>
-              <span className="lnd-build__star">✦</span>
+              <span className="lx-build__num">{String(i + 1).padStart(2, '0')}</span>
+              <span className="lx-build__title">{w}</span>
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* ═══ INSIDE THE STUDIO ═══ */}
-      <section className="lnd-section lnd-studio">
-        <div className="lnd-studio__grid">
+      <section className="lx-section lx-studio">
+        <div className="lx-studio__grid">
           <motion.div
-            className="lnd-studio__media"
-            initial={{ opacity: 0, x: -36 }}
+            className="lx-studio__media"
+            initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
           >
             <img src={studioImage} alt="Inside the ATTICARCH studio" loading="lazy" />
-            <div className="lnd-studio__badge">
-              <Hammer size={16} />
-              <div>
-                <strong>In-House Production</strong>
-                <span>Built by us, not outsourced</span>
-              </div>
+            <div className="lx-studio__badge">
+              <Hammer size={15} />
+              <span>In-House Production</span>
             </div>
           </motion.div>
           <motion.div
-            className="lnd-studio__text"
-            initial={{ opacity: 0, x: 36 }}
+            className="lx-studio__text"
+            initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="lnd-kicker lnd-kicker--left"><i />Inside the Studio</span>
-            <h2 className="lnd-h2">Built Around You. <em>Made by Hand.</em></h2>
-            <p className="lnd-studio__desc">{studioDesc}</p>
-            <div className="lnd-studio__highlights">
+            <Kicker>Inside the Studio</Kicker>
+            <h2 className="lx-h2">Built Around You. <em>Made by Hand.</em></h2>
+            <p className="lx-studio__desc">{studioDesc}</p>
+            <div className="lx-studio__highlights">
               {studioHighlights.map((h, i) => (
-                <div key={i} className="lnd-studio__hl">
+                <div key={i} className="lx-studio__hl">
                   <strong>{h.value}</strong>
                   <span>{h.label}</span>
                 </div>
@@ -549,76 +554,103 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ CLIENT VIDEO TESTIMONIALS ═══ */}
-      <section className="lnd-section lnd-videos">
-        <div className="lnd-head">
-          <Kicker>What Our Clients Say</Kicker>
-          <H2>Real Homes. <em>Real Walkthroughs.</em></H2>
+      {/* ═══ CLIENT VIDEO WALKTHROUGHS ═══ */}
+      <section className="lx-section lx-videos">
+        <div className="lx-head">
+          <Kicker center>What Our Clients Say</Kicker>
+          <H2 center>Real Homes. <em>Real Walkthroughs.</em></H2>
         </div>
-        <div className="lnd-videos__grid">
+        <div className="lx-videos__grid">
           {displayTestimonials.map((t, i) => (
             <motion.a
               key={t.videoId || i}
-              className="lnd-video"
+              className="lx-video"
               href={`https://www.youtube.com/watch?v=${t.videoId}`}
               target="_blank" rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.65, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="lnd-video__thumb">
+              <div className="lx-video__thumb">
                 <img src={`https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`} alt={t.project || t.name} loading="lazy" />
-                <span className="lnd-video__play"><Play size={18} fill="currentColor" /></span>
+                <span className="lx-video__play"><Play size={16} fill="currentColor" /></span>
               </div>
-              <div className="lnd-video__meta">
+              <div className="lx-video__meta">
                 <strong>{t.project || 'Home Interiors'}</strong>
                 <span>{t.name}</span>
               </div>
             </motion.a>
           ))}
         </div>
+        <div className="lx-partners">
+          {partners.slice(0, 8).map(p => {
+            const logo = partnerLogo(p.slug)
+            return (
+              <div key={p.slug} className="lx-partners__logo" title={p.name}>
+                {logo ? <img src={logo} alt={p.name} /> : <span>{p.name}</span>}
+              </div>
+            )
+          })}
+        </div>
       </section>
 
       {/* ═══ FINAL CTA ═══ */}
-      <section className="lnd-final">
-        <span className="lnd-blob lnd-blob--3" aria-hidden="true" />
+      <section className="lx-final">
         <motion.div
-          className="lnd-final__inner"
-          initial={{ opacity: 0, y: 30 }}
+          className="lx-final__inner"
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span className="lnd-final__icons">
-            <Award size={16} /> <Clock size={16} /> <Hammer size={16} />
-          </span>
+          <span className="lx-final__ornament"><i /><b /><i /></span>
           <h2>Ready to Begin Your <em>Dream Home?</em></h2>
           <p>An award-winning studio, our own production unit, and a 10-year warranty — since 2002.</p>
-          <div className="lnd-final__buttons">
-            <a href="#lead-form" className="lnd-btn lnd-btn--gold lnd-btn--xl">
-              <span>Book a Consultation</span> <ArrowRight size={17} />
+          <div className="lx-final__buttons">
+            <a href="#lead-form" className="lx-btn lx-btn--gold lx-btn--xl">
+              Book a Consultation <ArrowRight size={16} />
             </a>
-            <a href={telLink} className="lnd-btn lnd-btn--line lnd-btn--xl">
-              <Phone size={16} /> <span>{phone}</span>
+            <a href={telLink} className="lx-btn lx-btn--ghost lx-btn--xl">
+              <Phone size={15} /> {phone}
             </a>
           </div>
         </motion.div>
       </section>
 
-      {/* ═══ FOOTER ═══ */}
-      <footer className="lnd-footer">
-        <div className="lnd-footer__inner">
-          <div className="lnd-footer__brand">
-            <img src={logoSrc} alt="ATTICARCH" className="lnd-footer__logo" />
-            <span>Transforming Spaces, Transforming Lives · Since 2002</span>
+      {/* ═══ FOOTER — editorial ═══ */}
+      <footer className="lx-footer">
+        <div className="lx-footer__inner">
+          <div className="lx-footer__grid">
+            <div className="lx-footer__brand">
+              <img src={logoSrc} alt="ATTICARCH" className="lx-footer__logo" />
+              <span className="lx-footer__tag">Transforming Spaces,<br />Transforming Lives.</span>
+              <span className="lx-footer__est">Bangalore · Est. 2002</span>
+            </div>
+            <div className="lx-footer__col">
+              <h4>Visit the Studio</h4>
+              <p>#12, 3rd Floor, 10th Main,<br />Outer Ring Rd, Banaswadi,<br />Bengaluru, Karnataka 560043</p>
+            </div>
+            <div className="lx-footer__col">
+              <h4>Talk to Us</h4>
+              <a href={telLink}><Phone size={13} /> {phone}</a>
+              <a href="mailto:sales@atticarch.com"><Mail size={13} /> sales@atticarch.com</a>
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> WhatsApp the studio</a>
+            </div>
+            <div className="lx-footer__col lx-footer__col--cta">
+              <h4>Start a Project</h4>
+              <p>A 20-minute conversation is all it takes to begin.</p>
+              <a href="#lead-form" className="lx-btn lx-btn--gold">
+                Book a Consultation <ArrowRight size={14} />
+              </a>
+            </div>
           </div>
-          <div className="lnd-footer__contact">
-            <a href={telLink}><Phone size={13} /> {phone}</a>
-            <a href="mailto:sales@atticarch.com"><Mail size={13} /> sales@atticarch.com</a>
-            <span><MapPin size={13} /> #12, 3rd Floor, 10th Main, Outer Ring Rd, Banaswadi, Bengaluru 560043</span>
+          <div className="lx-footer__bottom">
+            <small>© {new Date().getFullYear()} ATTICARCH. All rights reserved.</small>
+            <span className="lx-footer__rating">
+              <Star size={11} fill="#C9A96E" color="#C9A96E" /> 4.5 on Google · 41 reviews
+            </span>
           </div>
-          <small>© {new Date().getFullYear()} ATTICARCH. All rights reserved.</small>
         </div>
       </footer>
 
@@ -626,15 +658,15 @@ export default function LandingPage() {
       <AnimatePresence>
         {showSticky && (
           <motion.div
-            className="lnd-sticky"
+            className="lx-sticky"
             initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
-            <a href={telLink} className="lnd-sticky__btn lnd-sticky__btn--call"><Phone size={17} /> Call</a>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lnd-sticky__btn lnd-sticky__btn--wa">
-              <MessageCircle size={17} /> WhatsApp
+            <a href={telLink} className="lx-sticky__btn lx-sticky__btn--call"><Phone size={16} /> Call</a>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="lx-sticky__btn lx-sticky__btn--wa">
+              <MessageCircle size={16} /> WhatsApp
             </a>
-            <a href="#lead-form" className="lnd-sticky__btn lnd-sticky__btn--form"><Send size={17} /> Enquire</a>
+            <a href="#lead-form" className="lx-sticky__btn lx-sticky__btn--form"><Send size={16} /> Enquire</a>
           </motion.div>
         )}
       </AnimatePresence>
