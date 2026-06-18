@@ -128,10 +128,18 @@ export const services = [
 ]
 
 export const workTypes = [
-  'Modular Kitchens', 'Wardrobes', 'False Ceiling', 'Lighting Design',
-  'Flooring', 'Electrical', 'Plumbing', 'Civil Work',
-  'TV Units', 'Crockery Units', 'Pooja Rooms', 'Balcony Design',
-  'Kids Bedrooms', 'Home Office', 'Wallpaper & Textures', 'Landscaping',
+  'Design & Consultancy',
+  'Civil & Structural Modifications',
+  'Electrical & ELV Systems',
+  'Plumbing & Sanitary Works',
+  'Ceiling, Flooring & Surface Finishes',
+  'Modular Kitchen & Utility Areas',
+  'Joinery, Wardrobes & Storage Solutions',
+  'Custom Furniture & Upholstery',
+  'Lighting, Fixtures & Automation',
+  'Soft Furnishings & Styling',
+  'Glass, Metal & Specialty Works',
+  'Project Management, Quality Control & Handover',
 ]
 
 /* Trusted brand partners — material & hardware suppliers we work with.

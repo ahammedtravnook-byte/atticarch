@@ -573,7 +573,7 @@
 
 .hero__eyebrow span {
   font-family: var(--font-accent);
-  font-size: 11px;
+  font-size: 13.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gold-light);
@@ -3057,7 +3057,7 @@
 @media (max-width: 480px) {
   .hero__title { font-size: clamp(1.6rem, 6.5vw, 2.4rem); }
   .hero__subtitle { font-size: var(--text-base); margin-bottom: 24px; }
-  .hero__eyebrow span { font-size: 9px; }
+  .hero__eyebrow span { font-size: 11px; }
   .hero__eyebrow-line { width: 24px; }
   .hero__content { padding-top: 130px; }
   .hero__preview { display: none; }
@@ -3095,6 +3095,86 @@
 
 /* ── WORK TYPES GRID ── */
 .work-types-section { overflow: visible; }
+
+/* ════════════════════════════════════════════════
+   "WHAT WE BUILD" — HONEYCOMB (hexagon grid, dark)
+   ════════════════════════════════════════════════ */
+.wb-comb-section {
+  background: radial-gradient(120% 120% at 50% 0%, #2a2620, #1a1a1a 62%);
+  overflow: hidden;
+}
+.wb-comb-section .section-label { color: #c9a96e; }
+.wb-comb-section .wb-comb-title { color: #fff; }
+
+.wb-comb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wb-comb-row {
+  display: flex;
+  justify-content: center;
+}
+.wb-comb-row + .wb-comb-row { margin-top: -34px; }
+
+.wb-hex {
+  width: 150px;
+  height: 170px;
+  margin: 0 6px;
+  flex-shrink: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(150deg, #c9a96e, #a8854a);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  position: relative;
+  cursor: default;
+  transition: transform 0.3s ease;
+}
+.wb-hex::before {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  clip-path: inherit;
+  background: #211d18;
+  z-index: 0;
+  transition: background 0.3s ease;
+}
+.wb-hex > * { position: relative; z-index: 1; }
+.wb-hex__icon {
+  width: 26px;
+  height: 26px;
+  color: #c9a96e;
+  transition: color 0.3s ease;
+}
+.wb-hex__title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #efe9df;
+  padding: 0 14px;
+  line-height: 1.25;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+.wb-hex:hover { transform: translateY(-3px); }
+.wb-hex:hover::before { background: transparent; }
+.wb-hex:hover .wb-hex__icon,
+.wb-hex:hover .wb-hex__title { color: #1a1a1a; }
+
+@media (max-width: 860px) {
+  .wb-hex { width: 118px; height: 134px; margin: 0 4px; }
+  .wb-hex__icon { width: 22px; height: 22px; }
+  .wb-hex__title { font-size: 11px; padding: 0 9px; }
+  .wb-comb-row + .wb-comb-row { margin-top: -28px; }
+}
+@media (max-width: 460px) {
+  .wb-hex { width: 90px; height: 103px; margin: 0 2.5px; gap: 6px; }
+  .wb-hex__icon { width: 18px; height: 18px; }
+  .wb-hex__title { font-size: 9px; padding: 0 5px; }
+  .wb-comb-row + .wb-comb-row { margin-top: -22px; }
+}
 
 .work-types-grid {
   display: grid;

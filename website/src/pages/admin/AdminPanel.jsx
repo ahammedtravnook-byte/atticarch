@@ -575,7 +575,7 @@ function HeroManager({ showToast }) {
             )
           })}
         </div>
-        <button type="button" onClick={addVideo} className="admin-gallery-btn" style={{ marginTop: 10 }}><Plus size={14} /> Add Video</button>
+        <button type="button" onClick={addVideo} className="admin-add-btn" style={{ marginTop: 10 }}><Plus size={14} /> Add Video</button>
 
         <h3 className="admin-card__title" style={{ marginTop: 32 }}>Slideshow Images ({slides.length})</h3>
         
@@ -1279,12 +1279,12 @@ function PortfolioManager({ showToast }) {
                         {s.image ? (
                           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                             <img src={s.image} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 6 }} />
-                            <button type="button" onClick={() => removeSubcatCover(i)} className="admin-gallery-btn admin-gallery-btn--danger">
+                            <button type="button" onClick={() => removeSubcatCover(i)} className="admin-add-btn admin-add-btn--danger">
                               <Trash2 size={13} /> Remove
                             </button>
                           </div>
                         ) : (
-                          <label className="admin-gallery-btn" style={{ cursor: 'pointer' }}>
+                          <label className="admin-add-btn" style={{ cursor: 'pointer' }}>
                             {subcatUploading === `cover-${i}` ? 'Uploading…' : (<><Plus size={14} /> Upload Cover</>)}
                             <input type="file" accept="image/*" hidden onChange={e => uploadSubcatCover(i, e.target.files?.[0])} />
                           </label>
@@ -1308,7 +1308,7 @@ function PortfolioManager({ showToast }) {
                             ))}
                           </div>
                         )}
-                        <label className="admin-gallery-btn" style={{ cursor: 'pointer' }}>
+                        <label className="admin-add-btn" style={{ cursor: 'pointer' }}>
                           {subcatUploading === `gallery-${i}` ? 'Uploading…' : (<><Plus size={14} /> Add Gallery Images</>)}
                           <input type="file" accept="image/*" multiple hidden onChange={e => uploadSubcatGallery(i, e.target.files)} />
                         </label>
@@ -1316,7 +1316,7 @@ function PortfolioManager({ showToast }) {
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={addSubcat} className="admin-gallery-btn" style={{ marginTop: 12 }}>
+                <button type="button" onClick={addSubcat} className="admin-add-btn" style={{ marginTop: 12 }}>
                   <Plus size={14} /> Add Subcategory
                 </button>
               </div>
@@ -1758,7 +1758,7 @@ function AboutTeaserManager({ showToast }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={addPrinciple} className="admin-gallery-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Principle</button>
+          <button type="button" onClick={addPrinciple} className="admin-add-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Principle</button>
 
           {/* Approach points */}
           <h4 style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Approach Points</h4>
@@ -1770,7 +1770,7 @@ function AboutTeaserManager({ showToast }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={addApproach} className="admin-gallery-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Point</button>
+          <button type="button" onClick={addApproach} className="admin-add-btn" style={{ marginBottom: 8 }}><Plus size={14} /> Add Point</button>
 
           {/* Value props */}
           <h4 style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase' }}>Value Prop Stats</h4>
@@ -1792,7 +1792,7 @@ function AboutTeaserManager({ showToast }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={addValueProp} className="admin-gallery-btn" style={{ marginBottom: 20 }}><Plus size={14} /> Add Stat</button>
+          <button type="button" onClick={addValueProp} className="admin-add-btn" style={{ marginBottom: 20 }}><Plus size={14} /> Add Stat</button>
 
           <SaveBtn saving={savingPage} onClick={handleSavePage} type="button" className="btn-gold" style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 15 }}>
             Save About Page Content

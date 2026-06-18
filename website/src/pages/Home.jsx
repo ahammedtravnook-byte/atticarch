@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { ArrowUpRight, ArrowRight, Star, ChevronLeft, ChevronRight, Quote, Play, Check, ShieldCheck, Wallet, Package } from 'lucide-react'
+import { ArrowUpRight, ArrowRight, Star, ChevronLeft, ChevronRight, Quote, Play, Check, ShieldCheck, Wallet, Package, PencilRuler, Hammer, Zap, Droplets, Layers, CookingPot, Shirt, Armchair, LampCeiling, BedDouble, Gem, ClipboardCheck } from 'lucide-react'
 
 /* brand SVGs — lucide doesn't include these */
 const IconYoutube = ({ size = 16, ...p }) => (
@@ -997,6 +997,40 @@ const workTypeCardVariants = {
   }
 }
 
+// Maps a "What We Build" title to a Lucide icon (keyword match, with a
+// sensible fallback) so admins can keep editing plain titles.
+function workTypeIcon(title = '') {
+  const t = title.toLowerCase()
+  if (t.includes('design') || t.includes('consult') || t.includes('drawing')) return PencilRuler
+  if (t.includes('civil') || t.includes('structural') || t.includes('modif')) return Hammer
+  if (t.includes('electric') || t.includes('elv')) return Zap
+  if (t.includes('plumb') || t.includes('sanitary')) return Droplets
+  if (t.includes('ceiling') || t.includes('floor') || t.includes('surface') || t.includes('finish')) return Layers
+  if (t.includes('kitchen') || t.includes('utility')) return CookingPot
+  if (t.includes('wardrobe') || t.includes('joinery') || t.includes('storage')) return Shirt
+  if (t.includes('furniture') || t.includes('upholstery')) return Armchair
+  if (t.includes('light') || t.includes('fixture') || t.includes('automation')) return LampCeiling
+  if (t.includes('furnishing') || t.includes('styling') || t.includes('decor')) return BedDouble
+  if (t.includes('glass') || t.includes('metal') || t.includes('specialty')) return Gem
+  if (t.includes('project') || t.includes('management') || t.includes('handover') || t.includes('quality')) return ClipboardCheck
+  return Package
+}
+
+// Honeycomb row layout — interlocking rows that nestle into each other.
+function combRows(items) {
+  const pattern = [3, 4, 3, 2]
+  const rows = []
+  let idx = 0
+  for (const count of pattern) {
+    if (idx >= items.length) break
+    rows.push(items.slice(idx, idx + count))
+    idx += count
+  }
+  // Any leftover items (admin added more) go into a final row.
+  if (idx < items.length) rows.push(items.slice(idx))
+  return rows
+}
+
 export default function Home() {
   const {
     projects,
@@ -1152,31 +1186,34 @@ export default function Home() {
       {/* ═══════════════════════════════════════════
           WORK TYPES — WHAT WE BUILD
       ══════════════════════════════════════════ */}
-      <section className="section section-linen work-types-section">
+      <section className="section work-types-section wb-comb-section">
         <div className="container">
           <Reveal>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ textAlign: 'center', marginBottom: 44 }}>
               <span className="section-label" style={{ justifyContent: 'center' }}>Everything Under One Roof</span>
-              <h2 className="section-title">What We Build</h2>
+              <h2 className="section-title wb-comb-title">What We Build</h2>
             </div>
           </Reveal>
           <motion.div
-            className="work-types-list"
+            className="wb-comb"
             variants={workTypeContainerVariants}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.05 }}
           >
-            {workTypes.map((w, i) => (
-              <motion.div
-                key={i}
-                className="work-type-item"
-                variants={workTypeCardVariants}
-              >
-                <span className="work-type-item__num text-mono">{String(i + 1).padStart(2, '0')}</span>
-                <span className="work-type-item__title">{w.title || w}</span>
-                <span className="work-type-item__star" aria-hidden="true">✦</span>
-              </motion.div>
+            {combRows(workTypes).map((row, ri) => (
+              <div className="wb-comb-row" key={ri}>
+                {row.map((w, ci) => {
+                  const title = w.title || w
+                  const Icon = workTypeIcon(title)
+                  return (
+                    <motion.div className="wb-hex" key={ci} variants={workTypeCardVariants}>
+                      <Icon className="wb-hex__icon" aria-hidden="true" strokeWidth={1.5} />
+                      <span className="wb-hex__title">{title}</span>
+                    </motion.div>
+                  )
+                })}
+              </div>
             ))}
           </motion.div>
         </div>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ATTICARCH — "What We Build" · UI Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #D4B883;
+    --gold-dark: #A68B4B;
+    --charcoal: #1A1A1A;
+    --ink: #2b2622;
+    --cream: #FAF6F0;
+    --warm-white: #FEFCF9;
+    --linen: #F2EADD;
+    --pearl: #E8E0D4;
+    --ash: #8a8178;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Jost', sans-serif;
+    background: #e9e3d8;
+    color: var(--charcoal);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'Cormorant Garamond', serif; }
+
+  /* ─── Top explainer bar ─── */
+  .topbar {
+    background: var(--charcoal);
+    color: var(--warm-white);
+    padding: 22px 28px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 30px rgba(0,0,0,.25);
+  }
+  .topbar__inner { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+  .topbar__brand { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 26px; color: var(--gold); letter-spacing: .5px; }
+  .topbar__brand small { display: block; font-family: 'Jost'; font-style: normal; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #b7ada0; margin-top: 2px; }
+  .switcher { display: flex; flex-wrap: wrap; gap: 8px; }
+  .switcher a {
+    text-decoration: none; color: #cfc6ba; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 9px 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; transition: .25s;
+  }
+  .switcher a:hover { color: var(--charcoal); background: var(--gold); border-color: var(--gold); }
+
+  .intro { max-width: 760px; margin: 48px auto 8px; padding: 0 24px; text-align: center; }
+  .intro h1 { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; color: var(--charcoal); }
+  .intro p { color: #6a6258; margin-top: 14px; font-size: 15px; }
+
+  /* ─── Option frame ─── */
+  .option { max-width: 1240px; margin: 0 auto; padding: 40px 24px 20px; }
+  .option__tag {
+    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dark); font-weight: 600;
+  }
+  .option__tag b {
+    background: var(--charcoal); color: var(--gold); width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; font-family: 'Cormorant Garamond', serif; font-size: 16px;
+  }
+  .option__name { font-family: 'Cormorant Garamond', serif; font-size: 13px; }
+  .stage { border-radius: 18px; overflow: hidden; box-shadow: 0 30px 70px -30px rgba(0,0,0,.4); }
+
+  /* shared section bits */
+  .sec-label { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
+  .sec-label::before, .sec-label::after { content: ''; width: 26px; height: 1px; background: currentColor; opacity: .5; }
+  .sec-title { font-family: 'Cormorant Garamond', serif; font-weight: 600; line-height: 1; }
+
+  /* fade-up on load */
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+  /* ════════════════════════════════════════════════
+     OPTION 1 — REFINED ICON CARDS (light)
+     ════════════════════════════════════════════════ */
+  .o1 { background: var(--cream); padding: 70px 40px 80px; text-align: center; }
+  .o1 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 14px; }
+  .o1 .sec-title { font-size: clamp(34px, 5vw, 52px); color: var(--charcoal); }
+  .o1 .sub { color: #7a7065; margin: 14px auto 50px; max-width: 520px; }
+  .o1-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; max-width: 1040px; margin: 0 auto; }
+  .o1-card {
+    background: var(--warm-white); border: 1px solid var(--pearl); border-radius: 14px; padding: 28px 18px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; transition: .3s; position: relative; overflow: hidden;
+  }
+  .o1-card::before { content:''; position:absolute; inset:0; background: linear-gradient(160deg, rgba(201,169,110,.12), transparent 60%); opacity:0; transition:.3s; }
+  .o1-card:hover { transform: translateY(-6px); border-color: var(--gold); box-shadow: 0 20px 40px -22px rgba(166,139,75,.6); }
+  .o1-card:hover::before { opacity: 1; }
+  .o1-ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, var(--linen), #fff); border: 1px solid var(--pearl); color: var(--gold-dark); transition:.3s; }
+  .o1-card:hover .o1-ic { background: var(--charcoal); color: var(--gold); border-color: var(--charcoal); }
+  .o1-ic svg { width: 24px; height: 24px; }
+  .o1-card span { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: .3px; position: relative; }
+
+  /* ════════════════════════════════════════════════
+     OPTION 2 — EDITORIAL DARK INDEX
+     ════════════════════════════════════════════════ */
+  .o2 { background: var(--charcoal); color: #efe9df; padding: 78px 44px 84px; position: relative; }
+  .o2::after { content:''; position:absolute; inset:0; background-image: radial-gradient(rgba(201,169,110,.08) 1px, transparent 1px); background-size: 22px 22px; opacity:.5; pointer-events:none; }
+  .o2-head { text-align: center; margin-bottom: 56px; position: relative; }
+  .o2 .sec-label { color: var(--gold); justify-content: center; margin-bottom: 16px; }
+  .o2 .sec-title { font-size: clamp(36px, 5.5vw, 60px); color: #fff; }
+  .o2 .sec-title em { color: var(--gold); font-style: italic; }
+  .o2-list { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; column-gap: 60px; position: relative; }
+  .o2-row { display: flex; align-items: baseline; gap: 18px; padding: 16px 6px; border-bottom: 1px solid rgba(255,255,255,.1); transition: .3s; }
+  .o2-row:hover { padding-left: 14px; border-color: var(--gold); }
+  .o2-num { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; color: var(--gold); width: 38px; flex-shrink: 0; }
+  .o2-name { font-size: 16px; font-weight: 400; letter-spacing: .4px; flex: 1; }
+  .o2-row .dot { color: var(--gold); opacity: 0; transition: .3s; }
+  .o2-row:hover .dot { opacity: 1; }
+
+  /* ════════════════════════════════════════════════
+     OPTION 3 — LIVING MARQUEE (chips)
+     ════════════════════════════════════════════════ */
+  .o3 { background: linear-gradient(180deg, #fff 0%, var(--cream) 100%); padding: 72px 0 84px; text-align: center; overflow: hidden; }
+  .o3 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 14px; }
+  .o3 .sec-title { font-size: clamp(34px, 5vw, 54px); color: var(--charcoal); }
+  .o3 .sub { color: #7a7065; margin: 14px auto 46px; max-width: 520px; padding: 0 20px; }
+  .marquee { display: flex; flex-direction: column; gap: 16px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+  .track { display: flex; gap: 14px; width: max-content; animation: scrollx 38s linear infinite; }
+  .track.rev { animation-direction: reverse; animation-duration: 46s; }
+  .track:hover { animation-play-state: paused; }
+  @keyframes scrollx { to { transform: translateX(-50%); } }
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+    padding: 13px 24px; border-radius: 999px; border: 1px solid var(--pearl); background: var(--warm-white);
+    font-size: 15px; font-weight: 500; color: var(--ink); transition: .25s;
+  }
+  .chip svg { width: 17px; height: 17px; color: var(--gold-dark); }
+  .chip:hover { background: var(--charcoal); color: #fff; border-color: var(--charcoal); }
+  .chip:hover svg { color: var(--gold); }
+  .chip--solid { background: var(--gold); border-color: var(--gold); color: var(--charcoal); }
+  .chip--solid svg { color: var(--charcoal); }
+
+  /* ════════════════════════════════════════════════
+     OPTION 4 — BENTO CATEGORIES
+     ════════════════════════════════════════════════ */
+  .o4 { background: var(--cream); padding: 74px 40px 84px; }
+  .o4-head { text-align: center; margin-bottom: 50px; }
+  .o4 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 14px; }
+  .o4 .sec-title { font-size: clamp(34px, 5vw, 54px); color: var(--charcoal); }
+  .o4-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 1080px; margin: 0 auto; align-items: stretch; }
+  .o4-col { background: var(--warm-white); border: 1px solid var(--pearl); border-radius: 16px; padding: 30px 26px; display: flex; flex-direction: column; }
+  .o4-col h3 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; }
+  .o4-col .kicker { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dark); margin-bottom: 22px; }
+  .o4-col ul { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .o4-col li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--pearl); font-size: 14.5px; color: var(--ink); transition: .2s; }
+  .o4-col li:last-child { border-bottom: 0; }
+  .o4-col li:hover { color: var(--gold-dark); transform: translateX(4px); }
+  .o4-col li svg { width: 18px; height: 18px; color: var(--gold-dark); flex-shrink: 0; }
+  .o4-feature { grid-column: 1 / -1; background: var(--charcoal); color: #fff; border-color: var(--charcoal); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 34px 40px; }
+  .o4-feature .big { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px, 4vw, 46px); line-height: 1.05; }
+  .o4-feature .big em { color: var(--gold); font-style: italic; }
+  .o4-feature .stat { text-align: center; }
+  .o4-feature .stat b { font-family: 'Cormorant Garamond', serif; font-size: 44px; color: var(--gold); display: block; line-height: 1; }
+  .o4-feature .stat span { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #b7ada0; }
+
+  /* ════════════════════════════════════════════════
+     OPTION 5 — GRAND INDEX (oversized type, light)
+     ════════════════════════════════════════════════ */
+  .o5 { background: var(--warm-white); padding: 70px 44px 80px; }
+  .o5-head { text-align: center; margin-bottom: 40px; }
+  .o5 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 12px; }
+  .o5 .sec-title { font-size: clamp(34px, 5vw, 54px); color: var(--charcoal); }
+  .o5-list { max-width: 1080px; margin: 0 auto; }
+  .o5-row { display: flex; align-items: baseline; gap: 24px; padding: 14px 8px; border-top: 1px solid var(--pearl); transition: .3s; }
+  .o5-row:last-child { border-bottom: 1px solid var(--pearl); }
+  .o5-row .n { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(26px, 4vw, 44px); color: transparent; -webkit-text-stroke: 1px var(--gold-dark); width: 76px; flex-shrink: 0; transition: .3s; }
+  .o5-row .t { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: clamp(21px, 3.3vw, 36px); color: var(--charcoal); transition: .3s; }
+  .o5-row .meta { margin-left: auto; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ash); opacity: 0; transition: .3s; align-self: center; }
+  .o5-row:hover { padding-left: 18px; background: linear-gradient(90deg, rgba(201,169,110,.08), transparent 70%); }
+  .o5-row:hover .n { color: var(--gold); -webkit-text-stroke: 0; }
+  .o5-row:hover .t { color: var(--gold-dark); }
+  .o5-row:hover .meta { opacity: 1; }
+
+  /* ════════════════════════════════════════════════
+     OPTION 6 — GLASS MOSAIC (dark, layered tiles)
+     ════════════════════════════════════════════════ */
+  .o6 { background: radial-gradient(130% 120% at 0% 0%, #2c2820, var(--charcoal) 62%); padding: 72px 40px 84px; }
+  .o6-head { text-align: center; margin-bottom: 46px; }
+  .o6 .sec-label { color: var(--gold); justify-content: center; margin-bottom: 14px; }
+  .o6 .sec-title { font-size: clamp(34px, 5vw, 56px); color: #fff; }
+  .o6-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1080px; margin: 0 auto; }
+  .o6-tile {
+    position: relative; border-radius: 14px; padding: 24px 20px; min-height: 132px; overflow: hidden;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(201,169,110,.18); backdrop-filter: blur(6px);
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; transition: .3s;
+  }
+  .o6-tile.wide { grid-column: span 2; }
+  .o6-tile .wm { position: absolute; top: -8px; right: -6px; opacity: .12; color: var(--gold); }
+  .o6-tile .wm svg { width: 78px; height: 78px; }
+  .o6-tile .gp { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); position: relative; }
+  .o6-tile .nm { font-size: 16px; font-weight: 500; color: #f1ebe1; position: relative; }
+  .o6-tile:hover { transform: translateY(-5px); border-color: var(--gold); background: rgba(201,169,110,.10); }
+
+  /* ════════════════════════════════════════════════
+     OPTION 7 — FILMSTRIP (horizontal scroll-snap, light)
+     ════════════════════════════════════════════════ */
+  .o7 { background: var(--cream); padding: 70px 0 78px; }
+  .o7-head { text-align: center; margin-bottom: 32px; padding: 0 20px; }
+  .o7 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 12px; }
+  .o7 .sec-title { font-size: clamp(34px, 5vw, 54px); color: var(--charcoal); }
+  .o7 .sub { color: #7a7065; margin-top: 12px; }
+  .o7-strip { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 10px 40px 22px; -webkit-overflow-scrolling: touch; }
+  .o7-strip::-webkit-scrollbar { height: 6px; }
+  .o7-strip::-webkit-scrollbar-track { background: var(--pearl); border-radius: 3px; }
+  .o7-strip::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+  .o7-card { scroll-snap-align: center; flex: 0 0 196px; background: var(--warm-white); border: 1px solid var(--pearl); border-radius: 16px; padding: 26px 22px; transition: .3s; }
+  .o7-card .ix { font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--gold); font-size: 20px; }
+  .o7-card .ico { width: 48px; height: 48px; border-radius: 12px; background: var(--linen); display: grid; place-items: center; color: var(--gold-dark); margin: 14px 0; transition: .3s; }
+  .o7-card .ico svg { width: 22px; height: 22px; }
+  .o7-card .nm { font-size: 16px; font-weight: 500; color: var(--charcoal); }
+  .o7-card .ln { height: 2px; width: 28px; background: var(--gold); margin-top: 14px; transition: .3s; }
+  .o7-card:hover { transform: translateY(-6px); border-color: var(--gold); box-shadow: 0 20px 40px -24px rgba(166,139,75,.6); }
+  .o7-card:hover .ico { background: var(--charcoal); color: var(--gold); }
+  .o7-card:hover .ln { width: 60px; }
+  .o7-hint { text-align: center; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ash); margin-top: 4px; }
+
+  /* ════════════════════════════════════════════════
+     OPTION 8 — TABBED CATEGORIES (interactive filter)
+     ════════════════════════════════════════════════ */
+  .o8 { background: var(--cream); padding: 70px 40px 84px; text-align: center; }
+  .o8 .sec-label { color: var(--gold-dark); justify-content: center; margin-bottom: 14px; }
+  .o8 .sec-title { font-size: clamp(34px, 5vw, 54px); color: var(--charcoal); }
+  .o8-tabs { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 28px 0 36px; padding: 6px; background: var(--warm-white); border: 1px solid var(--pearl); border-radius: 999px; }
+  .o8-tab { border: 0; background: transparent; cursor: pointer; font-family: 'Jost', sans-serif; font-size: 13px; letter-spacing: .4px; color: var(--ink); padding: 11px 22px; border-radius: 999px; transition: .25s; }
+  .o8-tab:hover { color: var(--gold-dark); }
+  .o8-tab.active { background: var(--charcoal); color: var(--gold); }
+  .o8-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1000px; margin: 0 auto; }
+  .o8-card { background: var(--warm-white); border: 1px solid var(--pearl); border-radius: 14px; padding: 26px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: transform .3s, border-color .3s, box-shadow .3s; animation: rise .4s both; }
+  .o8-card .ic { width: 50px; height: 50px; border-radius: 14px; background: var(--linen); display: grid; place-items: center; color: var(--gold-dark); transition: .3s; }
+  .o8-card .ic svg { width: 22px; height: 22px; }
+  .o8-card span { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .o8-card:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 18px 36px -22px rgba(166,139,75,.55); }
+  .o8-card:hover .ic { background: var(--charcoal); color: var(--gold); }
+
+  /* ════════════════════════════════════════════════
+     OPTION 9 — SPOTLIGHT SPLIT (interactive, dark)
+     ════════════════════════════════════════════════ */
+  .o9 { background: linear-gradient(135deg, #221e18, var(--charcoal)); color: #efe9df; }
+  .o9-wrap { display: grid; grid-template-columns: 1fr 1fr; min-height: 470px; }
+  .o9-preview { padding: 54px 44px; display: flex; flex-direction: column; justify-content: center; gap: 16px; border-right: 1px solid rgba(201,169,110,.2); }
+  .o9-preview .sec-label { color: var(--gold); margin-bottom: 6px; }
+  .o9 .pv-ix { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--gold); }
+  .o9 .pv-ic { width: 92px; height: 92px; border-radius: 20px; background: rgba(201,169,110,.12); border: 1px solid rgba(201,169,110,.32); display: grid; place-items: center; color: var(--gold); transition: .3s; }
+  .o9 .pv-ic svg { width: 44px; height: 44px; }
+  .o9 .pv-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px, 4.5vw, 56px); font-weight: 600; color: #fff; line-height: 1; }
+  .o9 .pv-grp { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #b7ada0; }
+  .o9-list { padding: 26px 0; overflow-y: auto; max-height: 470px; }
+  .o9-item { display: flex; align-items: center; gap: 14px; padding: 11px 44px; cursor: pointer; color: #cfc6ba; transition: .2s; border-left: 2px solid transparent; }
+  .o9-item .qn { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--gold-dark); width: 26px; flex-shrink: 0; }
+  .o9-item .qt { font-size: 15px; }
+  .o9-item:hover, .o9-item.active { background: rgba(201,169,110,.08); color: #fff; border-left-color: var(--gold); }
+  .o9-item.active .qn { color: var(--gold); }
+
+  /* ════════════════════════════════════════════════
+     OPTION 10 — HONEYCOMB (hexagon grid, dark)
+     ════════════════════════════════════════════════ */
+  .o10 { background: radial-gradient(120% 120% at 50% 0%, #2a2620, var(--charcoal) 62%); padding: 74px 24px 96px; text-align: center; }
+  .o10 .sec-label { color: var(--gold); justify-content: center; margin-bottom: 14px; }
+  .o10 .sec-title { font-size: clamp(34px, 5vw, 56px); color: #fff; margin-bottom: 44px; }
+  .o10-comb { display: flex; flex-direction: column; align-items: center; }
+  .comb-row { display: flex; justify-content: center; }
+  .comb-row + .comb-row { margin-top: -34px; }
+  .hex {
+    width: 134px; height: 152px; margin: 0 5px; flex-shrink: 0;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    background: linear-gradient(150deg, var(--gold), var(--gold-dark));
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    transition: .3s; cursor: default; position: relative;
+  }
+  .hex::before { content: ''; position: absolute; inset: 1.5px; clip-path: inherit; background: #211d18; z-index: 0; transition: .3s; }
+  .hex > * { position: relative; z-index: 1; }
+  .hex svg { width: 24px; height: 24px; color: var(--gold); transition: .3s; }
+  .hex span { font-size: 12.5px; font-weight: 500; color: #efe9df; padding: 0 10px; line-height: 1.2; transition: .3s; }
+  .hex:hover::before { background: transparent; }
+  .hex:hover svg, .hex:hover span { color: var(--charcoal); }
+
+  footer { text-align: center; padding: 60px 24px 80px; color: #6a6258; font-size: 13px; }
+  footer .serif { font-size: 22px; color: var(--charcoal); display: block; margin-bottom: 6px; }
+
+  /* ─── responsive ─── */
+  @media (max-width: 860px) {
+    .o1-grid { grid-template-columns: repeat(2, 1fr); }
+    .o2-list { grid-template-columns: 1fr; column-gap: 0; }
+    .o4-grid { grid-template-columns: 1fr; }
+    .o6-grid { grid-template-columns: repeat(2, 1fr); }
+    .o6-tile.wide { grid-column: span 2; }
+    .o8-grid { grid-template-columns: repeat(2, 1fr); }
+    .o1, .o2, .o3, .o4, .o5, .o6, .o7, .o8, .o10 { padding-left: 18px; padding-right: 18px; }
+    .o5-row .meta { display: none; }
+    .o9-wrap { grid-template-columns: 1fr; }
+    .o9-preview { border-right: 0; border-bottom: 1px solid rgba(201,169,110,.2); }
+    .o9-list { max-height: none; }
+    .hex { width: 112px; height: 128px; }
+    .hex span { font-size: 11px; }
+    .comb-row + .comb-row { margin-top: -28px; }
+  }
+  @media (max-width: 460px) {
+    .o1-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .o6-grid { grid-template-columns: 1fr; }
+    .o6-tile.wide { grid-column: span 1; }
+    .o8-grid { grid-template-columns: 1fr 1fr; }
+    .hex { width: 74px; height: 85px; margin: 0 2px; }
+    .hex svg { width: 17px; height: 17px; }
+    .hex span { font-size: 9px; padding: 0 4px; }
+    .comb-row + .comb-row { margin-top: -18px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar__inner">
+      <div class="topbar__brand">ATTICARCH<small>“What We Build” — UI Options</small></div>
+      <nav class="switcher">
+        <a href="#opt1">1</a>
+        <a href="#opt2">2</a>
+        <a href="#opt3">3</a>
+        <a href="#opt4">4</a>
+        <a href="#opt5">5</a>
+        <a href="#opt6">6</a>
+        <a href="#opt7">7</a>
+        <a href="#opt8">8</a>
+        <a href="#opt9">9</a>
+        <a href="#opt10">10</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="intro">
+    <h1>Four ways to present <em class="serif" style="color:var(--gold-dark)">What We Build</em></h1>
+    <p>Same 16 in-house trades, four different looks for the homepage section. Scroll through, then tell us the option number you'd like to go live with — we can also mix ideas (e.g. Option&nbsp;1 icons with Option&nbsp;4 grouping).</p>
+  </div>
+
+  <!-- ░░░░░░░░ OPTION 1 ░░░░░░░░ -->
+  <section class="option" id="opt1">
+    <div class="option__tag"><b>1</b> <span>Refined Icon Cards <span class="option__name">— clean &amp; premium</span></span></div>
+    <div class="stage">
+      <div class="o1">
+        <span class="sec-label">Everything Under One Roof</span>
+        <h2 class="sec-title">What We Build</h2>
+        <p class="sub">From the first nail to the final finish — every trade handled by our own team.</p>
+        <div class="o1-grid" id="o1-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 2 ░░░░░░░░ -->
+  <section class="option" id="opt2">
+    <div class="option__tag"><b>2</b> <span>Editorial Index <span class="option__name">— dark &amp; luxurious</span></span></div>
+    <div class="stage">
+      <div class="o2">
+        <div class="o2-head">
+          <span class="sec-label">Everything Under One Roof</span>
+          <h2 class="sec-title">What <em>We Build</em></h2>
+        </div>
+        <div class="o2-list" id="o2-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 3 ░░░░░░░░ -->
+  <section class="option" id="opt3">
+    <div class="option__tag"><b>3</b> <span>Living Marquee <span class="option__name">— modern &amp; dynamic</span></span></div>
+    <div class="stage">
+      <div class="o3">
+        <span class="sec-label">Everything Under One Roof</span>
+        <h2 class="sec-title">What We Build</h2>
+        <p class="sub">Sixteen trades, always in motion — hover to pause.</p>
+        <div class="marquee">
+          <div class="track" id="o3-a"></div>
+          <div class="track rev" id="o3-b"></div>
+          <div class="track" id="o3-c"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 4 ░░░░░░░░ -->
+  <section class="option" id="opt4">
+    <div class="option__tag"><b>4</b> <span>Bento Categories <span class="option__name">— organised &amp; informative</span></span></div>
+    <div class="stage">
+      <div class="o4">
+        <div class="o4-head">
+          <span class="sec-label">Everything Under One Roof</span>
+          <h2 class="sec-title">What We Build</h2>
+        </div>
+        <div class="o4-grid" id="o4-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 5 ░░░░░░░░ -->
+  <section class="option" id="opt5">
+    <div class="option__tag"><b>5</b> <span>Grand Index <span class="option__name">— oversized &amp; editorial</span></span></div>
+    <div class="stage">
+      <div class="o5">
+        <div class="o5-head">
+          <span class="sec-label">Everything Under One Roof</span>
+          <h2 class="sec-title">What We Build</h2>
+        </div>
+        <div class="o5-list" id="o5-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 6 ░░░░░░░░ -->
+  <section class="option" id="opt6">
+    <div class="option__tag"><b>6</b> <span>Glass Mosaic <span class="option__name">— dark &amp; layered</span></span></div>
+    <div class="stage">
+      <div class="o6">
+        <div class="o6-head">
+          <span class="sec-label">Everything Under One Roof</span>
+          <h2 class="sec-title">What We Build</h2>
+        </div>
+        <div class="o6-grid" id="o6-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 7 ░░░░░░░░ -->
+  <section class="option" id="opt7">
+    <div class="option__tag"><b>7</b> <span>Filmstrip <span class="option__name">— scrollable &amp; interactive</span></span></div>
+    <div class="stage">
+      <div class="o7">
+        <div class="o7-head">
+          <span class="sec-label">Everything Under One Roof</span>
+          <h2 class="sec-title">What We Build</h2>
+          <p class="sub">Swipe through every trade →</p>
+        </div>
+        <div class="o7-strip" id="o7-strip"></div>
+        <p class="o7-hint">← scroll / swipe →</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 8 ░░░░░░░░ -->
+  <section class="option" id="opt8">
+    <div class="option__tag"><b>8</b> <span>Tabbed Categories <span class="option__name">— interactive &amp; filterable</span></span></div>
+    <div class="stage">
+      <div class="o8">
+        <span class="sec-label">Everything Under One Roof</span>
+        <h2 class="sec-title">What We Build</h2>
+        <div class="o8-tabs" id="o8-tabs"></div>
+        <div class="o8-grid" id="o8-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 9 ░░░░░░░░ -->
+  <section class="option" id="opt9">
+    <div class="option__tag"><b>9</b> <span>Spotlight Split <span class="option__name">— interactive &amp; premium</span></span></div>
+    <div class="stage">
+      <div class="o9">
+        <div class="o9-wrap">
+          <div class="o9-preview" id="o9-preview"></div>
+          <div class="o9-list" id="o9-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░░░░░░ OPTION 10 ░░░░░░░░ -->
+  <section class="option" id="opt10">
+    <div class="option__tag"><b>10</b> <span>Honeycomb <span class="option__name">— hexagonal &amp; bold</span></span></div>
+    <div class="stage">
+      <div class="o10">
+        <span class="sec-label">Everything Under One Roof</span>
+        <h2 class="sec-title">What We Build</h2>
+        <div class="o10-comb" id="o10-comb"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="serif">ATTICARCH</span>
+    Prepared for review · reply with the option number to finalise.
+  </footer>
+
+<script>
+  // 16 real trades with a matching Lucide icon + Option-4 grouping
+  const TRADES = [
+    { name: 'Modular Kitchens',     icon: 'cooking-pot',  group: 0 },
+    { name: 'Wardrobes',            icon: 'shirt',        group: 0 },
+    { name: 'False Ceiling',        icon: 'layers',       group: 1 },
+    { name: 'Lighting Design',      icon: 'lamp-ceiling', group: 1 },
+    { name: 'Flooring',             icon: 'grid-3x3',     group: 1 },
+    { name: 'Electrical',          icon: 'zap',          group: 2 },
+    { name: 'Plumbing',             icon: 'droplets',     group: 2 },
+    { name: 'Civil Work',           icon: 'hammer',       group: 2 },
+    { name: 'TV Units',             icon: 'tv',           group: 0 },
+    { name: 'Crockery Units',       icon: 'wine',         group: 0 },
+    { name: 'Pooja Rooms',          icon: 'flame',        group: 1 },
+    { name: 'Balcony Design',       icon: 'fence',        group: 2 },
+    { name: 'Kids Bedrooms',        icon: 'baby',         group: 2 },
+    { name: 'Home Office',          icon: 'laptop',       group: 0 },
+    { name: 'Wallpaper & Textures', icon: 'paint-roller', group: 1 },
+    { name: 'Landscaping',          icon: 'trees',        group: 2 },
+  ];
+  const GROUPS = [
+    { title: 'Joinery & Furniture',  kicker: 'Built in our unit' },
+    { title: 'Finishes & Ambience',  kicker: 'Look & feel' },
+    { title: 'Build & Systems',      kicker: 'The essentials' },
+  ];
+  const ic = (n) => `<i data-lucide="${n}"></i>`;
+
+  // Option 1 — icon cards
+  document.getElementById('o1-grid').innerHTML = TRADES.map((t, i) =>
+    `<div class="o1-card" style="animation: rise .5s both; animation-delay:${i*0.04}s">
+       <div class="o1-ic">${ic(t.icon)}</div><span>${t.name}</span>
+     </div>`).join('');
+
+  // Option 2 — editorial index
+  document.getElementById('o2-list').innerHTML = TRADES.map((t, i) =>
+    `<div class="o2-row">
+       <span class="o2-num">${String(i+1).padStart(2,'0')}</span>
+       <span class="o2-name">${t.name}</span>
+       <span class="dot">✦</span>
+     </div>`).join('');
+
+  // Option 3 — marquee (duplicate each row for seamless loop)
+  const rows = [[], [], []];
+  TRADES.forEach((t, i) => rows[i % 3].push(t));
+  const chip = (t, solid) => `<span class="chip${solid ? ' chip--solid':''}">${ic(t.icon)}${t.name}</span>`;
+  ['o3-a','o3-b','o3-c'].forEach((id, r) => {
+    const set = rows[r].map((t, i) => chip(t, i % 4 === 1)).join('');
+    document.getElementById(id).innerHTML = set + set; // duplicated for loop
+  });
+
+  // Option 4 — bento categories
+  document.getElementById('o4-grid').innerHTML =
+    GROUPS.map((g, gi) =>
+      `<div class="o4-col">
+         <h3>${g.title}</h3><div class="kicker">${g.kicker}</div>
+         <ul>${TRADES.filter(t => t.group === gi).map(t => `<li>${ic(t.icon)} ${t.name}</li>`).join('')}</ul>
+       </div>`).join('') +
+    `<div class="o4-col o4-feature">
+       <div class="big">All <em>16 trades</em>,<br>one accountable team.</div>
+       <div class="stat"><b>100%</b><span>In-House · No Outsourcing</span></div>
+     </div>`;
+
+  // Option 5 — grand index
+  document.getElementById('o5-list').innerHTML = TRADES.map((t, i) =>
+    `<div class="o5-row">
+       <span class="n">${String(i+1).padStart(2,'0')}</span>
+       <span class="t">${t.name}</span>
+       <span class="meta">${GROUPS[t.group].title}</span>
+     </div>`).join('');
+
+  // Option 6 — glass mosaic (first item of each group is wide for mosaic rhythm)
+  const wideSet = new Set([0, 9]);
+  document.getElementById('o6-grid').innerHTML = TRADES.map((t, i) =>
+    `<div class="o6-tile${wideSet.has(i) ? ' wide' : ''}">
+       <div class="wm">${ic(t.icon)}</div>
+       <div class="gp">${GROUPS[t.group].title}</div>
+       <div class="nm">${t.name}</div>
+     </div>`).join('');
+
+  // Option 7 — filmstrip
+  document.getElementById('o7-strip').innerHTML = TRADES.map((t, i) =>
+    `<div class="o7-card">
+       <div class="ix">${String(i+1).padStart(2,'0')}</div>
+       <div class="ico">${ic(t.icon)}</div>
+       <div class="nm">${t.name}</div>
+       <div class="ln"></div>
+     </div>`).join('');
+
+  // Option 8 — tabbed categories (click a tab to filter)
+  const O8_TABS = [{ title: 'All', g: -1 }, ...GROUPS.map((g, i) => ({ title: g.title, g: i }))];
+  const o8render = (g) => {
+    const items = TRADES.filter(t => g === -1 || t.group === g);
+    document.getElementById('o8-grid').innerHTML = items.map((t, i) =>
+      `<div class="o8-card" style="animation-delay:${i*0.03}s">
+         <div class="ic">${ic(t.icon)}</div><span>${t.name}</span>
+       </div>`).join('');
+    lucide.createIcons();
+  };
+  document.getElementById('o8-tabs').innerHTML = O8_TABS.map((tb, i) =>
+    `<button class="o8-tab${i === 0 ? ' active' : ''}" data-g="${tb.g}">${tb.title}</button>`).join('');
+  document.querySelectorAll('.o8-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.o8-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      o8render(+btn.dataset.g);
+    });
+  });
+  o8render(-1);
+
+  // Option 9 — spotlight split (hover the list to update the preview)
+  const renderPreview = (t, i) => {
+    document.getElementById('o9-preview').innerHTML =
+      `<span class="sec-label">Everything Under One Roof</span>
+       <div class="pv-ix">${String(i+1).padStart(2,'0')} / 16</div>
+       <div class="pv-ic">${ic(t.icon)}</div>
+       <div class="pv-name">${t.name}</div>
+       <div class="pv-grp">${GROUPS[t.group].title}</div>`;
+    lucide.createIcons();
+  };
+  document.getElementById('o9-list').innerHTML = TRADES.map((t, i) =>
+    `<div class="o9-item${i === 0 ? ' active' : ''}" data-i="${i}">
+       <span class="qn">${String(i+1).padStart(2,'0')}</span><span class="qt">${t.name}</span>
+     </div>`).join('');
+  document.querySelectorAll('.o9-item').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.o9-item').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+      const i = +el.dataset.i; renderPreview(TRADES[i], i);
+    });
+  });
+  renderPreview(TRADES[0], 0);
+
+  // Option 10 — honeycomb (rows of 4 / 3 interlock into a hex grid)
+  const combPattern = [4, 3, 4, 3, 2];
+  let combIdx = 0, combHtml = '';
+  combPattern.forEach(count => {
+    combHtml += '<div class="comb-row">';
+    for (let k = 0; k < count && combIdx < TRADES.length; k++, combIdx++) {
+      const t = TRADES[combIdx];
+      combHtml += `<div class="hex">${ic(t.icon)}<span>${t.name}</span></div>`;
+    }
+    combHtml += '</div>';
+  });
+  document.getElementById('o10-comb').innerHTML = combHtml;
+
+  lucide.createIcons();
+</script>
+</body>
+</html>
