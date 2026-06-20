@@ -1,192 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATTICARCH — SMS &amp; Cloudinary Storage Pricing</title>
-<style>
-  :root {
-    --ink: #1a1a1a;
-    --muted: #555;
-    --accent: #b07a3c;
-    --accent-dark: #8a5e2c;
-    --line: #e3ddd3;
-    --bg-soft: #faf7f2;
-    --note-bg: #fbf6ec;
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body {
-    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-    color: var(--ink); line-height: 1.6; margin: 0; background: #ececec;
-  }
-  .page {
-    max-width: 820px; margin: 24px auto; background: #fff;
-    padding: 56px 64px 72px; box-shadow: 0 4px 28px rgba(0,0,0,.12);
-  }
-  .toolbar {
-    max-width: 820px; margin: 20px auto 0; display: flex; justify-content: flex-end;
-  }
-  .toolbar button {
-    background: var(--accent); color: #fff; border: none; padding: 10px 22px;
-    font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer;
-    letter-spacing: .3px; box-shadow: 0 2px 8px rgba(176,122,60,.35);
-  }
-  .toolbar button:hover { background: var(--accent-dark); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATTICARCH — SMS &amp; Cloudinary Storage Pricing</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #555;
+      --accent: #b07a3c;
+      --accent-dark: #8a5e2c;
+      --line: #e3ddd3;
+      --bg-soft: #faf7f2;
+      --note-bg: #fbf6ec;
+    }
 
-  .doc-head { border-bottom: 3px solid var(--accent); padding-bottom: 18px; }
-  .brand {
-    font-size: 13px; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--accent); font-weight: 700; margin: 0 0 6px;
-  }
-  h1 { font-size: 26px; margin: 0; font-weight: 700; letter-spacing: -.3px; }
+    * {
+      box-sizing: border-box;
+    }
 
-  .preamble {
-    background: var(--bg-soft); border-left: 4px solid var(--accent);
-    padding: 12px 18px; margin: 22px 0 30px; font-size: 13px; color: var(--muted);
-    border-radius: 0 4px 4px 0;
-  }
+    html {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
 
-  h2 {
-    font-size: 20px; margin: 38px 0 6px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--line); color: var(--accent-dark);
-  }
-  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+    body {
+      font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      line-height: 1.6;
+      margin: 0;
+      background: #ececec;
+    }
 
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
-  th, td { border: 1px solid var(--line); padding: 10px 13px; text-align: left; vertical-align: top; }
-  th { background: var(--accent); color: #fff; font-weight: 600; }
-  tr:nth-child(even) td { background: var(--bg-soft); }
-  td.big { font-size: 16px; font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
+    .page {
+      max-width: 820px;
+      margin: 24px auto;
+      background: #fff;
+      padding: 56px 64px 72px;
+      box-shadow: 0 4px 28px rgba(0, 0, 0, .12);
+    }
 
-  .highlight {
-    background: var(--note-bg); border-left: 4px solid var(--accent);
-    padding: 14px 20px; margin: 16px 0; border-radius: 0 4px 4px 0; font-size: 14.5px;
-  }
-  .highlight strong { color: var(--accent-dark); }
+    .toolbar {
+      max-width: 820px;
+      margin: 20px auto 0;
+      display: flex;
+      justify-content: flex-end;
+    }
 
-  code {
-    background: #f3efe8; padding: 1px 6px; border-radius: 4px;
-    font-family: "Consolas", monospace; font-size: 13px; color: var(--accent-dark);
-  }
-  .footnote { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+    .toolbar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: .3px;
+      box-shadow: 0 2px 8px rgba(176, 122, 60, .35);
+    }
 
-  .sources {
-    margin-top: 36px; padding-top: 16px; border-top: 2px solid var(--accent); font-size: 12.5px;
-  }
-  .sources a { color: var(--accent-dark); }
+    .toolbar button:hover {
+      background: var(--accent-dark);
+    }
 
-  @media print {
-    body { background: #fff; }
-    .toolbar { display: none; }
-    .page { box-shadow: none; margin: 0; max-width: 100%; padding: 0 8mm; }
-    h2 { page-break-after: avoid; }
-    table { page-break-inside: avoid; }
-  }
-  @page { margin: 16mm; }
-</style>
+    .doc-head {
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 18px;
+    }
+
+    .brand {
+      font-size: 13px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .preamble {
+      background: var(--bg-soft);
+      border-left: 4px solid var(--accent);
+      padding: 12px 18px;
+      margin: 22px 0 30px;
+      font-size: 13px;
+      color: var(--muted);
+      border-radius: 0 4px 4px 0;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 38px 0 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      color: var(--accent-dark);
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin: 0 0 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 13px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background: var(--bg-soft);
+    }
+
+    td.big {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-dark);
+      white-space: nowrap;
+    }
+
+    .highlight {
+      background: var(--note-bg);
+      border-left: 4px solid var(--accent);
+      padding: 14px 20px;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 14.5px;
+    }
+
+    .highlight strong {
+      color: var(--accent-dark);
+    }
+
+    code {
+      background: #f3efe8;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+      color: var(--accent-dark);
+    }
+
+    .footnote {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .sources {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 2px solid var(--accent);
+      font-size: 12.5px;
+    }
+
+    .sources a {
+      color: var(--accent-dark);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .page {
+        box-shadow: none;
+        margin: 0;
+        max-width: 100%;
+        padding: 0 8mm;
+      }
+
+      h2 {
+        page-break-after: avoid;
+      }
+
+      table {
+        page-break-inside: avoid;
+      }
+    }
+
+    @page {
+      margin: 16mm;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="toolbar">
-  <button onclick="window.print()">🖨️ Print / Save as PDF</button>
-</div>
-
-<div class="page">
-
-  <div class="doc-head">
-    <p class="brand">ATTICARCH</p>
-    <h1>SMS &amp; Cloudinary Storage — Pricing</h1>
+  <div class="toolbar">
+    <button onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>
 
-  <div class="preamble">
-    Verified against official Google&nbsp;Cloud (Firebase) and Cloudinary pricing pages, June&nbsp;2026.
-    USD→INR converted at ~₹85 per $1 (check the live rate when paying).
+  <div class="page">
+
+    <div class="doc-head">
+      <p class="brand">ATTICARCH</p>
+      <h1>SMS &amp; Cloudinary Storage — Pricing</h1>
+    </div>
+
+    <div class="preamble">
+      Verified against official Google&nbsp;Cloud (Firebase) and Cloudinary pricing pages, June&nbsp;2026.
+      USD→INR converted at ~₹85 per $1 (check the live rate when paying).
+    </div>
+
+    <!-- ════════ 1. SMS COST PER MESSAGE ════════ -->
+    <h2>1. SMS — cost per message</h2>
+    <p class="sub">Charged by Firebase Phone Authentication (Google Cloud Identity Platform) per SMS actually sent.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Destination of the phone number</th>
+          <th>Price per SMS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>India</strong> (your main audience)</td>
+          <td class="big">$0.01 ≈ ₹0.85</td>
+        </tr>
+        <tr>
+          <td>USA &amp; Canada</td>
+          <td class="big">$0.01 ≈ ₹0.85</td>
+        </tr>
+        <tr>
+          <td>United Kingdom</td>
+          <td class="big">~$0.04 ≈ ₹3.4</td>
+        </tr>
+        <tr>
+          <td>Most other countries (NRI enquiries)</td>
+          <td class="big">$0.02 – $0.06</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight">
+      <strong>India = about ₹0.85 per OTP message.</strong> The first <strong>10 SMS per day are free</strong>.
+      Billing only happens when the SMS is successfully sent.
+    </div>
+
+    <p class="footnote">
+      Example: 1,000 OTP messages to India in a month ≈ <strong>$10 (≈ ₹850)</strong> before the free
+      daily allowance is deducted. Rates are set by Google and can change; this is the current published rate.
+    </p>
+
+    <!-- ════════ 2. CLOUDINARY STORAGE ════════ -->
+    <h2>2. Cloudinary — cost to increase storage</h2>
+    <p class="sub">Cloudinary does not sell storage separately — storage is part of a monthly “credit” pool. <strong>1
+        credit = 1&nbsp;GB of storage.</strong> To get more storage you move up a plan.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Plan</th>
+          <th>Price</th>
+          <th>Credits / month</th>
+          <th>Storage you can hold*</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Free</strong> (current)</td>
+          <td class="big">$0</td>
+          <td>25</td>
+          <td>up to ~25 GB</td>
+        </tr>
+        <tr>
+          <td><strong>Plus</strong></td>
+          <td class="big">$99 / mo<br><span style="font-size:12px;font-weight:400;color:#555;">($89/mo if paid
+              yearly)</span></td>
+          <td>225</td>
+          <td>up to ~225 GB</td>
+        </tr>
+        <tr>
+          <td><strong>Advanced</strong></td>
+          <td class="big">$249 / mo<br><span style="font-size:12px;font-weight:400;color:#555;">($224/mo if paid
+              yearly)</span></td>
+          <td>600</td>
+          <td>up to ~600 GB</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="footnote">
+      * The credit pool is <strong>shared</strong> between storage, visitor bandwidth and image transformations
+      (1 credit = 1 GB storage <em>or</em> 1 GB bandwidth <em>or</em> 1,000 transformations). So real
+      usable storage is whatever is left after bandwidth and transformations are used — the “up to” figures
+      assume credits spent on storage only.
+    </p>
+
+    <div class="highlight">
+      <strong>To increase storage, the only step up from Free is Plus at $99/month (≈ ₹8,400)</strong>,
+      which raises you from 25&nbsp;GB to 225&nbsp;GB. There is no cheaper in-between plan, and storage
+      cannot be bought on its own — the next tier above Plus is Advanced at $249/month for 600&nbsp;GB.
+    </div>
+
+    <p class="footnote">
+      A portfolio site like ATTICARCH usually stores only 1–3 GB of project photos, so the <strong>Free
+        25 GB is plenty for storage today</strong> — you would only need Plus if total usage (storage + traffic
+      bandwidth) crosses 25 credits in a month.
+    </p>
+
+    <div class="sources">
+      <strong>Sources (June 2026):</strong>
+      <a href="https://cloud.google.com/identity-platform/pricing">Google Cloud Identity Platform — SMS pricing</a> ·
+      <a href="https://firebase.google.com/pricing">Firebase pricing</a> ·
+      <a href="https://cloudinary.com/pricing">Cloudinary pricing</a> ·
+      <a href="https://cloudinary.com/pricing/compare-plans">Cloudinary plan comparison</a>
+    </div>
+
   </div>
-
-  <!-- ════════ 1. SMS COST PER MESSAGE ════════ -->
-  <h2>1. SMS — cost per message</h2>
-  <p class="sub">Charged by Firebase Phone Authentication (Google Cloud Identity Platform) per SMS actually sent.</p>
-
-  <table>
-    <thead>
-      <tr><th>Destination of the phone number</th><th>Price per SMS</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><strong>India</strong> (your main audience)</td><td class="big">$0.01 ≈ ₹0.85</td></tr>
-      <tr><td>USA &amp; Canada</td><td class="big">$0.01 ≈ ₹0.85</td></tr>
-      <tr><td>United Kingdom</td><td class="big">~$0.04 ≈ ₹3.4</td></tr>
-      <tr><td>Most other countries (NRI enquiries)</td><td class="big">$0.02 – $0.06</td></tr>
-    </tbody>
-  </table>
-
-  <div class="highlight">
-    <strong>India = about ₹0.85 per OTP message.</strong> The first <strong>10 SMS per day are free</strong>.
-    Billing only happens when the SMS is successfully sent.
-  </div>
-
-  <p class="footnote">
-    Example: 1,000 OTP messages to India in a month ≈ <strong>$10 (≈ ₹850)</strong> before the free
-    daily allowance is deducted. Rates are set by Google and can change; this is the current published rate.
-  </p>
-
-  <!-- ════════ 2. CLOUDINARY STORAGE ════════ -->
-  <h2>2. Cloudinary — cost to increase storage</h2>
-  <p class="sub">Cloudinary does not sell storage separately — storage is part of a monthly “credit” pool. <strong>1 credit = 1&nbsp;GB of storage.</strong> To get more storage you move up a plan.</p>
-
-  <table>
-    <thead>
-      <tr><th>Plan</th><th>Price</th><th>Credits / month</th><th>Storage you can hold*</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Free</strong> (current)</td>
-        <td class="big">$0</td>
-        <td>25</td>
-        <td>up to ~25 GB</td>
-      </tr>
-      <tr>
-        <td><strong>Plus</strong></td>
-        <td class="big">$99 / mo<br><span style="font-size:12px;font-weight:400;color:#555;">($89/mo if paid yearly)</span></td>
-        <td>225</td>
-        <td>up to ~225 GB</td>
-      </tr>
-      <tr>
-        <td><strong>Advanced</strong></td>
-        <td class="big">$249 / mo<br><span style="font-size:12px;font-weight:400;color:#555;">($224/mo if paid yearly)</span></td>
-        <td>600</td>
-        <td>up to ~600 GB</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p class="footnote">
-    * The credit pool is <strong>shared</strong> between storage, visitor bandwidth and image transformations
-    (1 credit = 1 GB storage <em>or</em> 1 GB bandwidth <em>or</em> 1,000 transformations). So real
-    usable storage is whatever is left after bandwidth and transformations are used — the “up to” figures
-    assume credits spent on storage only.
-  </p>
-
-  <div class="highlight">
-    <strong>To increase storage, the only step up from Free is Plus at $99/month (≈ ₹8,400)</strong>,
-    which raises you from 25&nbsp;GB to 225&nbsp;GB. There is no cheaper in-between plan, and storage
-    cannot be bought on its own — the next tier above Plus is Advanced at $249/month for 600&nbsp;GB.
-  </div>
-
-  <p class="footnote">
-    A portfolio site like ATTICARCH usually stores only 1–3 GB of project photos, so the <strong>Free
-    25 GB is plenty for storage today</strong> — you would only need Plus if total usage (storage + traffic
-    bandwidth) crosses 25 credits in a month.
-  </p>
-
-  <div class="sources">
-    <strong>Sources (June 2026):</strong>
-    <a href="https://cloud.google.com/identity-platform/pricing">Google Cloud Identity Platform — SMS pricing</a> ·
-    <a href="https://firebase.google.com/pricing">Firebase pricing</a> ·
-    <a href="https://cloudinary.com/pricing">Cloudinary pricing</a> ·
-    <a href="https://cloudinary.com/pricing/compare-plans">Cloudinary plan comparison</a>
-  </div>
-
-</div>
 </body>
+
 </html>
