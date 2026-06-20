@@ -1007,6 +1007,13 @@ function PortfolioManager({ showToast }) {
                     value={projectForm.category}
                     onChange={e => setProjectForm({...projectForm, category: e.target.value, subcategory: ''})}
                   >
+                    {/* Preserve a project's existing/legacy category (e.g. "villas")
+                        when it isn't one of the top-level categories — otherwise the
+                        dropdown would silently default to the first option and saving
+                        would reassign the project. */}
+                    {projectForm.category && !categories.some(c => c.id === projectForm.category) && (
+                      <option value={projectForm.category}>{projectForm.category} (current)</option>
+                    )}
                     {categories.filter(c => c.id !== 'residential').map(c => (
                       <option key={c.id} value={c.id}>{c.short}</option>
                     ))}
