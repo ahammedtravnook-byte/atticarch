@@ -145,9 +145,6 @@ export default function ProjectCategory() {
     setSearchParams(next, { replace: false })
   }
 
-  /* Stats */
-  const uniqueLocations = new Set(filtered.map((p) => p.location.split(',')[0].trim())).size || filtered.length
-  const totalPhotos = filtered.reduce((s, p) => s + (p.images?.length || 0), 0)
 
   const heroRef = useRef(null)
 
@@ -203,7 +200,7 @@ export default function ProjectCategory() {
             )}
             <Reveal delay={0.34}>
               <a href="#grid" className="pc-hero__scroll">
-                <span>Browse {filtered.length} {filtered.length === 1 ? 'project' : 'projects'}</span>
+                <span>Browse the collection</span>
                 <ArrowRight size={14} />
               </a>
             </Reveal>
@@ -262,7 +259,7 @@ export default function ProjectCategory() {
                     Free Consultation <ArrowUpRight size={16} />
                   </Link>
                   <a href="#grid" className="pc-hero__scroll">
-                    <span>Browse {filtered.length} {filtered.length === 1 ? 'project' : 'projects'}</span>
+                    <span>Browse the collection</span>
                     <ArrowRight size={14} />
                   </a>
                 </div>
@@ -287,10 +284,6 @@ export default function ProjectCategory() {
                     </div>
                   </motion.div>
                 ))}
-                <div className="pc-hero__stack-badge">
-                  <span className="pc-hero__stack-num text-mono">{String(filtered.length).padStart(2, '0')}</span>
-                  <span className="pc-hero__stack-label">Projects</span>
-                </div>
               </div>
             </Reveal>
           </div>
@@ -308,10 +301,10 @@ export default function ProjectCategory() {
         <div className="container">
           <div className="pc-stats__grid">
             {[
-              { num: String(filtered.length).padStart(2, '0'), label: 'Showcased Projects' },
-              { num: String(uniqueLocations).padStart(2, '0'), label: 'Bangalore Locations' },
+              { num: 'Est. 2002', label: 'Bangalore Studio' },
               { num: '20+', label: 'Years of Craft' },
-              { num: String(totalPhotos), label: 'Project Photos' },
+              { num: '10-Yr', label: 'Workmanship Warranty' },
+              { num: 'In-House', label: 'Production Unit' },
             ].map((s, i) => (
               <Reveal key={s.label} delay={i * 0.08} className="pc-stat">
                 <span className="pc-stat__num">{s.num}</span>
@@ -329,8 +322,6 @@ export default function ProjectCategory() {
             <span className="pc-filter__label">Filter by:</span>
             <div className="pc-filter__pills">
               {categories.map((catItem) => {
-                const filterArr = catItem.filter || [catItem.id]
-                const count = projects.filter((p) => filterArr.includes(p.category)).length
                 const isActive = category === catItem.slug || (!category && catItem.slug === (categories[0]?.slug || ''))
 
                 return (
@@ -340,7 +331,6 @@ export default function ProjectCategory() {
                     className={`pc-pill ${isActive ? 'is-active' : ''}`}
                   >
                     <span>{catItem.short}</span>
-                    <span className="pc-pill__count">{count}</span>
                   </Link>
                 )
               })}
@@ -354,22 +344,17 @@ export default function ProjectCategory() {
               <div className="pc-filter__pills">
                 <button type="button" className={`pc-pill ${!sub ? 'is-active' : ''}`} onClick={() => selectSub('')}>
                   <span>All</span>
-                  <span className="pc-pill__count">{baseFiltered.length}</span>
                 </button>
-                {subcats.map((sc) => {
-                  const count = baseFiltered.filter((p) => matchesSub(p, sc.slug)).length
-                  return (
-                    <button
-                      type="button"
-                      key={sc.slug}
-                      className={`pc-pill ${sub === sc.slug ? 'is-active' : ''}`}
-                      onClick={() => selectSub(sc.slug)}
-                    >
-                      <span>{sc.short || sc.title}</span>
-                      <span className="pc-pill__count">{count}</span>
-                    </button>
-                  )
-                })}
+                {subcats.map((sc) => (
+                  <button
+                    type="button"
+                    key={sc.slug}
+                    className={`pc-pill ${sub === sc.slug ? 'is-active' : ''}`}
+                    onClick={() => selectSub(sc.slug)}
+                  >
+                    <span>{sc.short || sc.title}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -413,7 +398,7 @@ export default function ProjectCategory() {
                 <div>
                   <span className="pc-eyebrow">Browse the Collection</span>
                   <h2 className="pc-grid-head__title">
-                    {filtered.length} {cat.short.toLowerCase()} {filtered.length === 1 ? 'project' : 'projects'}
+                    {cat.short} Projects
                   </h2>
                 </div>
                 <div className="pc-grid-head__sort">
