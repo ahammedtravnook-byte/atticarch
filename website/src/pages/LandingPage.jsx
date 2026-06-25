@@ -544,7 +544,8 @@ export default function LandingPage() {
                       <select value={form.budget} onChange={update('budget')}>
                         <option>10 - 15 Lakhs</option>
                         <option>15 - 20 Lakhs</option>
-                        <option>Over 20 Lakhs</option>
+                        <option>20 - 30 Lakhs</option>
+                        <option>Over 30 Lakhs</option>
                       </select>
                     </div>
                   </div>

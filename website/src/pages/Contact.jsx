@@ -452,7 +452,8 @@ export default function Contact() {
                                   <option value="">Please select an option</option>
                                   <option value="10 - 15 Lakhs">10 - 15 Lakhs</option>
                                   <option value="15 - 20 Lakhs">15 - 20 Lakhs</option>
-                                  <option value="Over 20 Lakhs">Over 20 Lakhs</option>
+                                  <option value="20 - 30 Lakhs">20 - 30 Lakhs</option>
+                                  <option value="Over 30 Lakhs">Over 30 Lakhs</option>
                                 </select>
                                 {errors.budget && <span className="ct-err">{errors.budget}</span>}
                               </div>
