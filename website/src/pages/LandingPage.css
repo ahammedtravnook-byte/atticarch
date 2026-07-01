@@ -483,6 +483,8 @@
 .lx-field.err input { border-color: #c0504d; }
 .lx-field small { color: #b04340; font-size: 11px; }
 
+.lx-form__captcha { margin: 4px 0; }
+
 .lx-form__submit {
   margin-top: 2px;
   width: 100%;
@@ -1033,6 +1035,44 @@
   .lx-sticky { display: grid; }
   .lx-footer { padding-bottom: 96px; }
   .lx-footer__grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+/* ═══ SHORT VIEWPORT — hero stays compact as window height shrinks (holds down to ~50% height) ═══ */
+@media (max-height: 800px) {
+  .lx-hero {
+    padding-top: clamp(84px, 11vh, 116px);
+    padding-bottom: clamp(26px, 3.5vh, 52px);
+  }
+  .lx-hero__eyebrow { margin-bottom: clamp(14px, 2.2vh, 26px); }
+  .lx-hero__title { margin-bottom: clamp(14px, 2.2vh, 26px); }
+  .lx-hero__badges { margin-bottom: clamp(16px, 2.4vh, 30px); }
+  .lx-hero__ctas { margin-bottom: clamp(16px, 2.4vh, 32px); }
+}
+
+@media (max-height: 640px) {
+  .lx-hero { padding-top: 80px; padding-bottom: 22px; }
+  .lx-hero__title { font-size: clamp(2.1rem, 3vw + 0.7rem, 3.3rem); }
+  .lx-hero__badges { margin-bottom: 16px; }
+  .lx-hero__ctas { margin-bottom: 16px; }
+  .lx-hero__meta { padding-top: 14px; }
+}
+
+@media (max-height: 520px) {
+  .lx-hero { padding-top: 72px; padding-bottom: 18px; }
+  .lx-hero__title { font-size: clamp(1.9rem, 2.6vw + 0.6rem, 2.8rem); }
+  .lx-hero__meta { padding-top: 12px; }
+}
+
+/* Desktop two-column: flatten the tall portrait image on short screens so it can't overflow */
+@media (min-width: 1025px) and (max-height: 800px) {
+  .lx-hero__media { aspect-ratio: 4 / 4; }
+}
+@media (min-width: 1025px) and (max-height: 640px) {
+  .lx-hero__inner { gap: clamp(28px, 4vw, 60px); align-items: start; }
+  .lx-hero__media { aspect-ratio: 16 / 11; }
+}
+@media (min-width: 1025px) and (max-height: 520px) {
+  .lx-hero__media { aspect-ratio: 16 / 9; }
 }
 
 @media (prefers-reduced-motion: reduce) {
