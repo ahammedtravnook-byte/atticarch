@@ -118,9 +118,8 @@ const defaultWorkTypes = staticWorkTypes.map((title, i) => ({
 const defaultLandingSettings = {
   heroTitleLine1: 'Luxury Interiors in',
   heroTitleLine2: 'Bangalore',
-  heroSubtitle: 'Free 3D Design + Detailed Quote in 48 Hours',
+  heroSubtitle: 'Free Design + Detailed Quote in 48 Hours',
   bullets: [
-    'Free 3D visualization of every room',
     '10-year workmanship warranty',
     'Turnkey execution — starts ₹4 Lacs'
   ],
@@ -128,7 +127,7 @@ const defaultLandingSettings = {
   whatsapp: '919845013138',
   whatsappPrefill: "Hi ATTICARCH, I'd like a free interior design consultation.",
   benefits: [
-    { iconName: 'Box', title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
+    { iconName: 'Box', title: 'Design Visualization', desc: 'See your home before we build it — photo-real renders included.' },
     { iconName: 'Palette', title: 'Material Selection', desc: '500+ finishes from premium brand partners, all visualized for you.' },
     { iconName: 'FileText', title: 'Detailed Quote', desc: 'Itemized BOQ with zero hidden costs — what you see is what you pay.' },
     { iconName: 'MapPin', title: 'On-site Survey', desc: 'Our designer visits your home and measures everything — free.' }
@@ -162,7 +161,7 @@ const defaultLandingSettings = {
   ],
   steps: [
     { num: '01', day: 'Day 1', title: 'Free Consultation Call', desc: 'A 20-minute call with our senior designer to understand your style, family needs and budget.' },
-    { num: '02', day: 'Days 2-7', title: '3D Design & Quote', desc: 'You receive photo-real 3D renders of every room + a detailed itemized BOQ — completely free.' },
+    { num: '02', day: 'Days 2-7', title: 'Design & Quote', desc: 'You receive photo-real renders of every room + a detailed itemized BOQ — completely free.' },
     { num: '03', day: 'Day 8 onwards', title: 'Execute & Move In', desc: 'Sign-off and we begin. Weekly progress photos, on-time handover, 10-year warranty.' }
   ],
   faqs: [

@@ -110,7 +110,7 @@ export default function Contact() {
     <motion.main className="ct" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
       <Helmet>
         <title>Book Design Consultation — ATTICARCH Bangalore</title>
-        <meta name="description" content="Talk to AtticArch's senior architects. Book a free 3D design consultation and receive a complete itemized budget estimate." />
+        <meta name="description" content="Talk to AtticArch's senior architects. Book a free design consultation and receive a complete itemized budget estimate." />
       </Helmet>
 
       {/* ── HERO ── */}
@@ -135,7 +135,7 @@ export default function Contact() {
           <Reveal delay={0.2}>
             <p className="ct-hero__sub">
               Have a villa, apartment, or commercial space in mind? Step through our interactive
-              planner to request your free 3D layout consultation.
+              planner to request your free design consultation.
             </p>
           </Reveal>
           <Reveal delay={0.3}>
@@ -391,7 +391,7 @@ export default function Contact() {
                               <button type="button" className="ct-back" onClick={() => setStep(1)}>
                                 <ChevronLeft size={14} /> Back
                               </button>
-                              <button type="submit" className="ct-btn ct-btn--primary" disabled={submitting || !captchaOk}>
+                              <button type="submit" className="ct-btn ct-btn--primary" disabled={submitting || !captchaOk || form.phone.replace(/\D/g, '').length !== 10}>
                                 {submitting ? <><Loader2 size={14} className="ct-spin" /> Submitting...</> : <>Book Consultation <Send size={14} /></>}
                               </button>
                             </div>

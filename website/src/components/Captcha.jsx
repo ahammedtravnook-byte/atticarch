@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Loader2, Check, X } from 'lucide-react'
 import './Captcha.css'
 
 // Self-contained CAPTCHA — a distorted alphanumeric code drawn on a canvas.
-// No external service, no API keys, no cost. The visitor retypes the code to
-// prove they're human. Backed on the server by honeypot + IP rate-limiting.
+// No external service, no API keys, no cost. The visitor retypes the code;
+// on the last character we show a brief "Verifying…" loader, then ✓/✗.
 
 // Ambiguous characters (0/O, 1/I/L) are excluded so it stays easy to read.
 const CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -19,7 +19,9 @@ function randomCode() {
 export default function Captcha({ onValidChange }) {
   const [code, setCode] = useState(randomCode)
   const [value, setValue] = useState('')
+  const [status, setStatus] = useState('idle') // idle | verifying | ok | bad
   const canvasRef = useRef(null)
+  const timerRef = useRef(null)
 
   const draw = useCallback((text) => {
     const canvas = canvasRef.current
@@ -68,16 +70,36 @@ export default function Captcha({ onValidChange }) {
     draw(code)
   }, [code, draw])
 
+  // Clear any pending verify timer on unmount.
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
+
   const refresh = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
     setCode(randomCode())
     setValue('')
+    setStatus('idle')
     if (onValidChange) onValidChange(false)
   }
 
   const onInput = (e) => {
     const v = e.target.value.toUpperCase().slice(0, LENGTH)
     setValue(v)
-    if (onValidChange) onValidChange(v === code)
+    if (timerRef.current) clearTimeout(timerRef.current)
+
+    if (v.length < LENGTH) {
+      setStatus('idle')
+      if (onValidChange) onValidChange(false)
+      return
+    }
+
+    // Full code entered — show a brief verifying loader, then confirm.
+    setStatus('verifying')
+    if (onValidChange) onValidChange(false)
+    timerRef.current = setTimeout(() => {
+      const ok = v === code
+      setStatus(ok ? 'ok' : 'bad')
+      if (onValidChange) onValidChange(ok)
+    }, 450)
   }
 
   return (
@@ -91,13 +113,28 @@ export default function Captcha({ onValidChange }) {
       <input
         type="text"
         inputMode="text"
-        className="captcha__input"
+        className={`captcha__input ${status === 'ok' ? 'is-ok' : status === 'bad' ? 'is-bad' : ''}`}
         placeholder="Type the code shown"
         value={value}
         onChange={onInput}
         autoComplete="off"
         aria-label="Type the characters shown in the image"
       />
+      {status === 'verifying' && (
+        <span className="captcha__status captcha__status--verifying">
+          <Loader2 size={13} className="captcha__spin" /> Verifying…
+        </span>
+      )}
+      {status === 'ok' && (
+        <span className="captcha__status captcha__status--ok">
+          <Check size={13} /> Verified
+        </span>
+      )}
+      {status === 'bad' && (
+        <span className="captcha__status captcha__status--bad">
+          <X size={13} /> Incorrect code — tap ↻ and try again
+        </span>
+      )}
     </div>
   )
 }

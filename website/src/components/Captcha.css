@@ -62,3 +62,19 @@
   border-color: #c9a96e;
   box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
 }
+.captcha__input.is-ok { border-color: #1faf54; background: #f5fbf6; }
+.captcha__input.is-bad { border-color: #c0504d; background: #fdf6f5; }
+
+.captcha__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.captcha__status--verifying { color: #7a5c2e; }
+.captcha__status--ok { color: #1faf54; }
+.captcha__status--bad { color: #c0504d; }
+
+.captcha__spin { animation: captcha-spin 0.7s linear infinite; }
+@keyframes captcha-spin { to { transform: rotate(360deg); } }

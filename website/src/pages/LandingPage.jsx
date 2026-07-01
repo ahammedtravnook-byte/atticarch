@@ -50,7 +50,7 @@ const FALLBACK_STATS = [
 ]
 
 const FALLBACK_BENEFITS = [
-  { iconName: 'Box', title: 'Free 3D Visualization', desc: 'See your home before we build it — photo-real renders included.' },
+  { iconName: 'Box', title: 'Design Visualization', desc: 'See your home before we build it — photo-real renders included.' },
   { iconName: 'Palette', title: 'Material Selection', desc: '500+ finishes from premium brand partners, all visualized for you.' },
   { iconName: 'FileText', title: 'Detailed Quote', desc: 'Itemized BOQ with zero hidden costs — what you see is what you pay.' },
   { iconName: 'MapPin', title: 'On-site Survey', desc: 'Our designer visits your home and measures everything — free.' }
@@ -80,7 +80,7 @@ const FALLBACK_PRICING = [
 
 const FALLBACK_STEPS = [
   { num: '01', day: 'Day 1', title: 'Free Consultation Call', desc: 'A 20-minute call with our senior designer to understand your style, family needs and budget.' },
-  { num: '02', day: 'Days 2-7', title: '3D Design & Quote', desc: 'You receive photo-real 3D renders of every room + a detailed itemized BOQ — completely free.' },
+  { num: '02', day: 'Days 2-7', title: 'Design & Quote', desc: 'You receive photo-real renders of every room + a detailed itemized BOQ — completely free.' },
   { num: '03', day: 'Day 8 onwards', title: 'Execute & Move In', desc: 'Sign-off and we begin. Weekly progress photos, on-time handover, 10-year warranty.' }
 ]
 
@@ -566,7 +566,7 @@ export default function LandingPage() {
                   </div>
                   {errors.captcha && <p className="lx-form__error">{errors.captcha}</p>}
 
-                  <button type="submit" disabled={status === 'sending' || !captchaOk} className="lx-form__submit">
+                  <button type="submit" disabled={status === 'sending' || !captchaOk || form.phone.replace(/\D/g, '').length !== 10} className="lx-form__submit">
                     {status === 'sending' ? 'Sending…' : <>Request a Call Back <ArrowRight size={15} /></>}
                   </button>
                   {status === 'error' && (
