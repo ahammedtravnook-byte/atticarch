@@ -9,14 +9,9 @@
   # bundle instead of inlining it, which is more reliable.
   external_node_modules = ["firebase-admin"]
 
-# Let function calls pass straight through (belt-and-suspenders; Netlify already
-# reserves /.netlify/*).
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
 # SPA fallback so React Router deep links resolve on hard loads.
+# (Netlify already reserves /.netlify/functions/* for functions, so no explicit
+# passthrough redirect is needed — and one starting with /.netlify is invalid.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
