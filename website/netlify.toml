@@ -1,0 +1,23 @@
+# ATTICARCH — Netlify config (base directory is "website" in the Netlify UI).
+# This file only ADDS functions + redirect config; the build command and
+# publish directory continue to come from the Netlify dashboard settings.
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # firebase-admin has native/dynamic requires — install it alongside the
+  # bundle instead of inlining it, which is more reliable.
+  external_node_modules = ["firebase-admin"]
+
+# Let function calls pass straight through (belt-and-suspenders; Netlify already
+# reserves /.netlify/*).
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA fallback so React Router deep links resolve on hard loads.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

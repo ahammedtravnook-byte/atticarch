@@ -80,34 +80,24 @@ service cloud.firestore {
     }
 
     // ── Leads (contact form) ──
-    // Anyone may submit a lead; only admins may read/modify them (PII).
-    // Creates are validated: only known fields, sane types/sizes, and the
-    // `verified` flag may only be true when the request is phone-authenticated
-    // (i.e. the OTP step actually completed) — otherwise it is spoofable.
+    // Leads are written ONLY by the server — the Netlify `submit-lead` function
+    // uses the Admin SDK, which bypasses these rules. Direct client creates are
+    // DENIED so the CAPTCHA + IP rate-limit checkpoint can't be bypassed by
+    // POSTing straight to Firestore. Only admins may read/modify (PII).
+    //
+    // ⚠️ DEPLOY THIS RULE LAST — only after the submit-lead function is
+    //    confirmed live. Until then the contact form uses a direct-write
+    //    fallback that needs client `create` to remain allowed.
     match /leads/{id} {
-      allow create: if
-        request.resource.data.keys().hasOnly([
-          'id', 'name', 'email', 'phone', 'projectType', 'size', 'possession',
-          'location', 'budget', 'message', 'timeline', 'verified', 'source', 'createdAt'
-        ])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 200
-        && request.resource.data.phone is string
-        && request.resource.data.phone.size() <= 20
-        && request.resource.data.email is string
-        && request.resource.data.email.size() <= 200
-        && request.resource.data.verified is bool
-        && (request.resource.data.verified == false || isSignedIn())
-        && (!('message' in request.resource.data) || (request.resource.data.message is string && request.resource.data.message.size() <= 5000))
-        && (!('projectType' in request.resource.data) || (request.resource.data.projectType is string && request.resource.data.projectType.size() <= 100))
-        && (!('size' in request.resource.data) || (request.resource.data.size is string && request.resource.data.size.size() <= 100))
-        && (!('possession' in request.resource.data) || (request.resource.data.possession is string && request.resource.data.possession.size() <= 100))
-        && (!('location' in request.resource.data) || (request.resource.data.location is string && request.resource.data.location.size() <= 300))
-        && (!('budget' in request.resource.data) || (request.resource.data.budget is string && request.resource.data.budget.size() <= 100))
-        && (!('source' in request.resource.data) || (request.resource.data.source is string && request.resource.data.source.size() <= 50))
-        && (!('createdAt' in request.resource.data) || (request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 50));
+      allow create: if false;
       allow read, update, delete: if isAdmin();
+    }
+
+    // ── Rate-limit counters (server-only) ──
+    // Written by the submit-lead function via the Admin SDK. No client access;
+    // the default-deny below already covers this, but it's called out here.
+    match /rateLimits/{id} {
+      allow read, write: if false;
     }
 
     // ── Default deny everything else ──

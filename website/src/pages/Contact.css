@@ -442,6 +442,23 @@
 }
 
 /* Nav row */
+.ct-captcha {
+  margin-top: 2px;
+}
+.ct-captcha > label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ct-trust-note {
+  display: flex; align-items: center; gap: 7px;
+  margin-top: 4px;
+  font-family: var(--font-accent);
+  font-size: 11.5px;
+  color: var(--ash);
+}
+.ct-trust-note svg { color: var(--gold); flex-shrink: 0; }
+
 .ct-nav-row {
   display: flex; justify-content: space-between;
   align-items: center;

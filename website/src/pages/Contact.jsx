@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import {
   Phone, Mail, MapPin, Send, MessageCircle, Check,
-  ChevronRight, ChevronLeft, Sparkles, AlertCircle,
+  ChevronRight, ChevronLeft, AlertCircle,
   Shield, Star, Home, Loader2
 } from 'lucide-react'
-import {
-  auth, db, doc, setDoc,
-  RecaptchaVerifier, signInWithPhoneNumber, signOut as fbSignOut
-} from '../lib/firebase'
+import { submitLead } from '../lib/submitLead'
+import Captcha from '../components/Captcha'
 import './Contact.css'
 
 function Reveal({ children, delay = 0 }) {
@@ -27,8 +25,6 @@ function Reveal({ children, delay = 0 }) {
 
 const WHATSAPP_NUM = '919845013138'
 const WHATSAPP_MSG = encodeURIComponent("Hi ATTICARCH, I'd like a free interior design consultation.")
-const RATE_LIMIT_MAX = 3
-const RATE_LIMIT_WINDOW_HRS = 24
 
 export default function Contact() {
   const [step, setStep] = useState(1)
@@ -38,149 +34,15 @@ export default function Contact() {
   })
   const [errors, setErrors] = useState({})
 
-  // OTP states
-  const [otpSending, setOtpSending] = useState(false)
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpVerified, setOtpVerified] = useState(false)
-  const [otpCode, setOtpCode] = useState('')
-  const [otpError, setOtpError] = useState('')
-  const [timer, setTimer] = useState(60)
-  const [verifying, setVerifying] = useState(false)
-  // True when SMS OTP can't be sent (e.g. Firebase billing not enabled) — we
-  // then let the user submit without SMS verification so no lead is lost.
-  const [otpUnavailable, setOtpUnavailable] = useState(false)
-
-  // Firebase phone auth
-  const confirmationRef = useRef(null)
-  const recaptchaRef = useRef(null)
+  // Anti-spam: built-in CAPTCHA (solved flag) + hidden honeypot field
+  const [captchaOk, setCaptchaOk] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
+  const [formError, setFormError] = useState('')
 
   // Submit states
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-
-  // OTP countdown — keyed off `timer` itself so it re-arms on every resend
-  // (a [otpSent]-keyed interval never restarts when sendOtp() resets the timer)
-  useEffect(() => {
-    if (!otpSent || otpVerified || timer <= 0) return
-    const t = setTimeout(() => setTimer(p => p - 1), 1000)
-    return () => clearTimeout(t)
-  }, [otpSent, otpVerified, timer])
-
-  // Init invisible reCAPTCHA once
-  const setupRecaptcha = useCallback(() => {
-    if (recaptchaRef.current) return
-    recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible',
-      callback: () => {},
-      'expired-callback': () => { recaptchaRef.current = null }
-    })
-  }, [])
-
-  // ── Rate limit check: max 3 OTP requests per phone per 24h ──
-  // Done client-side via localStorage (NOT a Firestore read) — the leads
-  // collection holds customer PII and must stay admin-read-only. Firebase
-  // Phone Auth enforces its own server-side abuse limits on top of this.
-  const RL_KEY = 'atticarch_otp_attempts'
-
-  const recordOtpAttempt = (phone) => {
-    try {
-      const now = Date.now()
-      const cutoff = now - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000
-      const list = JSON.parse(localStorage.getItem(RL_KEY) || '[]')
-        .filter(a => a.ts >= cutoff)
-      list.push({ phone, ts: now })
-      localStorage.setItem(RL_KEY, JSON.stringify(list))
-    } catch { /* localStorage unavailable — skip */ }
-  }
-
-  const checkRateLimit = (phone) => {
-    try {
-      const cutoff = Date.now() - RATE_LIMIT_WINDOW_HRS * 60 * 60 * 1000
-      const count = JSON.parse(localStorage.getItem(RL_KEY) || '[]')
-        .filter(a => a.ts >= cutoff && a.phone === phone).length
-      return count < RATE_LIMIT_MAX
-    } catch {
-      return true // localStorage unavailable — don't block the user
-    }
-  }
-
-  // ── Send real OTP via Firebase Phone Auth ──
-  const sendOtp = async () => {
-    const cleanPhone = form.phone.replace(/\D/g, '')
-    if (cleanPhone.length !== 10) {
-      setErrors(e => ({ ...e, phone: 'Please enter a valid 10-digit phone number' }))
-      return
-    }
-    setErrors(e => ({ ...e, phone: null }))
-    setOtpError('')
-    setOtpSending(true)
-
-    try {
-      // Rate limit check before sending OTP
-      if (!checkRateLimit(cleanPhone)) {
-        setOtpError(`Too many submissions from this number. Please try after ${RATE_LIMIT_WINDOW_HRS} hours.`)
-        setOtpSending(false)
-        return
-      }
-
-      setupRecaptcha()
-      const phoneNumber = `+91${cleanPhone}`
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaRef.current)
-      confirmationRef.current = confirmation
-      recordOtpAttempt(cleanPhone)
-      setOtpSent(true)
-      setTimer(60)
-      setOtpCode('')
-    } catch (err) {
-      console.error('OTP send error:', err)
-      const code = err?.code || ''
-      // SMS verification not available on this Firebase project (needs the
-      // Blaze plan). Don't block the user — let them submit without OTP.
-      if (['auth/billing-not-enabled', 'auth/operation-not-allowed', 'auth/admin-restricted-operation', 'auth/quota-exceeded'].includes(code)) {
-        setOtpUnavailable(true)
-        setOtpError('')
-      } else if (code === 'auth/too-many-requests') {
-        setOtpError('Too many OTP requests. Please wait a few minutes and try again.')
-      } else if (code === 'auth/invalid-phone-number') {
-        setOtpError('Invalid phone number. Please check and try again.')
-      } else {
-        setOtpError('Failed to send OTP. Please try again.')
-      }
-      // Tear down the reCAPTCHA widget so a retry can render a fresh one
-      // (otherwise Firebase throws "reCAPTCHA has already been rendered").
-      try { recaptchaRef.current?.clear() } catch { /* ignore */ }
-      recaptchaRef.current = null
-    } finally {
-      setOtpSending(false)
-    }
-  }
-
-  // ── Verify OTP code ──
-  const verifyOtp = async () => {
-    if (!confirmationRef.current) {
-      setOtpError('Session expired. Please resend OTP.')
-      return
-    }
-    setVerifying(true)
-    setOtpError('')
-
-    try {
-      await confirmationRef.current.confirm(otpCode)
-      setOtpVerified(true)
-    } catch (err) {
-      console.error('OTP verify error:', err)
-      if (err.code === 'auth/invalid-verification-code') {
-        setOtpError('Invalid code. Please check and try again.')
-      } else if (err.code === 'auth/code-expired') {
-        setOtpError('Code expired. Please resend OTP.')
-      } else {
-        setOtpError('Verification failed. Please try again.')
-      }
-    } finally {
-      setVerifying(false)
-    }
-  }
 
   // ── Step 1 validation ──
   const handleNextStep = () => {
@@ -198,42 +60,45 @@ export default function Contact() {
     setStep(2)
   }
 
-  // ── Final submit → Firestore ──
+  // ── Final submit → guarded Netlify function (CAPTCHA + IP rate-limit) ──
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!otpVerified && !otpUnavailable) { setStep(2); setOtpError('Please verify your mobile number first.'); return }
-    if (otpUnavailable && form.phone.replace(/\D/g, '').length !== 10) {
-      setStep(2); setOtpError('Please enter a valid 10-digit mobile number.'); return
+    const cleanPhone = form.phone.replace(/\D/g, '')
+    if (cleanPhone.length !== 10) {
+      setErrors(er => ({ ...er, phone: 'Please enter a valid 10-digit mobile number' }))
+      return
+    }
+    if (!captchaOk) {
+      setFormError('Please enter the verification code shown below to continue.')
+      return
     }
 
     setSubmitting(true)
     setSubmitError('')
+    setFormError('')
 
     try {
-      const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      await setDoc(doc(db, 'leads', leadId), {
-        id: leadId,
+      await submitLead({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.replace(/\D/g, ''),
+        phone: cleanPhone,
         projectType: form.projectType,
         size: form.size || '',
         possession: form.possession || '',
         location: form.location || '',
         budget: form.budget || '',
         message: form.message || '',
-        verified: otpVerified,
         source: 'contact-page',
-        createdAt: new Date().toISOString(),
+        company: honeypot,
       })
-
-      // Sign out the temporary phone auth user
-      try { await fbSignOut(auth) } catch (_) {}
-
       setSubmitted(true)
     } catch (err) {
       console.error('Submit error:', err)
-      setSubmitError('Failed to submit. Please try again or call us directly.')
+      if (err.code === 'rate-limited') {
+        setSubmitError(err.message || 'Too many submissions. Please try again later.')
+      } else {
+        setSubmitError('Failed to submit. Please try again or call us directly.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -247,9 +112,6 @@ export default function Contact() {
         <title>Book Design Consultation — ATTICARCH Bangalore</title>
         <meta name="description" content="Talk to AtticArch's senior architects. Book a free 3D design consultation and receive a complete itemized budget estimate." />
       </Helmet>
-
-      {/* Invisible reCAPTCHA container */}
-      <div id="recaptcha-container" />
 
       {/* ── HERO ── */}
       <section className="ct-hero">
@@ -375,7 +237,7 @@ export default function Contact() {
                   </div>
                   <div className="ct-progress__labels">
                     <span className={step >= 1 ? 'active' : ''}>Project Details</span>
-                    <span className={step >= 2 ? 'active' : ''}>Verify &amp; Book</span>
+                    <span className={step >= 2 ? 'active' : ''}>Confirm &amp; Book</span>
                   </div>
 
                   <AnimatePresence mode="wait">
@@ -389,11 +251,11 @@ export default function Contact() {
                       >
                         <div className="ct-success__icon"><Check size={32} /></div>
                         <h3>Consultation Booked!</h3>
-                        <p>We've verified your phone and recorded your project details.</p>
+                        <p>We've recorded your project details. Our team will reach out to confirm.</p>
 
                         <div className="ct-receipt">
                           <div className="ct-receipt__row"><span>Name</span><strong>{form.name}</strong></div>
-                          <div className="ct-receipt__row"><span>Verified Mobile</span><strong>+91 {form.phone}</strong></div>
+                          <div className="ct-receipt__row"><span>Mobile</span><strong>+91 {form.phone}</strong></div>
                           <div className="ct-receipt__row"><span>Space Type</span><strong>{form.projectType}</strong></div>
                           {form.size && <div className="ct-receipt__row"><span>Approx. Size</span><strong>{form.size} sq.ft</strong></div>}
                           {form.budget && <div className="ct-receipt__row"><span>Budget</span><strong>{form.budget}</strong></div>}
@@ -475,16 +337,16 @@ export default function Contact() {
                             </div>
 
                             <button type="button" onClick={handleNextStep} className="ct-btn ct-btn--primary ct-btn--full">
-                              Next: Verify Mobile <ChevronRight size={15} />
+                              Next: Contact Number <ChevronRight size={15} />
                             </button>
                           </motion.div>
                         )}
 
-                        {/* STEP 2 — Real Firebase OTP */}
+                        {/* STEP 2 — Contact number + CAPTCHA */}
                         {step === 2 && (
                           <motion.div key="s2" className="ct-step-content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                            <h4 className="ct-step-heading">Verify Phone Number</h4>
-                            <p className="ct-step-sub">We'll send a real SMS code to verify your number.</p>
+                            <h4 className="ct-step-heading">Your Contact Number</h4>
+                            <p className="ct-step-sub">Add your mobile number and confirm you're human — our team will call you back to confirm.</p>
 
                             <div className="ct-fields">
                               <div className="ct-field">
@@ -497,79 +359,39 @@ export default function Contact() {
                                     onChange={e => {
                                       const phone = e.target.value.replace(/\D/g, '').slice(0, 10)
                                       setForm(f => ({ ...f, phone }))
-                                      // Editing the number invalidates any in-flight OTP
-                                      if (otpSent) { setOtpSent(false); setOtpCode(''); setOtpError(''); confirmationRef.current = null }
+                                      if (errors.phone) setErrors(er => ({ ...er, phone: null }))
                                     }}
-                                    disabled={otpVerified}
                                   />
-                                  {!otpVerified && !otpUnavailable && (
-                                    <button
-                                      type="button" className="ct-otp-send"
-                                      onClick={sendOtp}
-                                      disabled={form.phone.length !== 10 || otpSending}
-                                    >
-                                      {otpSending ? <Loader2 size={14} className="ct-spin" /> : otpSent ? 'Resend' : 'Send OTP'}
-                                    </button>
-                                  )}
                                 </div>
                                 {errors.phone && <span className="ct-err">{errors.phone}</span>}
                               </div>
 
-                              {otpSent && !otpVerified && (
-                                <motion.div className="ct-otp-box" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                  <label>Enter 6-Digit Verification Code</label>
-                                  <div className="ct-otp-row">
-                                    <input
-                                      type="text" placeholder="• • • • • •" maxLength={6}
-                                      value={otpCode}
-                                      onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                                      className="ct-otp-input"
-                                    />
-                                    <button
-                                      type="button" className="ct-btn ct-btn--gold"
-                                      onClick={verifyOtp}
-                                      disabled={otpCode.length !== 6 || verifying}
-                                    >
-                                      {verifying ? <Loader2 size={14} className="ct-spin" /> : 'Verify'}
-                                    </button>
-                                  </div>
-                                  {otpError && <div className="ct-otp-err"><AlertCircle size={13} /> {otpError}</div>}
-                                  <div className="ct-otp-timer">
-                                    {timer > 0
-                                      ? <>Resend in <strong>{timer}s</strong></>
-                                      : <button type="button" className="ct-link" onClick={sendOtp} disabled={otpSending}>Resend code</button>
-                                    }
-                                  </div>
-                                </motion.div>
-                              )}
+                              {/* Honeypot — hidden from humans; bots that fill it are dropped */}
+                              <input
+                                type="text" tabIndex={-1} autoComplete="off" aria-hidden="true"
+                                value={honeypot}
+                                onChange={e => setHoneypot(e.target.value)}
+                                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                              />
 
-                              {!otpSent && !otpVerified && otpError && (
-                                <div className="ct-otp-err"><AlertCircle size={13} /> {otpError}</div>
-                              )}
+                              <div className="ct-field ct-captcha">
+                                <label>Verification <span>*</span></label>
+                                <Captcha onValidChange={setCaptchaOk} />
+                              </div>
 
-                              {otpVerified && (
-                                <motion.div className="ct-verified" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                                  <Check size={15} /> Mobile Verified Successfully
-                                </motion.div>
-                              )}
-
-                              {otpUnavailable && !otpVerified && (
-                                <motion.div className="ct-otp-box" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--ash)', lineHeight: 1.5 }}>
-                                    <Shield size={15} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: 1 }} />
-                                    <span>SMS verification is momentarily unavailable. No problem — just make sure your number is correct and tap <strong>Book Consultation</strong>; our team will call you back to confirm.</span>
-                                  </div>
-                                </motion.div>
-                              )}
+                              <div className="ct-trust-note">
+                                <Shield size={14} /> <span>Protected against spam. We never share your details.</span>
+                              </div>
                             </div>
 
-                            {submitError && <div className="ct-otp-err" style={{ marginTop: 16 }}><AlertCircle size={13} /> {submitError}</div>}
+                            {formError && <div className="ct-otp-err" style={{ marginTop: 12 }}><AlertCircle size={13} /> {formError}</div>}
+                            {submitError && <div className="ct-otp-err" style={{ marginTop: 12 }}><AlertCircle size={13} /> {submitError}</div>}
 
                             <div className="ct-nav-row">
                               <button type="button" className="ct-back" onClick={() => setStep(1)}>
                                 <ChevronLeft size={14} /> Back
                               </button>
-                              <button type="submit" className="ct-btn ct-btn--primary" disabled={(!otpVerified && !otpUnavailable) || submitting}>
+                              <button type="submit" className="ct-btn ct-btn--primary" disabled={submitting || !captchaOk}>
                                 {submitting ? <><Loader2 size={14} className="ct-spin" /> Submitting...</> : <>Book Consultation <Send size={14} /></>}
                               </button>
                             </div>

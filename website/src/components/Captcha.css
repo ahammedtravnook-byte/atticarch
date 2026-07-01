@@ -1,0 +1,64 @@
+.captcha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.captcha__challenge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captcha__canvas {
+  width: 150px;
+  height: 54px;
+  border: 1px solid #e3d9c4;
+  border-radius: 8px;
+  background: #f4efe6;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.captcha__refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e3d9c4;
+  border-radius: 8px;
+  background: #fff;
+  color: #7a5c2e;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+.captcha__refresh:hover {
+  background: #f4efe6;
+  color: #3c2e16;
+}
+
+.captcha__input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #e3d9c4;
+  border-radius: 8px;
+  font-size: 15px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-family: inherit;
+  background: #fff;
+  color: #2c2c2c;
+}
+.captcha__input::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  color: #a99;
+}
+.captcha__input:focus {
+  outline: none;
+  border-color: #c9a96e;
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
+}

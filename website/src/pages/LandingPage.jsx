@@ -10,7 +10,8 @@ import {
   partners, partnerLogo, pickImages
 } from '../data/siteData'
 import { useData } from '../context/DataContext'
-import { db, doc, setDoc } from '../lib/firebase'
+import { submitLead } from '../lib/submitLead'
+import Captcha from '../components/Captcha'
 import logoSrc from '../assets/logo.png'
 import './LandingPage.css'
 
@@ -172,6 +173,8 @@ export default function LandingPage() {
   const [form, setForm] = useState({ name: '', phone: '', type: 'Apartment', budget: '10 - 15 Lakhs' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
+  const [captchaOk, setCaptchaOk] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
   const [titleIdx, setTitleIdx] = useState(0)
   const [imgIdx, setImgIdx] = useState(0)
   const [showSticky, setShowSticky] = useState(false)
@@ -248,19 +251,20 @@ export default function LandingPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
+    if (!captchaOk) {
+      setErrors(er => ({ ...er, captcha: 'Please enter the verification code shown below.' }))
+      return
+    }
     setStatus('sending')
     try {
-      const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      await setDoc(doc(db, 'leads', leadId), {
-        id: leadId,
+      await submitLead({
         name: form.name.trim(),
         email: '',
         phone: form.phone.replace(/\D/g, ''),
         projectType: form.type || '',
         budget: form.budget || '',
-        verified: false,
         source: 'landing-page',
-        createdAt: new Date().toISOString(),
+        company: honeypot,
       })
       setStatus('success')
       fireConversion()
@@ -549,7 +553,20 @@ export default function LandingPage() {
                       </select>
                     </div>
                   </div>
-                  <button type="submit" disabled={status === 'sending'} className="lx-form__submit">
+                  {/* Honeypot — hidden from humans; bots that fill it are dropped */}
+                  <input
+                    type="text" tabIndex={-1} autoComplete="off" aria-hidden="true"
+                    value={honeypot}
+                    onChange={e => setHoneypot(e.target.value)}
+                    style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                  />
+
+                  <div className="lx-form__captcha">
+                    <Captcha onValidChange={ok => { setCaptchaOk(ok); if (ok) setErrors(er => ({ ...er, captcha: null })) }} />
+                  </div>
+                  {errors.captcha && <p className="lx-form__error">{errors.captcha}</p>}
+
+                  <button type="submit" disabled={status === 'sending' || !captchaOk} className="lx-form__submit">
                     {status === 'sending' ? 'Sending…' : <>Request a Call Back <ArrowRight size={15} /></>}
                   </button>
                   {status === 'error' && (
